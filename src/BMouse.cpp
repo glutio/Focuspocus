@@ -32,3 +32,10 @@ void BMouse::update(int16_t x, int16_t y, bool buttonDown) {
 void BMouse::update(bool buttonDown) {
   update(_x, _y, buttonDown);
 }
+
+void BKeyboard::sendKey(uint16_t code, bool isDown) {
+  BKeyboardInputEvent event;
+  event.type = (isDown) ? BInputEvent::evKeyDown : BInputEvent::evKeyUp;
+  event.code = code;
+  BFocusManager::handleEvent(event);
+}

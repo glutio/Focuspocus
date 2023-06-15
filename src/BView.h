@@ -9,9 +9,12 @@ using namespace Buratino;
 
 class BInputEvent;
 class BMouseInputEvent;
-class BFocusEventArgs;
+class BFocusInputEvent;
+class BKeyboardInputEvent;
+
 class BGraphics;
 class BPanel;
+class BControl;
 
 struct BRect {
   int16_t x;
@@ -40,8 +43,10 @@ class BView {
 private:
   int16_t _actualWidth;
   int16_t _actualHeight;
+  BPanel* _parent;
 protected:
   bool _isDirty;
+  
 public:
   int16_t x;
   int16_t y;
@@ -57,7 +62,9 @@ private:
   virtual BPanel* asPanel() {
     return nullptr;
   }
-
+  virtual BControl* asControl() {
+    return nullptr;
+  }
 public:
   typedef EventDelegate<BView, BMouseInputEvent&> MouseEvent;
   EventSource<MouseEvent> onMouse;
@@ -69,10 +76,11 @@ public:
 
   bool hitTest(uint16_t ptX, uint16_t ptY);
 
-  void handleEvent(BInputEvent& event);
+  virtual void handleEvent(BInputEvent& event);
+
   int16_t actualWidth();
   int16_t actualHeight();
-
+  BPanel* parent();
   void dirty();
   
   friend class BFocusManager;
@@ -81,14 +89,20 @@ public:
 };
 
 class BControl: public BView {
+private:
+  virtual BControl* asControl() {
+    return this;
+  }
 public:
   uint16_t color;
   
 public:
-  typedef EventDelegate<BControl, BFocusEventArgs&> FocusEvent;
+  typedef EventDelegate<BControl, BFocusInputEvent&> FocusEvent;
 
   EventSource<FocusEvent> onFocus;
 public:
+  BControl();
+  virtual void handleEvent(BInputEvent& event);
   void focus();
   bool isFocused();
 };
@@ -114,8 +128,10 @@ protected:
 public:
   BButton();
 
-  void handleFocus(BControl* sender, BFocusEventArgs& args);
-  void handleMouse(BView* sender, BMouseInputEvent& event);
+  void handleMouse(BMouseInputEvent& event);
+  void handleKeyboard(BKeyboardInputEvent& event);
+
+  virtual void handleEvent(BInputEvent& event);
 
   virtual void draw(BGraphics& g);
 
@@ -136,9 +152,9 @@ public:
 
 protected:
   int16_t applyMinMax(int16_t val, int16_t minimum, int16_t maximum);    
-  void applyOffset(int16_t& x, int16_t& y);
+  void applyOffset(int16_t& x, int16_t& y, int8_t sign = 1);
   void applyOffset(int16_t& x, int16_t& y, int16_t& width, int16_t& height);
-
+  int16_t indexOf(BView& view);
 public:
   BPanel(BView* children[], unsigned count, unsigned capacity);
 
@@ -160,10 +176,10 @@ public:
 };
 
 class BStackPanel: public BPanel {
-private:
-  virtual BPanel* asPanel() {
-    return this;
-  }
+// private:
+//   virtual BPanel* asPanel() {
+//     return this;
+//   }
 public:
   enum Orientation {
     vertical,

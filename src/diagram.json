@@ -5,7 +5,31 @@
   "parts": [
     { "type": "wokwi-arduino-uno", "id": "uno", "top": 331.89, "left": 1.49, "attrs": {} },
     { "type": "wokwi-ili9341", "id": "lcd1", "top": 5.51, "left": 40.77, "attrs": {} },
-    { "type": "board-ili9341-cap-touch", "id": "lcd2", "top": 2.88, "left": -152.99, "attrs": {} }
+    { "type": "board-ili9341-cap-touch", "id": "lcd2", "top": 2.88, "left": -152.99, "attrs": {} },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 245.34,
+      "left": 221.04,
+      "rotate": 90,
+      "attrs": { "color": "green", "bounce": "0" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn2",
+      "top": 245.82,
+      "left": 328.13,
+      "rotate": 90,
+      "attrs": { "color": "green", "bounce": "0" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn3",
+      "top": 245.82,
+      "left": 274.82,
+      "rotate": 90,
+      "attrs": { "color": "yellow", "bounce": "0" }
+    }
   ],
   "connections": [
     [ "lcd1:GND", "uno:GND.1", "black", [ "v22", "h-46" ] ],
@@ -23,7 +47,13 @@
     [ "lcd2:SCK", "uno:13", "green", [ "v63.39", "h183.9", "v-3.88" ] ],
     [ "lcd2:MISO", "uno:12", "green", [ "v58.74", "h173.5" ] ],
     [ "lcd2:SCL", "uno:A5", "green", [ "v257.96", "h282.88" ] ],
-    [ "lcd2:SDA", "uno:A4", "green", [ "v249.53", "h269.07" ] ]
+    [ "lcd2:SDA", "uno:A4", "green", [ "v249.53", "h269.07" ] ],
+    [ "btn1:2.r", "uno:7", "green", [ "v0" ] ],
+    [ "btn1:1.r", "uno:GND.1", "green", [ "v0" ] ],
+    [ "btn3:2.r", "uno:6", "green", [ "v0" ] ],
+    [ "btn3:1.r", "uno:GND.1", "green", [ "v0" ] ],
+    [ "btn2:2.r", "uno:5", "green", [ "v0" ] ],
+    [ "btn2:1.r", "uno:GND.1", "green", [ "v0" ] ]
   ],
   "dependencies": {}
 }

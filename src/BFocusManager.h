@@ -8,33 +8,54 @@
 class BView;
 class BPoint;
 class BControl;
+class BPanel;
 
 using namespace Buratino;
 
-class BInputEvent {
-public:
+struct BInputEvent {
   enum EventType {
     evNothing = 0x0000,
     evMouseDown = 0x0001,
     evMouseUp = 0x0002,
     evMouseMove = 0x0004,
     evMouseAuto = 0x0008,
-    evMouseWheel = 0x0020,
-    evMouse = 0x002f,
+    evMouseWheel = 0x0010,
+    evMouse = 0x001f,
+
+    evKeyDown = 0x0020,
+    evKeyUp = 0x0040,
+    evKeyboard = 0x0060,
+
     evCommand = 0x0100,
   };
 
   EventType type;
 };
 
-class BMouseInputEvent: public BInputEvent {
-public:
+struct BMouseInputEvent: BInputEvent {
   uint16_t x;
   uint16_t y;
   bool buttonDown;
 };
 
-struct BFocusEventArgs {
+struct BKeyboardInputEvent: BInputEvent {
+  uint16_t code;
+};
+
+struct BCommandInputEvent: BInputEvent {
+  enum CommandType {
+    cmFocus = 0x0001,
+    cmBlur = 0x0002,
+  };
+
+  uint16_t command;
+
+  BCommandInputEvent() { 
+    type = evCommand;
+  }
+};
+
+struct BFocusInputEvent: BCommandInputEvent {
   BControl* blurred;
   BControl* focused;
 };
@@ -49,10 +70,15 @@ protected:
   static bool _needsLayout;
 
 protected:
-  static bool findView(BView& view, int16_t offsetX, int16_t offsetY, BPoint& pt, BView*& target);
-  static bool mapScreenToView(BView& view, int16_t offsetX, int16_t offsetY, BView& target, BPoint& pt);
-  static bool getGraphics(BView& view, int16_t offsetX, int16_t offsetY, int16_t width, int16_t height, BView& target, BGraphics& g);
-  static bool getParent(BView& view, BView& target, BView*& parent);
+  static bool findViewHelper(BView& view, int16_t x, int16_t y, BView*& target);
+  static void mapScreenToViewHelper(BView& view, int16_t& x, int16_t& y);
+  static void mapViewToScreenHelper(BView& view, int16_t& x, int16_t& y);
+  static BControl* focusNextHelper(BPanel& panel, int16_t tabIndex);
+  static BControl* focusNextHelper(BView& view);
+  static BControl* focusPrevHelper(BPanel& panel, int16_t tabIndex);
+  static BControl* focusPrevHelper(BControl& control);
+  static BControl* focusFirstHelper(BView& view);
+  static void focusLastHelper(BView& view, BControl*& control);
 public:
   template<size_t N>
   static void BFocusManager::initialize(BGraphics& g, BView* (&stack)[N]) {
@@ -74,14 +100,18 @@ public:
   static void layoutRoot();
   static void handleEvent(BInputEvent& event);
 
-  static BView* focus(BView& view);
-  static BView* focusedElement();
-  static BView* focusNext();
+  static BControl* focus(BControl& view);
+  static BControl* focusedControl();
+  static BControl* focusFirst();
+  static BControl* focusLast();
+  static BControl* focusNext();
+  static BControl* focusPrev();
+  static void focusClick();
 
-  static BPoint mapScreenToView(uint16_t x, uint16_t y, BView& view);
   static BView* findView(BMouseInputEvent& event);
+  static BPoint mapScreenToView(BView& view, int16_t x, int16_t y);
+  static BPoint mapViewToScreen(BView& view, int16_t x, int16_t y);
   static BGraphics getGraphics(BView& view);
-  static BView* getParent(BView& view);
 
   static void captureMouse(BView& view);
   static void releaseMouse(BView& view);
@@ -99,6 +129,7 @@ public:
 
 template<size_t N>
 void setupFocuspocus(BGraphics& g, BView* (&stack)[N]) {
+  BMouse::initialize(-1, -1, false);
   BFocusManager::initialize(g, stack);
 }
 

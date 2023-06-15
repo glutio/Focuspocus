@@ -34,7 +34,7 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 BGraphics _g(tft);
 
 namespace ButtonViewStatic {
-  
+  BButton button3;
   BButton buttonOk;
   BButton buttonCancel;
   BView* confirmContent[] = { &buttonOk, &buttonCancel }; 
@@ -42,12 +42,12 @@ namespace ButtonViewStatic {
 
   BButton button1;
   BButton button2;
-  BView* rootContent[] = { &button1, &button2, &confirm };
+  BView* rootContent[] = { &button1, &button2, &confirm, &button3 };
   BStackPanel root(rootContent);
 
 
   void onClick(BButton* sender, bool clicked) {
-    Serial.println(sender->tag);
+  //  Serial.println(sender->tag);
   }
 
   void Initialize() {
@@ -79,14 +79,18 @@ namespace ButtonViewStatic {
     button2.tag = "Button2";
     button2.text = "Cancel";
 
+    button3.tag = "button3";
     confirm.spacing = 10;
     confirm.padding.left = 10;
     confirm.padding.right = 10;
     confirm.padding.top = 10;
     confirm.padding.bottom = 10;
+    confirm.tag = "Confirm";
     buttonOk.text = "Yes";
     buttonOk.color = 0xFFFF;
+    buttonOk.tag = "Yes";
     buttonCancel.text = "No";
+    buttonCancel.tag="No";
     buttonCancel.color = 0xAA00;
     //buttonCancel.maxWidth = 20;
     buttonCancel.width=-2;
@@ -109,17 +113,44 @@ BView* _stack[] = { &ButtonViewStatic::root };
 //   }
 // };
 
-bool _touched;
+#define LEFT_PIN 7
+#define CLICK_PIN 6
+#define RIGHT_PIN 5
+
+BDigitalPin btnLeft(LEFT_PIN, INPUT_PULLUP, 40);
+BDigitalPin btnClick(CLICK_PIN, INPUT_PULLUP, 40);
+BDigitalPin btnRight(RIGHT_PIN, INPUT_PULLUP, 40);
+
+void onChange(BDigitalPin* sender, bool state) {
+  if (sender->pin() == LEFT_PIN) {
+    if (!state) BFocusManager::focusPrev();      
+  } else if (sender->pin() == RIGHT_PIN) {
+    if (!state) BFocusManager::focusNext();
+  } else if (sender->pin() == CLICK_PIN) {
+    BKeyboard::sendKey(BKeyboard::kbEnter, !state);
+  }
+}
 
 void setup() {
+  pinMode(7, INPUT_PULLUP);
+  pinMode(6, INPUT_PULLUP);
+  pinMode(5, INPUT_PULLUP);
   Serial.begin(9600);
   Serial.println("ILI9341 Test!"); 
   ctp.begin(40);
   tft.begin();
+
+  btnLeft.init();
+  btnLeft.onChange += onChange;
+  btnClick.init();
+  btnClick.onChange += onChange;
+  btnRight.init();
+  btnRight.onChange += onChange;
+
   ButtonViewStatic::Initialize();
-  BMouse::initialize(-1, -1, false);
   setupFocuspocus(_g, _stack);
 }
+
 
 void loop(void) {
   if (ctp.touched()) {
@@ -135,7 +166,11 @@ void loop(void) {
   }
   else {
     BMouse::update(false);
-  }
+  }  
+ 
+  btnClick.update();
+  btnLeft.update();
+  btnRight.update();
   focuspocus();
 }
 

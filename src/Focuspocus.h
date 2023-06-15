@@ -5,5 +5,6 @@
 #include "BView.h"
 #include "BGraphics.h"
 #include "BMouse.h"
+#include "BHWButton.h"
 
 #endif
