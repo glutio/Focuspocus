@@ -79,6 +79,11 @@ protected:
   static BControl* focusPrevHelper(BView& view);
   static BControl* focusFirstHelper(BView& view);
   static void focusLastHelper(BView& view, BControl*& control);
+
+  static void drawPass(BView& view, BGraphics& g);
+  static void layoutPass(BPanel& panel);
+  static void BFocusManager::touchTree(BView& view);
+
 public:
   template<size_t N>
   static void BFocusManager::initialize(BGraphics& g, BView* (&stack)[N]) {
@@ -87,15 +92,8 @@ public:
     layoutRoot();
   }
 
-  static BView* root() {
-    for(unsigned i = _stack.Length() - 1; i >= 0; --i) {
-      if (_stack[i]) {
-        return _stack[i];
-      } 
-    }
-    return nullptr;
-  }
-
+  static BView* root();
+  
   static void draw();
   static void layoutRoot();
   static void handleEvent(BInputEvent& event);

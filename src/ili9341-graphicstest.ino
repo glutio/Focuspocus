@@ -47,7 +47,11 @@ namespace ButtonViewStatic {
 
 
   void onClick(BButton* sender, bool clicked) {
-  //  Serial.println(sender->tag);
+    auto width = sender->width*1.2;
+    if (width != sender->width) {
+      sender->width=width;
+      sender->parent()->dirtyLayout();
+    }
   }
 
   void Initialize() {
@@ -56,19 +60,20 @@ namespace ButtonViewStatic {
     root.padding.left = 10;
     root.padding.bottom = 10;
     root.padding.right = 10;
-    //root.spacing = 10;
-    // root.margin.top = 10;
+    root.spacing = 10;
+    root.margin.top = 10;
     // root.margin.bottom = 10;
-    // root.margin.left = 10;
-    // root.margin.right = 10;
-    root.orientation = BStackPanel::vertical;  
+    root.margin.left = 50;
+    root.margin.right = 10;
+    root.orientation = BStackPanel::horizontal;  
     root.horizontalAlignment = BStackPanel::right;  
     root.verticalAlignment = BStackPanel::center;  
   //   button1.x = 0;
   //   button1.y = 0;
   //  button1.width = 50;
   //   button1.maxWidth = 105;
-    button1.height = -1;
+    button1.height = 30;
+    button1.width = 50;
     button1.color = 0xFFFF;
     button1.tag = "Button1";
     button1.fontColor = 0x8020;
@@ -76,7 +81,7 @@ namespace ButtonViewStatic {
     button1.fontSize = 3;
     button1.margin.left = 10;    
     button2.minHeight = 200;
-    button2.margin.top=50;
+    //button2.margin.left=50;
     //button1.margin.right = 10;
     //button1.margin.top = 10;
     //button1.margin.bottom = 10;

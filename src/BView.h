@@ -76,7 +76,7 @@ protected:
   void applyOffset(int16_t& x, int16_t& y, int8_t sign = 1);
   void applyOffset(int16_t& x, int16_t& y, int16_t& width, int16_t& height);
   void applyMargins(int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyMargins(int16_t& x, int16_t& y, int16_t& width, int16_t& height);
+  void applyMargins(int16_t& x, int16_t& y, int16_t& width, int16_t& height);  
   BRect boundingBox();
 
 public:
@@ -96,7 +96,9 @@ public:
   int16_t actualHeight();
   BPanel* parent();
   void dirty();
-  
+  bool isDirty();
+  void clearDirty();
+
   friend class BFocusManager;
   friend class BPanel;
   friend class BStackPanel;
@@ -169,6 +171,8 @@ protected:
   void applyPadding(int16_t& x, int16_t& y, int16_t& width, int16_t& height);
   int16_t applyMinMax(int16_t val, int16_t minimum, int16_t maximum);    
   int16_t indexOf(BView& view);
+  void touchView(BView& view);
+
 public:
   BPanel(BView* children[], unsigned count, unsigned capacity);
 
@@ -183,6 +187,9 @@ public:
   virtual void draw(BGraphics& graphics);
 
   virtual void layout();
+  void dirtyLayout();
+  bool isDirtyLayout();
+
   int16_t clientWidth();
   int16_t clientHeight();
 

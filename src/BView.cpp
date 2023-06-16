@@ -17,12 +17,10 @@ void BView::applyOffset(int16_t& x, int16_t& y, int8_t sign) {
 }
 
 void BView::applyOffset(int16_t& x, int16_t& y, int16_t& width, int16_t& height) {
-  Serial.print("X ");
-  Serial.println(this->x);
   x += this->x;
   y += this->y;
-  width = actualWidth()+margin.left + margin.right;
-  height = actualHeight()+margin.top + margin.bottom;
+  width = actualWidth() + margin.left + margin.right;
+  height = actualHeight() + margin.top + margin.bottom;
 }
 
 void BView::applyMargins(int16_t& x, int16_t& y, int8_t sign) {
@@ -41,8 +39,8 @@ BRect BView::boundingBox() {
   BRect rt;
   rt.x = x;
   rt.y = y;
-  rt.width = actualWidth() + margin.right;
-  rt.height = actualWidth() + margin.bottom;
+  rt.width = actualWidth() + margin.right + margin.left;
+  rt.height = actualWidth() + margin.bottom + margin.top;
 }
 
 bool BView::hitTest(uint16_t ptX, uint16_t ptY) {
@@ -66,6 +64,14 @@ BPanel* BView::parent() {
 void BView::dirty() {
   _isDirty = true;
   BFocusManager::dirty();
+}
+
+bool BView::isDirty() {
+  return _isDirty;
+}
+
+void BView::clearDirty() {
+  _isDirty = false;
 }
 
 BControl::BControl() : color(0xFFFF) {};
@@ -179,11 +185,13 @@ void BButton::draw(BGraphics& g) {
   auto c = isFocused() ? 0xFF20 : color;
   if (_isDown) {
     g.drawRect(0, 0, actualWidth(), actualHeight(), 0);
-    g.drawRect(2, 2, actualWidth()-4, actualHeight()-4, c);
+    g.drawRect(1, 1, actualWidth()-2, actualHeight()-2, 0);
+//    g.fillRect(0, 0, actualWidth(), actualHeight(), 0);
+    g.fillRect(2, 2, actualWidth()-4, actualHeight()-4, c);
   }
   else {
-    g.drawRect(2, 2, actualWidth()-4, actualHeight()-4, 0);
-    g.drawRect(0, 0, actualWidth(), actualHeight(), c);
+//    g.fillRect(2, 2, actualWidth()-4, actualHeight()-4, 0);
+    g.fillRect(0, 0, actualWidth(), actualHeight(), c);
   }
   drawContent(g);
 }
@@ -209,17 +217,11 @@ void BPanel::remove(BView* view) {
 }
 
 void BPanel::draw(BGraphics& graphics) {
+  graphics.fillRect(1, 1, graphics.width-2, graphics.height-2, 0);
   graphics.drawRect(0, 0, graphics.width, graphics.height, 0xFFFF);
-  for(auto i = 0; i < _children.Length(); ++i) {
+  for(unsigned i = 0; i < _children.Length(); ++i) {
     if (_children[i]) {
-      BGraphics g(graphics);
-      applyPadding(g.x, g.y, g.width, g.height);
-      Serial.println(g.y);
-      _children[i]->applyOffset(g.x, g.y, g.width, g.height);
-      Serial.println(g.y);
-      _children[i]->applyMargins(g.x, g.y, g.width, g.height);
-      Serial.println(g.y);
-      _children[i]->draw(g);
+      _children[i]->dirty();
     }
   }
 }
@@ -254,19 +256,35 @@ int16_t BPanel::applyMinMax(int16_t val, int16_t minimum, int16_t maximum) {
   return val;
 }
 
+void BPanel::dirtyLayout() {
+  dirty();
+  _needsLayout = true;
+  BFocusManager::dirtyLayout();
+}
+
+bool BPanel::isDirtyLayout() {
+  return _needsLayout;
+}
+
+void BPanel::touchView(BView& view) {
+  view._parent = this;
+  view.dirty();
+  BPanel* panel = view.asPanel();
+  if (panel) {
+    panel->dirtyLayout();
+  }
+}
+
 void BPanel::layout() {
   for(unsigned i = 0; i < _children.Length(); ++i) {
     if (_children[i]) {
       BView& view = *_children[i];
+      touchView(view);
       view._actualWidth = view.width;
       view._actualHeight = view.height;
-      view._parent = this;
-      BPanel* panel = view.asPanel();
-      if (panel) {
-        panel->layout();
-      }
     }
   }
+  _needsLayout = false;
 }
 
 int16_t BPanel::clientWidth() {
@@ -284,15 +302,7 @@ void BStackPanel::layout() {
   else {
     layoutVertical();
   }
-
-  for(unsigned i = 0; i < _children.Length(); ++i) {
-    if (_children[i]) {
-      BPanel* panel = _children[i]->asPanel();
-      if (panel) {
-        panel->layout();
-      }
-    }
-  }
+  _needsLayout = false;
 }
 
 void BStackPanel::layoutVertical() {
@@ -303,12 +313,12 @@ void BStackPanel::layoutVertical() {
   for(unsigned i = 0; i < _children.Length(); ++i) {
     if (_children[i]) {
       BView& view = *_children[i];
-      view._parent = this;
+      touchView(view);
       if (view.height < 0) {
         totalFactor += abs(view.height);
         view._actualHeight = -1;      
       } else {
-        fixedSize += view.height;
+        fixedSize += view.height + marginHeight(view);
         view._actualHeight = view.height;
       }
 
@@ -389,13 +399,13 @@ void BStackPanel::layoutHorizontal() {
   for(unsigned i = 0; i < _children.Length(); ++i) {
     if (_children[i]) {
       BView& view = *_children[i];
-      view._parent = this;
+      touchView(view);
 
       if (view.width < 0) {
         totalFactor += abs(view.width);
         view._actualWidth = -1; // mark for auto layout     
       } else {
-        fixedSize += view.width;
+        fixedSize += view.width + marginWidth(view);
         view._actualWidth = view.width; // fixed size
       }
 
