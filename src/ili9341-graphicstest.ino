@@ -34,15 +34,15 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 BGraphics _g(tft);
 
 namespace ButtonViewStatic {
-  BButton button3;
-  BButton buttonOk;
-  BButton buttonCancel;
-  BView* confirmContent[] = { &buttonOk, &buttonCancel }; 
-  BStackPanel confirm(confirmContent);
+  // BButton button3;
+  // BButton buttonOk;
+  // BButton buttonCancel;
+  // BView* confirmContent[] = { &buttonOk, &buttonCancel }; 
+  // BStackPanel confirm(confirmContent);
 
   BButton button1;
-  BButton button2;
-  BView* rootContent[] = { &button1, &button2, &confirm, &button3 };
+   BButton button2;
+  BView* rootContent[] = { &button1, &button2, /*&confirm, &button3*/ };
   BStackPanel root(rootContent);
 
 
@@ -56,47 +56,58 @@ namespace ButtonViewStatic {
     root.padding.left = 10;
     root.padding.bottom = 10;
     root.padding.right = 10;
-    root.spacing = 10;
+    //root.spacing = 10;
+    // root.margin.top = 10;
+    // root.margin.bottom = 10;
+    // root.margin.left = 10;
+    // root.margin.right = 10;
     root.orientation = BStackPanel::vertical;  
-    root.horizontalAlignment = BStackPanel::center;  
+    root.horizontalAlignment = BStackPanel::right;  
     root.verticalAlignment = BStackPanel::center;  
-    // button1.x = 0;
-    // button1.y = 0;
-   // button1.width = 50;
-    //button1.maxWidth = 105;
-    button1.height = -2;
+  //   button1.x = 0;
+  //   button1.y = 0;
+  //  button1.width = 50;
+  //   button1.maxWidth = 105;
+    button1.height = -1;
     button1.color = 0xFFFF;
     button1.tag = "Button1";
     button1.fontColor = 0x8020;
     button1.text = "OK";
     button1.fontSize = 3;
-
+    button1.margin.left = 10;    
+    button2.minHeight = 200;
+    button2.margin.top=50;
+    //button1.margin.right = 10;
+    //button1.margin.top = 10;
+    //button1.margin.bottom = 10;
+    
     // button2.x = 80;
     // button2.y = 0;
-    button2.width = 50;
-    //button2.height = 25;
+    // button2.width = 50;
+    // button2.height = 25;
     button2.color = 0xFFFF;
     button2.tag = "Button2";
     button2.text = "Cancel";
+    // button2.margin.right = 10;
 
-    button3.tag = "button3";
-    confirm.spacing = 10;
-    confirm.padding.left = 10;
-    confirm.padding.right = 10;
-    confirm.padding.top = 10;
-    confirm.padding.bottom = 10;
-    confirm.tag = "Confirm";
-    buttonOk.text = "Yes";
-    buttonOk.color = 0xFFFF;
-    buttonOk.tag = "Yes";
-    buttonCancel.text = "No";
-    buttonCancel.tag="No";
-    buttonCancel.color = 0xAA00;
-    //buttonCancel.maxWidth = 20;
-    buttonCancel.width=-2;
+    // button3.tag = "button3";
+    // confirm.spacing = 10;
+    // confirm.padding.left = 10;
+    // confirm.padding.right = 10;
+    // confirm.padding.top = 10;
+    // confirm.padding.bottom = 10;
+    // confirm.tag = "Confirm";
+    // buttonOk.text = "Yes";
+    // buttonOk.color = 0xFFFF;
+    // buttonOk.tag = "Yes";
+    // buttonCancel.text = "No";
+    // buttonCancel.tag="No";
+    // buttonCancel.color = 0xAA00;
+    // //buttonCancel.maxWidth = 20;
+    // buttonCancel.width=-2;
 
     button1.onClick += onClick;
-    button2.onClick += onClick;
+   // button2.onClick += onClick;
   }  
 
 }
@@ -149,6 +160,7 @@ void setup() {
 
   ButtonViewStatic::Initialize();
   setupFocuspocus(_g, _stack);
+
 }
 
 
@@ -171,6 +183,7 @@ void loop(void) {
   btnClick.update();
   btnLeft.update();
   btnRight.update();
+
   focuspocus();
 }
 

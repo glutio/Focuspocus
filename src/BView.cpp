@@ -8,14 +8,46 @@ void BView::handleEvent(BInputEvent& event) {
   }
 }
 
-BView::BView() : x(0), y(0), width(-1), height(-1), minWidth(-1), minHeight(-1), maxWidth(-1), maxHeight(-1), _isDirty(true) {}
+BView::BView() 
+: x(0), y(0), width(-1), height(-1), minWidth(-1), minHeight(-1), maxWidth(-1), maxHeight(-1), _isDirty(true) {}
+
+void BView::applyOffset(int16_t& x, int16_t& y, int8_t sign) {
+  x += sign * this->x;
+  y += sign * this->y;
+}
+
+void BView::applyOffset(int16_t& x, int16_t& y, int16_t& width, int16_t& height) {
+  Serial.print("X ");
+  Serial.println(this->x);
+  x += this->x;
+  y += this->y;
+  width = actualWidth()+margin.left + margin.right;
+  height = actualHeight()+margin.top + margin.bottom;
+}
+
+void BView::applyMargins(int16_t& x, int16_t& y, int8_t sign) {
+  x += sign * margin.left;
+  y += sign * margin.top;
+}
+
+void BView::applyMargins(int16_t& x, int16_t& y, int16_t& width, int16_t& height) {
+  x += margin.left;
+  y += margin.top;
+  width -= margin.left + margin.right;
+  height -= margin.top + margin.bottom;
+}
+
+BRect BView::boundingBox() {
+  BRect rt;
+  rt.x = x;
+  rt.y = y;
+  rt.width = actualWidth() + margin.right;
+  rt.height = actualWidth() + margin.bottom;
+}
 
 bool BView::hitTest(uint16_t ptX, uint16_t ptY) {
-  auto hit = ptX >= x && ptX <= x + _actualWidth && ptY >= y && ptY <= y + _actualHeight;
-  // Serial.print(ptX >= x); Serial.print(" ");
-  // Serial.print(ptX >= ptX <= x + _actualWidth); Serial.print(" ");
-  // Serial.print(ptX >= ptY >= y); Serial.print(" ");
-  // Serial.print(ptX >= ptY <= y + _actualHeight); Serial.println();
+  auto hit = ptX >= x + margin.left && ptX <= x + margin.left + _actualWidth &&
+             ptY >= y + margin.top && ptY <= y + margin.top + _actualHeight;
   return hit;
 }
 
@@ -137,22 +169,28 @@ void BButton::handleMouse(BMouseInputEvent& event) {
 }
 
 void BButton::draw(BGraphics& g) {
+  BGraphics border(g);
+  border.x-=margin.left;
+  border.y-=margin.top;
+  border.width +=margin.left+margin.right;
+  border.height += margin.top+margin.bottom;
+  border.drawRect(0, 0, border.width, border.height, 0x00FF);
   //g.fillRect(x, y, actualWidth(), actualHeight(), 0x0000);
   auto c = isFocused() ? 0xFF20 : color;
   if (_isDown) {
-    g.drawRect(x, y, actualWidth(), actualHeight(), 0);
-    g.drawRect(x+2, y+2, actualWidth()-4, actualHeight()-4, c);
+    g.drawRect(0, 0, actualWidth(), actualHeight(), 0);
+    g.drawRect(2, 2, actualWidth()-4, actualHeight()-4, c);
   }
   else {
-    g.drawRect(x+2, y+2, actualWidth()-4, actualHeight()-4, 0);
-    g.drawRect(x, y, actualWidth(), actualHeight(), c);
+    g.drawRect(2, 2, actualWidth()-4, actualHeight()-4, 0);
+    g.drawRect(0, 0, actualWidth(), actualHeight(), c);
   }
   drawContent(g);
 }
 
 void BButton::drawContent(BGraphics& g) {
   auto rt = g.getTextBounds(text, fontSize);  
-  g.drawText(text, x + (actualWidth() - rt.width)/2, y + (actualHeight() - rt.height)/2, fontSize, fontColor);
+  g.drawText(text, (g.width - rt.width)/2, (g.height - rt.height)/2, fontSize, fontColor);
 }
 
 /*
@@ -171,21 +209,18 @@ void BPanel::remove(BView* view) {
 }
 
 void BPanel::draw(BGraphics& graphics) {
-  BGraphics g(graphics);
-  applyOffset(g.x, g.y, g.width, g.height);    
-  // Serial.print(g.x); Serial.print(" ");
-  // Serial.print(g.y); Serial.print(" ");
-  // Serial.print(g.width); Serial.print(" ");
-  // Serial.print(g.height); Serial.println();
-  
-  // Serial.print(x); Serial.print(" ");
-  // Serial.print(y); Serial.print(" ");
-  // Serial.print(actualWidth()); Serial.print(" ");
-  // Serial.print(actualHeight()); Serial.println();
-  
-  graphics.drawRect(x, y, _actualWidth, _actualHeight, 0xFFFF);
+  graphics.drawRect(0, 0, graphics.width, graphics.height, 0xFFFF);
   for(auto i = 0; i < _children.Length(); ++i) {
-    _children[i]->draw(g);
+    if (_children[i]) {
+      BGraphics g(graphics);
+      applyPadding(g.x, g.y, g.width, g.height);
+      Serial.println(g.y);
+      _children[i]->applyOffset(g.x, g.y, g.width, g.height);
+      Serial.println(g.y);
+      _children[i]->applyMargins(g.x, g.y, g.width, g.height);
+      Serial.println(g.y);
+      _children[i]->draw(g);
+    }
   }
 }
 
@@ -198,16 +233,16 @@ int16_t BPanel::indexOf(BView& view) {
   return -1;
 }
 
-void BPanel::applyOffset(int16_t& x, int16_t& y, int8_t sign) {
-  x += sign * (this->x + padding.left);
-  y += sign * (this->y + padding.top);
+void BPanel::applyPadding(int16_t& x, int16_t& y, int8_t sign) {
+  x += sign * padding.left;
+  y += sign * padding.top;
 }
 
-void BPanel::applyOffset(int16_t& x, int16_t& y, int16_t& width, int16_t& height) {
-  x += this->x + padding.left;
-  y += this->y + padding.top;
-  width = actualWidth() - (padding.right + padding.left);
-  height = actualHeight() - (padding.top + padding.bottom);
+void BPanel::applyPadding(int16_t& x, int16_t& y, int16_t& width, int16_t& height) {
+  x += padding.left;
+  y += padding.top;
+  width -= padding.left + padding.right;
+  height -= padding.top + padding.bottom;
 }
 
 int16_t BPanel::applyMinMax(int16_t val, int16_t minimum, int16_t maximum) {    
@@ -235,11 +270,11 @@ void BPanel::layout() {
 }
 
 int16_t BPanel::clientWidth() {
-  return _actualWidth - padding.left - padding.right;
+  return actualWidth() - padding.left - padding.right;
 };
 
 int16_t BPanel::clientHeight() {
-  return _actualHeight - padding.top - padding.bottom;
+  return actualHeight() - padding.top - padding.bottom;
 }
 
 void BStackPanel::layout() {
@@ -263,8 +298,8 @@ void BStackPanel::layout() {
 void BStackPanel::layoutVertical() {
   int16_t totalSize = clientHeight() - (spacing * (_children.Length() - 1));
   int16_t totalFactor = 0;
-
   int16_t fixedSize = 0;
+
   for(unsigned i = 0; i < _children.Length(); ++i) {
     if (_children[i]) {
       BView& view = *_children[i];
@@ -278,7 +313,7 @@ void BStackPanel::layoutVertical() {
       }
 
       if (view.width < 0) {
-        view._actualWidth = applyMinMax(clientWidth(), view.minWidth, view.maxWidth);
+        view._actualWidth = applyMinMax(clientWidth() - marginWidth(view), view.minWidth, view.maxWidth);
       }
       else {
         view._actualWidth = view.width;
@@ -294,11 +329,11 @@ void BStackPanel::layoutVertical() {
       if (_children[i]) {
         BView& view = *_children[i];
         if (view.height < 0 && view._actualHeight < 0) {
-          uint16_t proposedSize = abs(view.width) * unitSize;
-          uint16_t minmaxSize = applyMinMax(proposedSize, view.minWidth, view.maxWidth);
+          uint16_t proposedSize = abs(view.height) * unitSize - marginHeight(view);
+          uint16_t minmaxSize = applyMinMax(proposedSize, view.minHeight, view.maxHeight);
           if (proposedSize != minmaxSize) {
             view._actualHeight = minmaxSize;
-            fixedSize += minmaxSize;
+            fixedSize += minmaxSize + marginHeight(view);
             totalFactor -= abs(view.height);
             converged = false;
           }
@@ -316,9 +351,9 @@ void BStackPanel::layoutVertical() {
     if (_children[i]) {
       BView& view = *_children[i];
       if (view.height < 0 && view._actualHeight < 0) {
-        view._actualHeight = abs(view.height) * unitSize;
+        view._actualHeight = abs(view.height) * unitSize - marginHeight(view);
       }
-      totalSize += view._actualHeight;
+      totalSize += view._actualHeight + marginHeight(view);
     }
   }
 
@@ -333,12 +368,13 @@ void BStackPanel::layoutVertical() {
     if (_children[i]) {
       BView& view = *_children[i];  
       view.y = startPos;
-      startPos += view._actualHeight + spacing;    
+
+      startPos += view._actualHeight + marginHeight(view) + spacing;    
 
       if (horizontalAlignment == right) {
-        view.x = clientWidth() - view._actualWidth;
+        view.x = clientWidth() - view._actualWidth - marginWidth(view);
       } else if (horizontalAlignment == center) {
-        view.x = (clientWidth() - view._actualWidth) /2;
+        view.x = (clientWidth() - view._actualWidth - marginWidth(view)) /2;
       }
     }
   }
@@ -365,7 +401,7 @@ void BStackPanel::layoutHorizontal() {
 
       if (view.height < 0) {
         // occupy entire area in this dimension
-        view._actualHeight = applyMinMax(clientHeight(), view.minHeight, view.maxHeight);
+        view._actualHeight = applyMinMax(clientHeight() - marginHeight(view), view.minHeight, view.maxHeight);
       }
       else {
         view._actualHeight = view.height;
@@ -382,11 +418,11 @@ void BStackPanel::layoutHorizontal() {
       if (_children[i]) {
         BView& view = *_children[i];
         if (view.width < 0 && view._actualWidth < 0) { // if marked for auto sizing
-          uint16_t proposedSize = abs(view.width) * unitSize;
+          uint16_t proposedSize = abs(view.width) * unitSize - marginWidth(view);
           uint16_t minmaxSize = applyMinMax(proposedSize, view.minWidth, view.maxWidth);
           if (proposedSize != minmaxSize) { // if constrained and has a fixed size now
             view._actualWidth = minmaxSize;
-            fixedSize += minmaxSize;
+            fixedSize += minmaxSize + marginWidth(view);
             totalFactor -= abs(view.width);
             converged = false; // reposition auto-sized controls
           }
@@ -406,9 +442,9 @@ void BStackPanel::layoutHorizontal() {
       BView& view = *_children[i];
       if (view.width < 0 && view._actualWidth < 0) {
         // position unconstrained controls
-        view._actualWidth = abs(view.width) * unitSize;
+        view._actualWidth = abs(view.width) * unitSize - marginWidth(view);
       }
-      totalSize += view._actualWidth;
+      totalSize += view._actualWidth + marginWidth(view);
     }
   }
 
@@ -425,13 +461,13 @@ void BStackPanel::layoutHorizontal() {
     if (_children[i]) {
       BView& view = *_children[i];  
       view.x = startPos;
-      startPos += view._actualWidth + spacing;    
+      startPos += view._actualWidth + marginWidth(view) + spacing;    
 
       // position controls in the other dimension    
       if (verticalAlignment == bottom) {
-        view.y = clientHeight() - view._actualHeight;
+        view.y = clientHeight() - view._actualHeight - marginHeight(view);
       } else if (verticalAlignment == center) {
-        view.y = (clientHeight() - view._actualHeight) /2;
+        view.y = (clientHeight() - view._actualHeight - marginHeight(view)) /2;
       }
     }
   }

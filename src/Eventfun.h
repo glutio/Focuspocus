@@ -41,7 +41,7 @@ protected:
     void (*_func)(TSender*, TArgument);
 
     CallableFunctionImpl(void (*func)(TSender*, TArgument))
-      : _func(func) {}
+      : _func(func) { }
 
     virtual void Call(TSender* sender, TArgument argument) {
       (_func)(sender, argument);

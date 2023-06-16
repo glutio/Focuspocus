@@ -15,6 +15,8 @@ bool BFocusManager::findViewHelper(BView& view, int16_t x, int16_t y, BView*& ta
     BPanel* panel = view.asPanel();
     if (panel) {
       panel->applyOffset(x, y, -1);
+      panel->applyMargins(x, y, -1);
+      panel->applyPadding(x, y, -1);
       for(unsigned i = 0; i < panel->_children.Length(); ++i) {
         if (panel->_children[i]) {
           if (findViewHelper(*panel->_children[i], x, y, target)) {
@@ -32,6 +34,8 @@ void BFocusManager::mapScreenToViewHelper(BView& view, int16_t& x, int16_t& y) {
   BPanel* panel = view.asPanel();
   if (panel) {
     panel->applyOffset(x, y, -1);
+    panel->applyMargins(x, y, -1);
+    panel->applyPadding(x, y, -1);
   } else {
     x -= view.x;
     y -= view.y;
@@ -45,6 +49,8 @@ void BFocusManager::mapViewToScreenHelper(BView& view, int16_t& x, int16_t& y) {
   BPanel* panel = view.asPanel();
   if (panel) {
     panel->applyOffset(x, y);
+    panel->applyMargins(x, y);
+    panel->applyPadding(x, y);
   } else {
     x += view.x;
     y += view.y;
@@ -58,7 +64,9 @@ void BFocusManager::mapViewToScreenHelper(BView& view, int16_t& x, int16_t& y) {
 void BFocusManager::draw() {
   auto r = root();
   if (root()) {
-    r->draw(*_g);
+    BGraphics g(*_g);
+    r->applyMargins(g.x, g.y, g.width, g.height);
+    r->draw(g);
   }
 }
 
@@ -66,7 +74,7 @@ void BFocusManager::layoutRoot() {
   if (root()) {
     BView& view = *root();
     if (view.width < 0) {
-      view._actualWidth = _g->width;
+      view._actualWidth = _g->width - view.margin.left - view.margin.right;
       view.x = 0;
     }
     else {
@@ -75,7 +83,7 @@ void BFocusManager::layoutRoot() {
     }
 
     if (view.height < 0) {
-      view._actualHeight = _g->height;
+      view._actualHeight = _g->height - view.margin.top - view.margin.bottom;
       view.y = 0;
     }
     else {
@@ -178,10 +186,8 @@ BControl* BFocusManager::focusNextHelper(BView& view) {
 }
 
 
-
-
 BControl* BFocusManager::focusPrevHelper(BPanel& panel, int16_t tabIndex) {
-  for(unsigned i = tabIndex; i < panel._children.Length(); ++i) {
+  for(auto i = tabIndex; i >= 0; --i) {
     if (panel._children[i]) {
       BControl* ctl = panel._children[i]->asControl();      
       if (ctl) {
@@ -190,35 +196,34 @@ BControl* BFocusManager::focusPrevHelper(BPanel& panel, int16_t tabIndex) {
 
       BPanel* ctlPanel = panel._children[i]->asPanel();
       if (ctlPanel) {            
-        return focusNextHelper(*ctlPanel, 0);
+        return focusNextHelper(*ctlPanel, ctlPanel->_children.Length() - 1);
       }
     }
   }
-
   return nullptr;
 }
 
-BControl* BFocusManager::focusPrevHelper(BControl& control) {
+BControl* BFocusManager::focusPrevHelper(BView& view) {
   int16_t tabIndex;
-  auto parent = control.parent();
+  auto parent = view.parent();
+  BView* pview = &view;
   if (parent) {
     while (parent) {      
       BPanel* panel = parent->asPanel();
       if (panel) {
-        tabIndex = panel->indexOf(control);
-        auto ctl = focusNextHelper(*panel, tabIndex + 1);
+        tabIndex = panel->indexOf(*pview);
+        auto ctl = focusPrevHelper(*panel, tabIndex - 1);
         if (ctl) {
           return ctl;
         }        
       }
+      pview = parent;
       parent = parent->parent();
     }
   }
 
   return nullptr;
 }
-
-
 
 BControl* BFocusManager::focusFirstHelper(BView& view) {
   BControl* ctl = view.asControl();
@@ -310,7 +315,6 @@ BControl* BFocusManager::focusPrev() {
     focus(*prev);
     return prev;
   }
-
   return focusLast();
 }
 

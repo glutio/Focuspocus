@@ -25,11 +25,14 @@ struct BRect {
   bool pointInRect(int16_t ptX, int16_t ptY) {
     return ptX >= x && ptX <= x + width && ptY >= y && ptY <= y + height;
   }
+
+  BRect() : x(0), y(0), width(0), height(0) {}
 };
 
 struct BPoint {
   int16_t x;
   int16_t y;
+  BPoint() : x(0), y(0) {}
 };
 
 struct BMargin {
@@ -37,6 +40,8 @@ struct BMargin {
   int16_t left;
   int16_t bottom;
   int16_t right;
+  
+  BMargin() : top(0), left(0), bottom(0), right(0) {}
 };
 
 class BView {
@@ -44,9 +49,10 @@ private:
   int16_t _actualWidth;
   int16_t _actualHeight;
   BPanel* _parent;
+
 protected:
   bool _isDirty;
-  
+
 public:
   int16_t x;
   int16_t y;
@@ -56,6 +62,7 @@ public:
   int16_t minHeight;
   int16_t maxWidth;
   int16_t maxHeight;
+  BMargin margin;
   const char* tag;
 
 private:
@@ -65,6 +72,13 @@ private:
   virtual BControl* asControl() {
     return nullptr;
   }
+protected:
+  void applyOffset(int16_t& x, int16_t& y, int8_t sign = 1);
+  void applyOffset(int16_t& x, int16_t& y, int16_t& width, int16_t& height);
+  void applyMargins(int16_t& x, int16_t& y, int8_t sign = 1);
+  void applyMargins(int16_t& x, int16_t& y, int16_t& width, int16_t& height);
+  BRect boundingBox();
+
 public:
   typedef EventDelegate<BView, BMouseInputEvent&> MouseEvent;
   EventSource<MouseEvent> onMouse;
@@ -74,7 +88,7 @@ public:
   virtual void draw(BGraphics& g) = 0;
   void redraw();
 
-  bool hitTest(uint16_t ptX, uint16_t ptY);
+  virtual bool hitTest(uint16_t ptX, uint16_t ptY);
 
   virtual void handleEvent(BInputEvent& event);
 
@@ -151,9 +165,9 @@ public:
   BMargin padding;
 
 protected:
+  void applyPadding(int16_t& x, int16_t& y, int8_t sign = 1);
+  void applyPadding(int16_t& x, int16_t& y, int16_t& width, int16_t& height);
   int16_t applyMinMax(int16_t val, int16_t minimum, int16_t maximum);    
-  void applyOffset(int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyOffset(int16_t& x, int16_t& y, int16_t& width, int16_t& height);
   int16_t indexOf(BView& view);
 public:
   BPanel(BView* children[], unsigned count, unsigned capacity);
@@ -176,10 +190,14 @@ public:
 };
 
 class BStackPanel: public BPanel {
-// private:
-//   virtual BPanel* asPanel() {
-//     return this;
-//   }
+private:
+  int16_t marginWidth(BView& view) {
+    return view.margin.left + view.margin.right;
+  }
+  int16_t marginHeight(BView& view) {
+    return view.margin.top + view.margin.bottom;
+  }
+
 public:
   enum Orientation {
     vertical,

@@ -76,7 +76,7 @@ protected:
   static BControl* focusNextHelper(BPanel& panel, int16_t tabIndex);
   static BControl* focusNextHelper(BView& view);
   static BControl* focusPrevHelper(BPanel& panel, int16_t tabIndex);
-  static BControl* focusPrevHelper(BControl& control);
+  static BControl* focusPrevHelper(BView& view);
   static BControl* focusFirstHelper(BView& view);
   static void focusLastHelper(BView& view, BControl*& control);
 public:
