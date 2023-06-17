@@ -1,18 +1,23 @@
 #ifndef __BMOUSE_H__
 #define __BMOUSE_H__
 
+class BFocusManager;
+
 class BMouse {
 protected:
-  static int16_t _x;
-  static int16_t _y;
-  static bool _buttonDown;
+  int16_t _x;
+  int16_t _y;
+  bool _buttonDown;
+  BFocusManager& _focusManager;
 public:
-  static void initialize(int16_t x, int16_t y, bool buttonDown);
-  static void update(int16_t x, int16_t y, bool buttonDown);
-  static void update(bool buttonDown);
+  BMouse(BFocusManager& focusManager, int16_t x = -1, int16_t y = -1, bool buttonDown = false);
+  void update(int16_t x, int16_t y, bool buttonDown);
+  void update(bool buttonDown);
 };
 
 class BKeyboard {
+protected:
+  BFocusManager& _focusManager;
 public:
   enum Keys {
     kbEnter = 0x0028,
@@ -21,7 +26,8 @@ public:
   };
 
 public:
-  static void sendKey(uint16_t code, bool isDown);
+  BKeyboard(BFocusManager& focusManager);
+  void sendKey(uint16_t code, bool isDown);
 };
 
 

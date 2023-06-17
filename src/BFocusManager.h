@@ -4,6 +4,7 @@
 #include "BList.h"
 #include "BGraphics.h"
 #include "BMouse.h"
+#include "BTheme.h"
 
 class BView;
 class BPoint;
@@ -62,74 +63,87 @@ struct BFocusInputEvent: BCommandInputEvent {
 
 class BFocusManager {
 protected:
-  static BList<BView*> _stack;
-  static BGraphics* _g;
-  static BControl* _focused;
-  static BView* _capture;
-  static bool _isDirty;
-  static bool _needsLayout;
+  BList<BPanel*> _stack;
+  BGraphics& _g;
+  BControl* _focused;
+  BView* _capture;
+  bool _isDirty;
+  bool _needsLayout;
+  BTheme* _theme;
 
 protected:
-  static bool findViewHelper(BView& view, int16_t x, int16_t y, BView*& target);
-  static void mapScreenToViewHelper(BView& view, int16_t& x, int16_t& y);
-  static void mapViewToScreenHelper(BView& view, int16_t& x, int16_t& y);
-  static BControl* focusNextHelper(BPanel& panel, int16_t tabIndex);
-  static BControl* focusNextHelper(BView& view);
-  static BControl* focusPrevHelper(BPanel& panel, int16_t tabIndex);
-  static BControl* focusPrevHelper(BView& view);
-  static BControl* focusFirstHelper(BView& view);
-  static void focusLastHelper(BView& view, BControl*& control);
+  bool findViewHelper(BView& view, int16_t x, int16_t y, BView*& target);
+  
+  void mapScreenToViewHelper(BView& view, int16_t& x, int16_t& y);
+  void mapViewToScreenHelper(BView& view, int16_t& x, int16_t& y);
 
-  static void drawPass(BView& view, BGraphics& g);
-  static void layoutPass(BPanel& panel);
-  static void BFocusManager::touchTree(BView& view);
+  BControl* focusNextHelper(BPanel& panel, int16_t tabIndex);
+  BControl* focusNextHelper(BView& view);
+  BControl* focusPrevHelper(BPanel& panel, int16_t tabIndex);
+  BControl* focusPrevHelper(BView& view);
+  BControl* focusFirstHelper(BView& view);
+  void focusLastHelper(BView& view, BControl*& control);
+
+  void applyOffset(BView& view, int16_t& x, int16_t& y, int8_t sign = 1);
+  void applyOffset(BView& view, int16_t& x, int16_t& y, int16_t& width, int16_t& height);
+  void applyMargins(BView& view, int16_t& x, int16_t& y, int8_t sign = 1);
+  void applyMargins(BView& view, int16_t& x, int16_t& y, int16_t& width, int16_t& height);
+  void applyPadding(BPanel& panel, int16_t& x, int16_t& y, int8_t sign = 1);
+  void applyPadding(BPanel& panel, int16_t& x, int16_t& y, int16_t& width, int16_t& height);
+
+  void drawPass(BView& view, BGraphics& g);
+  void layoutPass(BPanel& panel);
+
+  void touchTree(BView& view);
 
 public:
   template<size_t N>
-  static void BFocusManager::initialize(BGraphics& g, BView* (&stack)[N]) {
-    _g = &g;
-    _stack = BList<BView*>(stack, N, N);
+  BFocusManager(BGraphics& g, BView* (&stack)[N], BTheme& theme) 
+    : _g(g), _stack(stack, N, N), _theme(&theme) {
+    for(int i = _stack.Length() - 1; i >= 0; --i) {
+      if (!_stack[i]) {
+        _stack.Remove(i);
+      }
+    }
+
     layoutRoot();
   }
-
-  static BView* root();
   
-  static void draw();
-  static void layoutRoot();
-  static void handleEvent(BInputEvent& event);
+  BPanel* root();
+  BTheme& theme();
+  
+  void handleEvent(BInputEvent& event);
 
-  static BControl* focus(BControl& view);
-  static BControl* focusedControl();
-  static BControl* focusFirst();
-  static BControl* focusLast();
-  static BControl* focusNext();
-  static BControl* focusPrev();
-  static void focusClick();
+  BControl* focus(BControl& view);
+  BControl* focusedControl();
+  BControl* focusFirst();
+  BControl* focusLast();
+  BControl* focusNext();
+  BControl* focusPrev();
 
-  static BView* findView(BMouseInputEvent& event);
-  static BPoint mapScreenToView(BView& view, int16_t x, int16_t y);
-  static BPoint mapViewToScreen(BView& view, int16_t x, int16_t y);
-  static BGraphics getGraphics(BView& view);
+  BView* findView(BMouseInputEvent& event);
+  BPoint mapScreenToView(BView& view, int16_t x, int16_t y);
+  BPoint mapViewToScreen(BView& view, int16_t x, int16_t y);
+  BGraphics getGraphics(BView& view);
 
-  static void captureMouse(BView& view);
-  static void releaseMouse(BView& view);
-  static BView* capturingView();
+  void captureMouse(BView& view);
+  void releaseMouse(BView& view);
+  BView* capturingView();
 
-  static void dirty();
-  static void dirtyLayout();
+  void dirty();
+  void dirtyLayout();
 
-  static void loop();
+  void layoutRoot();
 
-  template<size_t N>
-  friend void setupFocuspocus(BGraphics&, BView* (&)[N]);
+  void push(BPanel& panel);
+  void pop();
+  void popToTop(BPanel& panel);
+  
+  void loop();
+
+
   friend void focuspocus();
 };
-
-template<size_t N>
-void setupFocuspocus(BGraphics& g, BView* (&stack)[N]) {
-  BMouse::initialize(-1, -1, false);
-  BFocusManager::initialize(g, stack);
-}
 
 void focuspocus();
 

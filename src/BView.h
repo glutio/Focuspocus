@@ -11,6 +11,7 @@ class BInputEvent;
 class BMouseInputEvent;
 class BFocusInputEvent;
 class BKeyboardInputEvent;
+class BFocusManager;
 
 class BGraphics;
 class BPanel;
@@ -42,16 +43,19 @@ struct BMargin {
   int16_t right;
   
   BMargin() : top(0), left(0), bottom(0), right(0) {}
+
+  operator ()(int16_t val) {
+    top = val;
+    left = val;
+    bottom = val;
+    right = val;
+  }
 };
 
 class BView {
-private:
-  int16_t _actualWidth;
-  int16_t _actualHeight;
-  BPanel* _parent;
-
 protected:
   bool _isDirty;
+  BPanel* _parent;
 
 public:
   int16_t x;
@@ -63,16 +67,19 @@ public:
   int16_t maxWidth;
   int16_t maxHeight;
   BMargin margin;
+  int16_t actualWidth;
+  int16_t actualHeight;
   const char* tag;
+  static bool showBoundingBox;
 
-private:
+protected:
   virtual BPanel* asPanel() {
     return nullptr;
   }
   virtual BControl* asControl() {
     return nullptr;
   }
-protected:
+
   void applyOffset(int16_t& x, int16_t& y, int8_t sign = 1);
   void applyOffset(int16_t& x, int16_t& y, int16_t& width, int16_t& height);
   void applyMargins(int16_t& x, int16_t& y, int8_t sign = 1);
@@ -85,40 +92,39 @@ public:
 
 public:
   BView();
+  
+  virtual void setParent();
+  virtual void measure();
   virtual void draw(BGraphics& g) = 0;
-  void redraw();
-
-  virtual bool hitTest(uint16_t ptX, uint16_t ptY);
-
+  virtual bool hitTest(int16_t ptX, int16_t ptY);
   virtual void handleEvent(BInputEvent& event);
 
-  int16_t actualWidth();
-  int16_t actualHeight();
   BPanel* parent();
+  BFocusManager& focusManager();
+
   void dirty();
   bool isDirty();
   void clearDirty();
 
-  friend class BFocusManager;
   friend class BPanel;
-  friend class BStackPanel;
+  friend class BFocusManager;
 };
 
 class BControl: public BView {
-private:
+protected:
   virtual BControl* asControl() {
     return this;
   }
-public:
-  uint16_t color;
   
 public:
   typedef EventDelegate<BControl, BFocusInputEvent&> FocusEvent;
-
   EventSource<FocusEvent> onFocus;
+
 public:
   BControl();
+
   virtual void handleEvent(BInputEvent& event);
+
   void focus();
   bool isFocused();
 };
@@ -130,14 +136,23 @@ public:
   BFontAware();
 };
 
-class BButton: public BControl, public BFontAware {
+class BColorAware {
+public:
+  uint16_t color;
+  uint16_t background;
+  BColorAware();
+};
+
+class BButton: public BControl, public BFontAware, public BColorAware {
 protected:
   bool _isDown;
   bool _capture;
+
 public:
   typedef EventDelegate<BButton, bool> ClickEvent;
   EventSource<ClickEvent> onClick;
   const char* text;
+
 protected:
   virtual void drawContent(BGraphics& g);
 
@@ -154,15 +169,45 @@ public:
   friend class BFocusManager;
 };
 
-class BPanel: public BView {
-private:
+class BPanel: public BView, public BColorAware {
+public:
+    class Iterator {
+    private:
+        BPanel& panel;
+        int index;
+    public:
+        Iterator(BPanel& panel, unsigned index);
+        bool operator!=(const Iterator& other) const;
+        BView& operator*();
+        Iterator& operator++();
+    };
+
+    class ReverseIterator {
+    private:
+        BPanel& panel;
+        int index;
+    public:
+        ReverseIterator(BPanel& panel, unsigned index);
+        bool operator!=(const ReverseIterator& other) const;
+        BView& operator*();
+        ReverseIterator& operator++();
+    };
+
+    Iterator begin();
+    Iterator end();
+    ReverseIterator rbegin();
+    ReverseIterator rend();
+
+protected:
   virtual BPanel* asPanel() {
     return this;
   }
 
 protected:
+  BFocusManager* _focusManager;
   BList<BView*> _children;
   bool _needsLayout;
+
 public:
   BMargin padding;
 
@@ -172,7 +217,7 @@ protected:
   int16_t applyMinMax(int16_t val, int16_t minimum, int16_t maximum);    
   int16_t indexOf(BView& view);
   void touchView(BView& view);
-
+  void setViewParent(BView& view);
 public:
   BPanel(BView* children[], unsigned count, unsigned capacity);
 
@@ -189,9 +234,12 @@ public:
   virtual void layout();
   void dirtyLayout();
   bool isDirtyLayout();
-
+  void clearDirtyLayout();
+  
   int16_t clientWidth();
   int16_t clientHeight();
+
+  BFocusManager& focusManager();
 
   friend class BFocusManager;
 };
