@@ -51,11 +51,11 @@ namespace ButtonViewStatic {
   BStackPanel root(rootContent);
 
   void onClick(BButton* sender, bool clicked) {
-    auto width = sender->width*4;
-    if (width != sender->width) {
-      sender->width=width;
-      sender->parent()->dirtyLayout();
-    }
+    // auto width = sender->width*4;
+    // if (width != sender->width) {
+    //   sender->width=width;
+    //   sender->parent()->dirtyLayout();
+    // }
   }
   void onChange(BScrollbar* sender, int16_t value) {
     Serial.println(value);
@@ -67,20 +67,23 @@ namespace ButtonViewStatic {
     root.tag = "root";
     root.padding(10);
     root.horizontalAlignment = BStackPanel::right;  
-    root.spacing = 10;
+    root.spacing = 1;
     root.margin(10);
-
+    
     main.orientation = BStackPanel::vertical;
     main.padding(10);
     main.spacing = 10;
+    main.tag = "main";
     vscrollbar.width = 15;
     vscrollbar.minimum = -10;
     vscrollbar.maximum = 100;
     vscrollbar.value = 10;
+    vscrollbar.step = 10;
     vscrollbar.orientation = BScrollbar::vertical;
     buttonOk.height = 30;
     buttonOk.width = 50;
     buttonOk.text = "OK";
+    buttonOk.tag = "ok";
     buttonOk.fontSize = 3;
     buttonOk.margin.left = 20;    
 

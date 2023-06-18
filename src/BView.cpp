@@ -7,6 +7,12 @@ bool BView::showBoundingBox(false);
 void BView::handleEvent(BInputEvent& event) {
   if (event.type & BInputEvent::evMouse) {
     onMouse(this, (BMouseInputEvent&)event);
+    auto pt = focusManager().mapScreenToView(*this,((BMouseInputEvent&)event).x, ((BMouseInputEvent&)event).y);
+    Serial.print(tag);
+    Serial.print(" ");
+    Serial.print(pt.x);
+    Serial.print(" ");
+    Serial.println(pt.y);
   }
 }
 

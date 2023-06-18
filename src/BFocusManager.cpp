@@ -92,7 +92,6 @@ BPanel* BFocusManager::root() {
 }
 
 void BFocusManager::touchTree(BView& view) {
-  Serial.print("touchtree");
   view.dirty();
   BPanel* panel = view.asPanel();
   if (panel) {
@@ -101,7 +100,6 @@ void BFocusManager::touchTree(BView& view) {
       touchTree(v);
     }
   }
-  Serial.println();
 }
 
 void BFocusManager::layoutRoot() {

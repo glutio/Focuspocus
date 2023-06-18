@@ -73,7 +73,6 @@ void BScrollbar::moveThumb(BMouseInputEvent& event) {
 }
 
 void BScrollbar::handleMouse(BMouseInputEvent& event) {
-        Serial.println(event.x);       
   switch(event.type) {
     case BInputEvent::evMouseDown: {
       focus();
@@ -90,16 +89,16 @@ void BScrollbar::handleMouse(BMouseInputEvent& event) {
           if (pt.x < _thumbPos) {
             kbdEvent.code = BKeyboard::kbLeft;
           }
-          if (pt.y > _thumbPos + _thumbSize) {
+          if (pt.x > _thumbPos + _thumbSize) {
             kbdEvent.code = BKeyboard::kbRight;
           }
         }
         else {
           if (pt.y < _thumbPos) {
-            kbdEvent.code = BKeyboard::kbLeft;
+            kbdEvent.code = BKeyboard::kbUp;
           }
           if (pt.y > _thumbPos + _thumbSize) {
-            kbdEvent.code = BKeyboard::kbRight;
+            kbdEvent.code = BKeyboard::kbDown;
           }
         }
         handleKeyboard(kbdEvent);
@@ -110,11 +109,11 @@ void BScrollbar::handleMouse(BMouseInputEvent& event) {
       focusManager().releaseMouse(*this);
     }
     case BInputEvent::evMouseMove: {      
-        if (focusManager().capturingView() == this) {
-          moveThumb(event);
-          _oldX = event.x;
-          _oldY = event.y;
-        }
+      if (focusManager().capturingView() == this) {
+        moveThumb(event);
+        _oldX = event.x;
+        _oldY = event.y;
+      }
     }
   }
 }
@@ -127,6 +126,7 @@ void BScrollbar::handleKeyboard(BKeyboardInputEvent& event) {
       {
         switch (event.code) {
           case BKeyboard::kbLeft: 
+        Serial.print(":");
             value = max(minimum, value - step);
             break;
           case BKeyboard::kbRight:
@@ -181,7 +181,6 @@ void BScrollbar::draw(BGraphics& g) {
     g.fillRect(_thumbPos, rt.y, _thumbSize, rt.height, c);
   } else {    
     g.fillRect(rt.x, _thumbPos, rt.width, _thumbSize, c);
-    Serial.println(_thumbSize);
   }
 }
 
