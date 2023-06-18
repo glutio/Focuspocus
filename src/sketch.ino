@@ -63,11 +63,11 @@ namespace ButtonViewStatic {
   }
 
   void Initialize() {
-    BView::showBoundingBox = true;
+    //BView::showBoundingBox = true;
     label.text = "hello";
     label.height = 0;
     // label.verticalAlignment = BTextLabel::bottom;
-    // label.horizontalAlignment = BTextLabel::right;
+    label.horizontalAlignment = BTextLabel::right;
     root.tag = "root";
     root.padding(10);
     root.horizontalAlignment = BStackPanel::right;  
@@ -139,8 +139,8 @@ void onChange(BDigitalPin* sender, bool state) {
     //kbd.sendKey(BKeyboard::kbLeft, !state);
     if (!state) fm.focusPrev();      
   } else if (sender->pin() == RIGHT_PIN) {
-    //if (!state) fm.focusNext();
-    kbd.sendKey(BKeyboard::kbRight, !state);
+    if (!state) fm.focusNext();
+    //kbd.sendKey(BKeyboard::kbRight, !state);
   } else if (sender->pin() == CLICK_PIN) {
     kbd.sendKey(BKeyboard::kbEnter, !state);
   }

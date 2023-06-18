@@ -152,35 +152,39 @@ void BScrollbar::handleKeyboard(BKeyboardInputEvent& event) {
 void BScrollbar::hideThumb(BGraphics& g) {
   BRect rt = clientRect();
   auto b = (isFocused()) ? focusManager().theme().focusBackground : background;  
+  auto radius = focusManager().theme().buttonRadius;
   if (orientation == horizontal) {
-    g.fillRect(_thumbPos, rt.y, _thumbSize, rt.height, b);
+    g.fillRoundRect(_thumbPos, rt.y, _thumbSize, rt.height, radius, b);
   } else {
-    g.fillRect(rt.x, _thumbPos, rt.width, _thumbSize, b);
+    g.fillRoundRect(rt.x, _thumbPos, rt.width, _thumbSize, radius, b);
   }
 }
 
 void BScrollbar::showThumb(BGraphics& g) {
   BRect rt = clientRect();
   auto c = (isFocused()) ? focusManager().theme().focusColor : color;
+  auto radius = focusManager().theme().buttonRadius;
   if (orientation == horizontal) {
-    g.fillRect(_thumbPos, rt.y, _thumbSize, rt.height, c);
+    g.fillRoundRect(_thumbPos, rt.y, _thumbSize, rt.height, radius, c);
   } else {
-    g.fillRect(rt.x, _thumbPos, rt.width, _thumbSize, c);
+    g.fillRoundRect(rt.x, _thumbPos, rt.width, _thumbSize, radius, c);
   }
 }
 
 
 void BScrollbar::draw(BGraphics& g) {
+  BView::draw(g);
   auto c = (isFocused()) ? focusManager().theme().focusColor : color;
   auto b = (isFocused()) ? focusManager().theme().focusBackground : background;
-  g.fillRect(0, 0, actualWidth, actualHeight, b);
-  g.drawRect(0, 0, actualWidth, actualHeight, c);
+  auto radius = focusManager().theme().buttonRadius;
+  g.fillRoundRect(0, 0, actualWidth, actualHeight, radius, b);
+  g.drawRoundRect(0, 0, actualWidth, actualHeight, radius, c);
 
   BRect rt = clientRect();
   if (orientation == horizontal) {
-    g.fillRect(_thumbPos, rt.y, _thumbSize, rt.height, c);
+    g.fillRoundRect(_thumbPos, rt.y, _thumbSize, rt.height, radius, c);
   } else {    
-    g.fillRect(rt.x, _thumbPos, rt.width, _thumbSize, c);
+    g.fillRoundRect(rt.x, _thumbPos, rt.width, _thumbSize, radius, c);
   }
 }
 

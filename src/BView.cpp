@@ -7,12 +7,12 @@ bool BView::showBoundingBox(false);
 void BView::handleEvent(BInputEvent& event) {
   if (event.type & BInputEvent::evMouse) {
     onMouse(this, (BMouseInputEvent&)event);
-    auto pt = focusManager().mapScreenToView(*this,((BMouseInputEvent&)event).x, ((BMouseInputEvent&)event).y);
-    Serial.print(tag);
-    Serial.print(" ");
-    Serial.print(pt.x);
-    Serial.print(" ");
-    Serial.println(pt.y);
+    // auto pt = focusManager().mapScreenToView(*this,((BMouseInputEvent&)event).x, ((BMouseInputEvent&)event).y);
+    // Serial.print(tag);
+    // Serial.print(" ");
+    // Serial.print(pt.x);
+    // Serial.print(" ");
+    // Serial.println(pt.y);
   }
 }
 
@@ -194,23 +194,24 @@ void BButton::handleMouse(BMouseInputEvent& event) {
 
 void BButton::draw(BGraphics& g) {
   BView::draw(g);
-  int16_t parentBackground = (parent()) ? parent()->background : 0;
+  auto parentBackground = parent()->background;
+  auto radius = focusManager().theme().buttonRadius;
 
   if (_isDown) {
-    g.drawRect(0, 0, actualWidth, actualHeight, parentBackground);
-    g.drawRect(1, 1, actualWidth-2, actualHeight-2, parentBackground);
-    g.fillRect(2, 2, actualWidth-4, actualHeight-4, focusManager().theme().focusBackground);
+    g.drawRoundRect(0, 0, actualWidth, actualHeight, radius, parentBackground);
+    g.drawRoundRect(1, 1, actualWidth - 2, actualHeight - 2, radius, parentBackground);
+    g.fillRoundRect(2, 2, actualWidth - 4, actualHeight - 4, radius, focusManager().theme().focusBackground);
   }
   else {
-    int16_t c = color;
-    int16_t b = background;
+    auto c = color;
+    auto b = background;
     if (isFocused()) {
       c = focusManager().theme().focusColor;
       b = focusManager().theme().focusBackground;
     } 
 
-    g.drawRect(0,0, actualWidth, actualHeight, c);
-    g.fillRect(1, 1, actualWidth-2, actualHeight-2, b);
+    g.drawRoundRect(0, 0, actualWidth, actualHeight, radius, c);
+    g.fillRoundRect(1, 1, actualWidth - 2, actualHeight - 2, radius, b);
   }
   drawContent(g);
 }

@@ -6,10 +6,18 @@ BGraphics::BGraphics(Adafruit_GFX& g) : x(0), y(0), width(g.width()), height(g.h
 
 void BGraphics::drawRect(int16_t x, int16_t y, int16_t width, int16_t height, int16_t color) {
   _g.drawRect(this->x + x, this->y + y, width, height, color);
-};
+}
 
 void BGraphics::fillRect(int16_t x, int16_t y, int16_t width, int16_t height, int16_t color) {
   _g.fillRect(this->x + x, this->y + y, width, height, color);
+}
+
+void BGraphics::drawRoundRect(int16_t x, int16_t y, int16_t width, int16_t height, int16_t radius, int16_t color) {
+  _g.drawRoundRect(this->x + x, this->y + y, width, height, radius, color);
+}
+
+void BGraphics::fillRoundRect(int16_t x, int16_t y, int16_t width, int16_t height, int16_t radius, int16_t color) {
+  _g.fillRoundRect(this->x + x, this->y + y, width, height, radius, color);
 }
 
 void BGraphics::drawText(const char* str, int16_t x, int16_t y, int8_t size, int16_t color) {
@@ -25,3 +33,4 @@ BRect BGraphics::getTextBounds(const char* str, int8_t size) {
   _g.getTextBounds(str, 0, 0, &rt.x, &rt.y, &rt.width, &rt.height);
   return rt;
 }
+

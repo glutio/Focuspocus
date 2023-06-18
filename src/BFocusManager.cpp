@@ -232,7 +232,7 @@ BControl* BFocusManager::focusPrevHelper(BPanel& panel, int16_t tabIndex) {
 
     BPanel* ctlPanel = (*i).asPanel();
     if (ctlPanel) {            
-      return focusNextHelper(*ctlPanel, ctlPanel->_children.Length() - 1);
+      return focusPrevHelper(*ctlPanel, ctlPanel->_children.Length() - 1);
     }
   }
   return nullptr;
@@ -421,18 +421,15 @@ void BFocusManager::loop() {
   BPanel* panel = root();
   if (panel) {
     if (_needsRootLayout) {
-      Serial.println("root layout");
       layoutRoot();
       _needsRootLayout = false;
     }
 
     if (_needsLayout) {
-      Serial.println("layout");
       layoutPass(*panel);
       _needsLayout = false;
     }
     if (_isDirty) {
-      Serial.println("draw");
       BGraphics g(_g);
       applyOffset(*panel, g.x, g.y, g.width, g.height);
       applyMargins(*panel, g.x, g.y, g.width, g.height);
