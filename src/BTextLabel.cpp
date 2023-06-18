@@ -6,6 +6,9 @@ BTextLabel::BTextLabel() : horizontalAlignment(left), verticalAlignment(top), te
 }
 
 void BTextLabel::measure(int16_t availableWidth, int16_t availableHeight) {
+  Serial.print(availableWidth);
+  Serial.print(" ");
+  Serial.println(availableHeight);
   if (!width || !height) {
     BGraphics g = focusManager().getGraphics();
     BRect rt = g.getTextBounds(text, fontSize);
@@ -19,6 +22,7 @@ void BTextLabel::measure(int16_t availableWidth, int16_t availableHeight) {
 }
 
 void BTextLabel::draw(BGraphics& g) {
+  BView::draw(g);
   BRect rt = g.getTextBounds(text, fontSize);
   int16_t x = 0;
   int16_t y = 0;
@@ -32,6 +36,6 @@ void BTextLabel::draw(BGraphics& g) {
   } else if (verticalAlignment == center) {
     y = (g.height - rt.height) / 2;
   }
-  g.fillRect(0, 0, g.width, g.height, background);
+  g.fillRect(1, 1, g.width - 2, g.height - 2, background);
   g.drawText(text, x, y, fontSize, fontColor);
 }

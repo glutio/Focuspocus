@@ -10,6 +10,7 @@ void BFocusManager::applyOffset(BView& view, int16_t& x, int16_t& y, int8_t sign
 void BFocusManager::applyOffset(BView& view, int16_t& x, int16_t& y, int16_t& width, int16_t& height) {
   x += view.x;
   y += view.y;
+
   width = view.actualWidth + view.margin.left + view.margin.right;
   height = view.actualHeight + view.margin.top + view.margin.bottom;
 }

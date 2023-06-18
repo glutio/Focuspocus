@@ -385,7 +385,7 @@ void BStackPanel::layoutVertical() {
 
   for(BView& view : *this) {
     touchView(view);
-    measure(clientWidth(), totalSize - fixedSize);
+    view.measure(clientWidth(), totalSize - fixedSize);
     if (viewHeight(view) < 0) {
       totalFactor += abs(viewHeight(view));
       view.actualHeight = -1;      
@@ -460,7 +460,7 @@ void BStackPanel::layoutHorizontal() {
 
   for(BView& view : *this) {
     touchView(view);
-    measure(totalSize - fixedSize, clientHeight());
+    view.measure(totalSize - fixedSize, clientHeight());
     if (viewWidth(view) < 0) {
       totalFactor += abs(viewWidth(view));
       view.actualWidth = -1; // mark for auto layout     

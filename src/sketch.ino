@@ -65,8 +65,9 @@ namespace ButtonViewStatic {
   void Initialize() {
     BView::showBoundingBox = true;
     label.text = "hello";
-    label.verticalAlignment = BTextLabel::bottom;
-    label.horizontalAlignment = BTextLabel::right;
+    label.height = 0;
+    // label.verticalAlignment = BTextLabel::bottom;
+    // label.horizontalAlignment = BTextLabel::right;
     root.tag = "root";
     root.padding(10);
     root.horizontalAlignment = BStackPanel::right;  
