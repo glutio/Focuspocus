@@ -7,6 +7,7 @@ struct BTheme {
   const int16_t focusColor = 0x0000;
   const int16_t focusBackground = 0xFF20;
   const int16_t boundingBoxColor = 0x00FF;
+  const int16_t scrollbarPadding = 1;
 };
 
 

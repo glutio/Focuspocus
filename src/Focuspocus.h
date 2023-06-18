@@ -6,5 +6,6 @@
 #include "BGraphics.h"
 #include "BMouse.h"
 #include "BHWButton.h"
+#include "BScrollbar.h"
 
 #endif

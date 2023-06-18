@@ -34,8 +34,8 @@ struct BInputEvent {
 };
 
 struct BMouseInputEvent: BInputEvent {
-  uint16_t x;
-  uint16_t y;
+  int16_t x;
+  int16_t y;
   bool buttonDown;
 };
 
@@ -138,7 +138,7 @@ public:
   void push(BPanel& panel);
   void pop();
   void popToTop(BPanel& panel);
-  
+
   void loop();
 
 

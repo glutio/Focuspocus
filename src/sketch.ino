@@ -42,8 +42,8 @@ namespace ButtonViewStatic {
 
   BButton buttonOk;
   BButton buttonCancel;
-  BButton buttonNone;
-  BView* rootContent[] = { &buttonOk, &buttonCancel, &confirm, &buttonNone };
+  BScrollbar scrollbar;
+  BView* rootContent[] = { &buttonOk, &buttonCancel, &confirm, &scrollbar };
   BStackPanel root(rootContent);
 
   void onClick(BButton* sender, bool clicked) {
@@ -87,7 +87,10 @@ namespace ButtonViewStatic {
     //button1.margin.right = 10;
     //button1.margin.top = 10;
     //button1.margin.bottom = 10;
-    
+    scrollbar.minimum = -1;
+    scrollbar.maximum = 1;
+    scrollbar.value = 0;
+    scrollbar.height = 15;
     // button2.x = 80;
     // button2.y = 0;
     // button2.width = 50;
@@ -97,7 +100,7 @@ namespace ButtonViewStatic {
     buttonCancel.text = "Cancel";
     // button2.margin.right = 10;
 
-    buttonNone.tag = "button3";
+ 
     confirm.spacing = 10;
     // confirm.padding.left = 10;
     // confirm.padding.right = 10;
@@ -113,7 +116,7 @@ namespace ButtonViewStatic {
     // buttonCancel.color = 0xAA00;
     //buttonCancel.maxWidth = 20;
     //buttonCancel.width=-2;
-    buttonNone.text = "It's all auto positioned!";
+    //buttonNone.text = "It's all auto positioned!";
 
     buttonOk.onClick += onClick;
    // button2.onClick += onClick;

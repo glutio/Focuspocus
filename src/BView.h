@@ -93,8 +93,9 @@ public:
 public:
   BView();
   
-  virtual void setParent();
+  virtual void parentChanged(BPanel* oldParent);
   virtual void measure();
+  virtual void layout();
   virtual void draw(BGraphics& g) = 0;
   virtual bool hitTest(int16_t ptX, int16_t ptY);
   virtual void handleEvent(BInputEvent& event);
@@ -252,7 +253,12 @@ private:
   int16_t marginHeight(BView& view) {
     return view.margin.top + view.margin.bottom;
   }
-
+  int16_t viewWidth(BView& view) {
+    return (view.width) ? view.width : view.actualWidth;
+  }
+  int16_t viewHeight(BView& view) {
+    return (view.height) ? view.height : view.actualHeight;
+  }
 public:
   enum Orientation {
     vertical,
