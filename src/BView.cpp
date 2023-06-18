@@ -67,7 +67,7 @@ BFocusManager& BView::focusManager() {
 void BView::parentChanged(BPanel* oldParent) {
 }
 
-void BView::measure() {
+void BView::measure(int16_t availableWidth, int16_t availableHeight) {
 }
 
 void BView::layout() {
@@ -335,7 +335,6 @@ BFocusManager& BPanel::focusManager() {
 
 void BPanel::touchView(BView& view) {
   setViewParent(view);
-  view.measure();
   view.dirty();
   BPanel* panel = view.asPanel();
   if (panel) {
@@ -355,6 +354,7 @@ void BPanel::setViewParent(BView& view) {
 void BPanel::layout() {
   for(BView& view: *this) {
     touchView(view);
+    measure(actualWidth, actualHeight);
     view.actualWidth = view.width;
     view.actualHeight = view.height;
     view.layout();
@@ -385,6 +385,7 @@ void BStackPanel::layoutVertical() {
 
   for(BView& view : *this) {
     touchView(view);
+    measure(clientWidth(), totalSize - fixedSize);
     if (viewHeight(view) < 0) {
       totalFactor += abs(viewHeight(view));
       view.actualHeight = -1;      
@@ -459,7 +460,7 @@ void BStackPanel::layoutHorizontal() {
 
   for(BView& view : *this) {
     touchView(view);
-
+    measure(totalSize - fixedSize, clientHeight());
     if (viewWidth(view) < 0) {
       totalFactor += abs(viewWidth(view));
       view.actualWidth = -1; // mark for auto layout     

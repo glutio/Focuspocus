@@ -7,5 +7,6 @@
 #include "BMouse.h"
 #include "BHWButton.h"
 #include "BScrollbar.h"
+#include "BTextLabel.h"
 
 #endif

@@ -43,7 +43,8 @@ namespace ButtonViewStatic {
   BButton buttonOk;
   BButton buttonCancel;
   BScrollbar scrollbar;
-  BView* mainContent[] = { &buttonOk, &buttonCancel, &confirm, &scrollbar };
+  BTextLabel label;
+  BView* mainContent[] = { &buttonOk, &buttonCancel, &confirm, &scrollbar, &label };
   BStackPanel main(mainContent);
 
   BScrollbar vscrollbar;
@@ -63,7 +64,9 @@ namespace ButtonViewStatic {
 
   void Initialize() {
     BView::showBoundingBox = true;
-    
+    label.text = "hello";
+    label.verticalAlignment = BTextLabel::bottom;
+    label.horizontalAlignment = BTextLabel::right;
     root.tag = "root";
     root.padding(10);
     root.horizontalAlignment = BStackPanel::right;  

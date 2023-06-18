@@ -364,6 +364,10 @@ BPoint BFocusManager::mapViewToScreen(BView& view, int16_t x, int16_t y) {
   return pt;
 }
 
+BGraphics BFocusManager::getGraphics() {
+  return _g;
+}
+
 BGraphics BFocusManager::getGraphics(BView& view) {
   BGraphics g(_g);
   g.width = view.actualWidth;

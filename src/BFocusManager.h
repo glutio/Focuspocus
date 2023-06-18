@@ -125,6 +125,7 @@ public:
   BPoint mapScreenToView(BView& view, int16_t x, int16_t y);
   BPoint mapViewToScreen(BView& view, int16_t x, int16_t y);
   BGraphics getGraphics(BView& view);
+  BGraphics getGraphics();
 
   void captureMouse(BView& view);
   void releaseMouse(BView& view);

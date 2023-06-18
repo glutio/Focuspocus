@@ -94,7 +94,7 @@ public:
   BView();
   
   virtual void parentChanged(BPanel* oldParent);
-  virtual void measure();
+  virtual void measure(int16_t availableWidth, int16_t availableHeight);
   virtual void layout();
   virtual void draw(BGraphics& g) = 0;
   virtual bool hitTest(int16_t ptX, int16_t ptY);
