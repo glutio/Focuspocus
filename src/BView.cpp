@@ -36,7 +36,9 @@ BPanel* BView::parent() {
 
 void BView::dirty() {
   _isDirty = true;
-  focusManager().dirty();
+  if (_parent) {
+    _parent->focusManager().dirty();
+  }
 }
 
 bool BView::isDirty() {
@@ -91,7 +93,6 @@ void BControl::handleEvent(BInputEvent& event) {
     switch(cmdEvent.command) {
       case BCommandInputEvent::cmFocus:
       case BCommandInputEvent::cmBlur: {
-        Serial.print("hi");
         dirty();
         BFocusInputEvent& cmd = (BFocusInputEvent&)event;
         onFocus(this, cmd);
@@ -309,7 +310,9 @@ int16_t BPanel::applyMinMax(int16_t val, int16_t minimum, int16_t maximum) {
 void BPanel::dirtyLayout() {
   dirty();
   _needsLayout = true;
-  focusManager().dirtyLayout();
+  if (_focusManager) {
+    _focusManager->dirtyLayout();
+  }
 }
 
 bool BPanel::isDirtyLayout() {

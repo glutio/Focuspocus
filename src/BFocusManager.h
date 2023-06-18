@@ -69,6 +69,7 @@ protected:
   BView* _capture;
   bool _isDirty;
   bool _needsLayout;
+  bool _needsRootLayout;
   BTheme* _theme;
 
 protected:
@@ -105,8 +106,7 @@ public:
         _stack.Remove(i);
       }
     }
-
-    layoutRoot();
+    _needsRootLayout = true;
   }
   
   BPanel* root();

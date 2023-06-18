@@ -16,22 +16,23 @@ public:
 protected:
   int16_t _oldX;
   int16_t _oldY;
-  int16_t _thumbX;
-  int16_t _thumbY;
+  int16_t _thumbPos;
   int16_t _thumbSize;
 
 public:
   int16_t minimum;
   int16_t maximum;
   int16_t value;
+  int16_t step;
   Orientation orientation;
 
 protected:
-  void redrawThumb(int16_t x, int16_t y);
-  void moveThumb(BMouseInputEvent& event);
+  void redrawThumb(int16_t pos);
+  void moveThumb(BMouseInputEvent& pos);
   bool thumbHitTest(BMouseInputEvent& event);
-  int16_t pad();
-  
+  BRect clientRect();
+  void hideThumb(BGraphics& g);
+  void showThumb(BGraphics& g);
   void handleMouse(BMouseInputEvent& event);
   void handleKeyboard(BKeyboardInputEvent& event);
 public:

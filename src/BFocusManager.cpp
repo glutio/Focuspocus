@@ -92,6 +92,7 @@ BPanel* BFocusManager::root() {
 }
 
 void BFocusManager::touchTree(BView& view) {
+  Serial.print("touchtree");
   view.dirty();
   BPanel* panel = view.asPanel();
   if (panel) {
@@ -100,6 +101,7 @@ void BFocusManager::touchTree(BView& view) {
       touchTree(v);
     }
   }
+  Serial.println();
 }
 
 void BFocusManager::layoutRoot() {
@@ -129,6 +131,10 @@ void BFocusManager::layoutRoot() {
 }
 
 void BFocusManager::handleEvent(BInputEvent& event) {  
+  if (_needsRootLayout) {
+    return;
+  }
+
   BView* view;
   if (event.type & BInputEvent::evMouse) {
     if (_capture) {
@@ -411,11 +417,19 @@ void BFocusManager::drawPass(BView& view, BGraphics& g) {
 void BFocusManager::loop() {
   BPanel* panel = root();
   if (panel) {
+    if (_needsRootLayout) {
+      Serial.println("root layout");
+      layoutRoot();
+      _needsRootLayout = false;
+    }
+
     if (_needsLayout) {
+      Serial.println("layout");
       layoutPass(*panel);
       _needsLayout = false;
     }
     if (_isDirty) {
+      Serial.println("draw");
       BGraphics g(_g);
       applyOffset(*panel, g.x, g.y, g.width, g.height);
       applyMargins(*panel, g.x, g.y, g.width, g.height);

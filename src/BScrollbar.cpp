@@ -3,11 +3,7 @@
 #include "BScrollbar.h"
 
 BScrollbar::BScrollbar() 
-  : minimum(0), maximum(0), value(0), _thumbX(0), _thumbY(0), _thumbSize(0), orientation(horizontal) {
-}
-
-int16_t BScrollbar::pad() {
-  return focusManager().theme().scrollbarPadding;
+  : minimum(0), maximum(0), value(0), _thumbPos(0), _thumbSize(0), orientation(horizontal), step(1) {
 }
 
 void BScrollbar::handleEvent(BInputEvent& event) {
@@ -21,38 +17,63 @@ void BScrollbar::handleEvent(BInputEvent& event) {
 
 bool BScrollbar::thumbHitTest(BMouseInputEvent& event) {
   BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
+  BRect rt = clientRect();
   if (orientation == horizontal) {
-    return pt.x >= _thumbX && pt.x <= _thumbX + _thumbSize && pt.y >= _thumbY && pt.y <= _thumbY + actualHeight - pad() * 2;
+    return pt.x >= _thumbPos && pt.x <= _thumbPos + _thumbSize && pt.y >= rt.y && pt.y <= rt.y + rt.height;
+  } else {
+    return pt.y >= _thumbPos && pt.y <= _thumbPos + _thumbSize && pt.x >= rt.x && pt.x <= rt.x + rt.width;
   }
+}
+
+BRect BScrollbar::clientRect() {
+  BRect rt;
+  auto border = 1;
+  auto padding = 1;
+  rt.x = margin.left + padding + border;
+  rt.y = margin.top + padding + border;
+  rt.width = actualWidth - (padding + border) * 2; 
+  rt.height = actualHeight - (padding + border) * 2;
+  return rt;
 }
 
 void BScrollbar::moveThumb(BMouseInputEvent& event) {
   int val;
-  int16_t x = _thumbX;
-  int16_t y = _thumbY;
+  int16_t pos;
+  auto rt = clientRect();
   if (orientation == horizontal) {
-    auto scrollArea = actualWidth - _thumbSize - pad() * 2 - 2;
-    auto minX = margin.left + 1 + pad();
-    auto maxX = minX + scrollArea;
-    x = min(maxX, max(_thumbX + (event.x - _oldX), minX));
-    float normalizedThumbPos = x * 1.0 / scrollArea;
+    auto scrollArea = rt.width - _thumbSize;
+    pos = min(rt.x + scrollArea, max(_thumbPos + (event.x - _oldX), rt.x));
+    float normalizedThumbPos = pos * 1.0 / scrollArea;
     val = (normalizedThumbPos * (maximum - minimum)) + minimum;
-    if (x == minX) {
+    if (pos == rt.x) {
       val = minimum;
-    } else if (x == maxX) {
+    } else if (x == rt.x + scrollArea) {
       val = maximum;
     }
   } else {
+    auto scrollArea = rt.height - _thumbSize;
+    pos = min(rt.y + scrollArea, max(_thumbPos + (event.y - _oldY), rt.y));
+    float normalizedThumbPos = pos * 1.0 / scrollArea;
+    val = (normalizedThumbPos * (maximum - minimum)) + minimum;
+    if (pos == rt.y) {
+      val = minimum;
+    } else if (x == rt.y + scrollArea) {
+      val = maximum;
+    }
   }
-  Serial.println(val);
-  redrawThumb(x, y);
-  value = val;
-  _thumbX = x;
-  _thumbY = y;
-  onChange(this, value);
+
+  BGraphics g = focusManager().getGraphics(*this);
+  hideThumb(g);
+  _thumbPos = pos;
+  showThumb(g);
+  if (value != val) {
+    value = val;
+    onChange(this, value);
+  }
 }
 
 void BScrollbar::handleMouse(BMouseInputEvent& event) {
+        Serial.println(event.x);       
   switch(event.type) {
     case BInputEvent::evMouseDown: {
       focus();
@@ -60,6 +81,28 @@ void BScrollbar::handleMouse(BMouseInputEvent& event) {
         focusManager().captureMouse(*this);
         _oldX = event.x;
         _oldY = event.y;
+      }
+      else { 
+        auto pt = focusManager().mapScreenToView(*this, event.x, event.y);
+        BKeyboardInputEvent kbdEvent;
+        kbdEvent.type = BInputEvent::evKeyDown;
+        if (orientation == horizontal) {
+          if (pt.x < _thumbPos) {
+            kbdEvent.code = BKeyboard::kbLeft;
+          }
+          if (pt.y > _thumbPos + _thumbSize) {
+            kbdEvent.code = BKeyboard::kbRight;
+          }
+        }
+        else {
+          if (pt.y < _thumbPos) {
+            kbdEvent.code = BKeyboard::kbLeft;
+          }
+          if (pt.y > _thumbPos + _thumbSize) {
+            kbdEvent.code = BKeyboard::kbRight;
+          }
+        }
+        handleKeyboard(kbdEvent);
       }
       break;
     }
@@ -69,41 +112,98 @@ void BScrollbar::handleMouse(BMouseInputEvent& event) {
     case BInputEvent::evMouseMove: {      
         if (focusManager().capturingView() == this) {
           moveThumb(event);
-        _oldX = event.x;
-        _oldY = event.y;
+          _oldX = event.x;
+          _oldY = event.y;
         }
     }
   }
 }
 
 void BScrollbar::handleKeyboard(BKeyboardInputEvent& event) {
+  switch (event.type) {
+    case BInputEvent::evKeyDown: {
+      if ((orientation == horizontal && (event.code == BKeyboard::kbLeft || event.code == BKeyboard::kbRight)) ||
+          (orientation == vertical   && (event.code == BKeyboard::kbUp   || event.code == BKeyboard::kbDown))) 
+      {
+        switch (event.code) {
+          case BKeyboard::kbLeft: 
+            value = max(minimum, value - step);
+            break;
+          case BKeyboard::kbRight:
+              value = min(maximum, value + step);
+            break;
+          case BKeyboard::kbUp: 
+            value = max(minimum, value - step);
+            break;
+          case BKeyboard::kbDown:
+              value = min(maximum, value + step);
+            break;
+        }
+        BGraphics g = focusManager().getGraphics(*this);
+        hideThumb(g);
+        layout();
+        showThumb(g);
+      }
+    }
+    break;
+  }
 }
 
-void BScrollbar::redrawThumb(int16_t x, int16_t y) {
-  BGraphics g = focusManager().getGraphics(*this);
-  auto c = (isFocused()) ? focusManager().theme().focusColor : color;
+void BScrollbar::hideThumb(BGraphics& g) {
+  BRect rt = clientRect();
   auto b = (isFocused()) ? focusManager().theme().focusBackground : background;  
-  g.fillRect(_thumbX, _thumbY, _thumbSize, actualHeight - pad() * 2 - 2, b);
-  g.fillRect(x, y, _thumbSize, actualHeight - pad() * 2 - 2, c);
+  if (orientation == horizontal) {
+    g.fillRect(_thumbPos, rt.y, _thumbSize, rt.height, b);
+  } else {
+    g.fillRect(rt.x, _thumbPos, rt.width, _thumbSize, b);
+  }
 }
+
+void BScrollbar::showThumb(BGraphics& g) {
+  BRect rt = clientRect();
+  auto c = (isFocused()) ? focusManager().theme().focusColor : color;
+  if (orientation == horizontal) {
+    g.fillRect(_thumbPos, rt.y, _thumbSize, rt.height, c);
+  } else {
+    g.fillRect(rt.x, _thumbPos, rt.width, _thumbSize, c);
+  }
+}
+
 
 void BScrollbar::draw(BGraphics& g) {
   auto c = (isFocused()) ? focusManager().theme().focusColor : color;
   auto b = (isFocused()) ? focusManager().theme().focusBackground : background;
   g.fillRect(0, 0, actualWidth, actualHeight, b);
   g.drawRect(0, 0, actualWidth, actualHeight, c);
-  g.fillRect(_thumbX, _thumbY, _thumbSize, actualHeight - pad() * 2 - 2, c);
+
+  BRect rt = clientRect();
+  if (orientation == horizontal) {
+    g.fillRect(_thumbPos, rt.y, _thumbSize, rt.height, c);
+  } else {    
+    g.fillRect(rt.x, _thumbPos, rt.width, _thumbSize, c);
+    Serial.println(_thumbSize);
+  }
 }
 
 void BScrollbar::layout() {
    if (maximum - minimum != 0) {
-    if (orientation == horizontal) {
-      auto range = abs(maximum - minimum);
-      auto scrollWidth = actualWidth - pad() * 2 - 2;
-      _thumbSize = min(actualWidth, max(25, 1.0 / range * scrollWidth));
-      _thumbX = margin.left + 1 + pad() + (abs((uint32_t)value - minimum) * (scrollWidth - _thumbSize)) / range;
-      _thumbY = margin.top + 1 + pad();
-      Serial.println(_thumbX);
+    auto range = abs(maximum - minimum);
+    auto rt = clientRect();
+    auto minThumb = focusManager().theme().scrollbarMinThumb;
+    int16_t scrollArea;
+    if (orientation == horizontal) {    
+      _thumbSize = min(rt.width, max(minThumb, step * 1.0 / range * rt.width));
+      scrollArea = rt.width - _thumbSize;
+      _thumbPos = rt.x;     
+    } else {
+      _thumbSize = min(rt.height, max(minThumb, step * 1.0 / range * rt.height));
+      scrollArea = rt.height - _thumbSize;
+      _thumbPos = rt.y;
     }
+    
+    _thumbPos += abs((int32_t)value - minimum) * scrollArea / range;
+  } else {
+    _thumbPos = 0;
+    _thumbSize = 0;
   }
 }

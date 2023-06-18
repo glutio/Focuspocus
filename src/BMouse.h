@@ -23,6 +23,8 @@ public:
     kbEnter = 0x0028,
     kbRight = 0x004f,
     kbLeft = 0x0050,
+    kbDown = 0x0051,
+    kbUp = 0x0052,
   };
 
 public:

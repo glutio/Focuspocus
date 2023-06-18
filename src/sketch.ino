@@ -43,7 +43,11 @@ namespace ButtonViewStatic {
   BButton buttonOk;
   BButton buttonCancel;
   BScrollbar scrollbar;
-  BView* rootContent[] = { &buttonOk, &buttonCancel, &confirm, &scrollbar };
+  BView* mainContent[] = { &buttonOk, &buttonCancel, &confirm, &scrollbar };
+  BStackPanel main(mainContent);
+
+  BScrollbar vscrollbar;
+  BView* rootContent[] = { &main, &vscrollbar };
   BStackPanel root(rootContent);
 
   void onClick(BButton* sender, bool clicked) {
@@ -53,73 +57,48 @@ namespace ButtonViewStatic {
       sender->parent()->dirtyLayout();
     }
   }
+  void onChange(BScrollbar* sender, int16_t value) {
+    Serial.println(value);
+  }
 
   void Initialize() {
     BView::showBoundingBox = true;
-    root.tag = "Panel";
+    
+    root.tag = "root";
     root.padding(10);
-    // root.padding.top = 10;
-    // root.padding.left = 10;
-    // root.padding.bottom = 10;
-    // root.padding.right = 10;
-    // root.spacing = 10;
-    // root.margin.top = 10;
-    // root.margin.bottom = 10;
-    // root.margin.left = 50;
-    // root.margin.right = 10;
-    root.orientation = BStackPanel::vertical;  
     root.horizontalAlignment = BStackPanel::right;  
     root.spacing = 10;
-    // root.verticalAlignment = BStackPanel::center;  
-  //   button1.x = 0;
-  //   button1.y = 0;
-  //  button1.width = 50;
-  //   button1.maxWidth = 105;
+    root.margin(10);
+
+    main.orientation = BStackPanel::vertical;
+    main.padding(10);
+    main.spacing = 10;
+    vscrollbar.width = 15;
+    vscrollbar.minimum = -10;
+    vscrollbar.maximum = 100;
+    vscrollbar.value = 10;
+    vscrollbar.orientation = BScrollbar::vertical;
     buttonOk.height = 30;
     buttonOk.width = 50;
-    // button1.tag = "Button1";
-    // button1.fontColor = 0x8020;
     buttonOk.text = "OK";
     buttonOk.fontSize = 3;
     buttonOk.margin.left = 20;    
-    //button2.minHeight = 100;
-    //button2.margin.left=50;
-    //button1.margin.right = 10;
-    //button1.margin.top = 10;
-    //button1.margin.bottom = 10;
-    scrollbar.minimum = -1;
-    scrollbar.maximum = 1;
+
+    scrollbar.minimum = -10;
+    scrollbar.maximum = 10;
     scrollbar.value = 0;
     scrollbar.height = 15;
-    // button2.x = 80;
-    // button2.y = 0;
-    // button2.width = 50;
-    // button2.height = 25;
-    // buttonCancel.color = 0xFFFF;
-    // buttonCancel.tag = "Button2";
-    buttonCancel.text = "Cancel";
-    // button2.margin.right = 10;
 
+    buttonCancel.text = "Cancel";
  
     confirm.spacing = 10;
-    // confirm.padding.left = 10;
-    // confirm.padding.right = 10;
-    // confirm.padding.top = 10;
-    // confirm.padding.bottom = 10;
     confirm.padding(10);
     confirm.tag = "Confirm";
     buttonYes.text = "Yes";
-    // button.color = 0xFFFF;
-    // buttonOk.tag = "Yes";
     buttonNo.text = "No";
-    // buttonCancel.tag="No";
-    // buttonCancel.color = 0xAA00;
-    //buttonCancel.maxWidth = 20;
-    //buttonCancel.width=-2;
-    //buttonNone.text = "It's all auto positioned!";
 
     buttonOk.onClick += onClick;
-   // button2.onClick += onClick;
+    scrollbar.onChange += onChange;
   }  
 
 }
@@ -150,9 +129,11 @@ BDigitalPin btnRight(RIGHT_PIN, INPUT_PULLUP, 40);
 
 void onChange(BDigitalPin* sender, bool state) {
   if (sender->pin() == LEFT_PIN) {
+    //kbd.sendKey(BKeyboard::kbLeft, !state);
     if (!state) fm.focusPrev();      
   } else if (sender->pin() == RIGHT_PIN) {
-    if (!state) fm.focusNext();
+    //if (!state) fm.focusNext();
+    kbd.sendKey(BKeyboard::kbRight, !state);
   } else if (sender->pin() == CLICK_PIN) {
     kbd.sendKey(BKeyboard::kbEnter, !state);
   }

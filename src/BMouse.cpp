@@ -11,8 +11,8 @@ void BMouse::update(int16_t x, int16_t y, bool buttonDown) {
   event.x = x; 
   event.y = y;
   event.buttonDown = buttonDown;
-
   if (_buttonDown != buttonDown) {
+    Serial.print("hi");
     _buttonDown = buttonDown;
     event.type = (buttonDown) ? BInputEvent::evMouseDown : BInputEvent::evMouseUp;    
     _focusManager.handleEvent(event);
