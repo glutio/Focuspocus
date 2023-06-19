@@ -83,6 +83,7 @@ namespace ButtonViewStatic {
     vscrollbar.maximum = 100;
     vscrollbar.value = 10;
     vscrollbar.step = 10;
+    vscrollbar.tag="vscrollbar";
     vscrollbar.orientation = BScrollbar::vertical;
     buttonOk.height = 30;
     buttonOk.width = 50;
@@ -95,14 +96,18 @@ namespace ButtonViewStatic {
     scrollbar.maximum = 10;
     scrollbar.value = 0;
     scrollbar.height = 15;
+    scrollbar.tag="scrollbar";
 
     buttonCancel.text = "Cancel";
- 
+    buttonCancel.tag = "cancel";
     confirm.spacing = 10;
     confirm.padding(10);
     confirm.tag = "Confirm";
+    confirm.tag = "confirm";
     buttonYes.text = "Yes";
+    buttonYes.tag="yes";
     buttonNo.text = "No";
+    buttonNo.tag = "no";
 
     buttonOk.onClick += onClick;
     scrollbar.onChange += onChange;

@@ -40,7 +40,7 @@ void BFocusManager::applyPadding(BPanel& panel, int16_t& x, int16_t& y, int16_t&
 }
 
 bool BFocusManager::findViewHelper(BView& view, int16_t x, int16_t y, BView*& target) {  
-  if (view.hitTest(x, y)) {
+  if (view.hitTest(x - view.x, y - view.y)) {
     target = &view;
     BPanel* panel = view.asPanel();
     if (panel) {
@@ -382,6 +382,7 @@ BView* BFocusManager::findView(BMouseInputEvent& event) {
   if (root()) {
     findViewHelper(*root(), event.x, event.y, target);
   }
+  if (target) Serial.println(target->tag);
   return target;
 }
 

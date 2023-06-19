@@ -31,8 +31,8 @@ BRect BView::boundingBox() {
 }
 
 bool BView::hitTest(int16_t ptX, int16_t ptY) {
-  auto hit = ptX >= x + margin.left && ptX <= x + margin.left + actualWidth &&
-             ptY >= y + margin.top && ptY <= y + margin.top + actualHeight;
+  auto hit = ptX >= margin.left && ptX <= margin.left + actualWidth &&
+             ptY >= margin.top && ptY <= margin.top + actualHeight;
   return hit;
 }
 
@@ -114,7 +114,7 @@ BFontAware::BFontAware() : fontSize(1), fontColor(0xFFFF) {
 BColorAware::BColorAware() : color(0xFFFF), background(0) {
 }
 
-BButton::BButton() : _isDown(false), _capture(false) {
+BButton::BButton() : _isDown(false) {
 }
 
 void BButton::handleEvent(BInputEvent& event) {
@@ -157,6 +157,7 @@ void BButton::handleMouse(BMouseInputEvent& event) {
     {
       focus();
       if (!_isDown) {
+        Serial.println("down");
         _isDown = true;        
         dirty();
         focusManager().captureMouse(*this);        
@@ -167,13 +168,13 @@ void BButton::handleMouse(BMouseInputEvent& event) {
     {
       focusManager().releaseMouse(*this);
       auto x = event.x; auto y = event.y;
-      BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
       if(_isDown)
       {
         _isDown = false;
         dirty();
       }
-      bool isDown = hitTest(pt.x + x, pt.y + y);
+      BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
+      bool isDown = hitTest(pt.x, pt.y);
       onClick(this, isDown);
       break;
     }
@@ -181,8 +182,12 @@ void BButton::handleMouse(BMouseInputEvent& event) {
     {
       if (event.buttonDown && focusManager().capturingView() == this) {
         BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
-        auto isDown = hitTest(pt.x + x, pt.y + y);
+        auto isDown = hitTest(pt.x, pt.y);
+        Serial.println(pt.x);
+        Serial.println(pt.y);
         if (isDown != _isDown) {
+          Serial.print("move ");
+          Serial.println(isDown);
           _isDown = isDown;
           dirty();
         }

@@ -147,7 +147,6 @@ public:
 class BButton: public BControl, public BFontAware, public BColorAware {
 protected:
   bool _isDown;
-  bool _capture;
 
 public:
   typedef EventDelegate<BButton, bool> ClickEvent;
