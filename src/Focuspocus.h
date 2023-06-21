@@ -9,5 +9,6 @@
 #include "BScrollbar.h"
 #include "BTextLabel.h"
 #include "BBitmapButton.h"
+#include "BCheckBox.h"
 
 #endif

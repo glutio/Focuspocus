@@ -36,6 +36,9 @@ BGraphics _g(tft);
 BTheme theme;
 
 namespace ButtonViewStatic {
+ BRadioButton radio1;
+ BRadioButton radio2;
+//  X x;
   BBitmapButton bitmapButton;
   BButton buttonYes;
   BButton buttonNo;
@@ -45,7 +48,7 @@ namespace ButtonViewStatic {
   BButton buttonCancel;
   BScrollbar scrollbar;
   BTextLabel label;
-  BView* mainContent[] = { &buttonOk, &bitmapButton, &buttonCancel, &confirm, &scrollbar, &label };
+  BView* mainContent[] = { &buttonOk, &bitmapButton, &radio1, &radio2, &buttonCancel, &confirm, &scrollbar, &label };
   BStackPanel main(mainContent);
 
   BScrollbar vscrollbar;
@@ -64,7 +67,8 @@ namespace ButtonViewStatic {
   }
 
   void Initialize() {
-    //BView::showBoundingBox = true;
+    BView::showBoundingBox = true;
+    //x.background = 0xFFFF;
     label.text = "hello";
     label.height = 0;
     // label.verticalAlignment = BTextLabel::bottom;
@@ -73,12 +77,18 @@ namespace ButtonViewStatic {
     bitmapButton.height = BUTTON_H;
     bitmapButton.bitmap = buttonPixMap;
     bitmapButton.mask = buttonAlphaMask;
+    bitmapButton.tag = "bitmap";
+    //x.tag = "x";
     root.tag = "root";
     root.padding(10);
     root.horizontalAlignment = BStackPanel::right;  
     root.spacing = 10;
    // root.margin(10);
     root.background = 0xf736;
+    radio1.text = "radio1";
+    radio2.text = "radio2";
+    radio1.group = "g";
+    radio2.group = "g";
     main.orientation = BStackPanel::vertical;
     main.padding(10);
     main.spacing = 10;
@@ -106,7 +116,11 @@ namespace ButtonViewStatic {
     scrollbar.value = 0;
     scrollbar.height = 15;
     scrollbar.tag="scrollbar";
-
+    //checkBox.alignment = BCheckBox::right;
+    // checkBox.padding(2);
+    // checkBox.spacing = 5;
+    // checkBox.height = 25;
+    // checkBox.width=-1;
     buttonCancel.text = "Cancel";
     buttonCancel.tag = "cancel";
     confirm.spacing = 10;

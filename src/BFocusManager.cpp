@@ -152,6 +152,24 @@ void BFocusManager::handleEvent(BInputEvent& event) {
   }
 }
 
+void BFocusManager::broadcastCommandHelper(BView& view, BCommandInputEvent& event) {
+  view.handleEvent(event);
+
+  BPanel* panel = view.asPanel();
+  if (panel) {
+    for(BView& v : *panel) {
+      broadcastCommandHelper(v, event);
+    }
+  }
+}
+
+void BFocusManager::broadcastCommand(BCommandInputEvent& event) {
+  if (root()) {
+    broadcastCommandHelper(*root(), event);
+  }
+}
+
+
 BTheme& BFocusManager::theme() {
   return *_theme;
 }
@@ -413,13 +431,14 @@ void BFocusManager::loop() {
   BPanel* panel = root();
   if (panel) {
     if (_needsRootLayout) {
-      layoutRoot();
       _needsRootLayout = false;
+      layoutRoot();
     }
-
     if (_needsLayout) {
-      layoutPass(*panel);
-      _needsLayout = false;
+      do {
+        _needsLayout = false;
+        layoutPass(*panel);
+      } while (_needsLayout);
     }
     if (_isDirty) {
       BGraphics g(_g);

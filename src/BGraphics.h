@@ -25,7 +25,8 @@ public:
   virtual BRect getTextBounds(const char* str, int8_t size);
   virtual void drawContour(int16_t x, int16_t y, uint8_t mask[], int16_t width, int16_t height, int16_t color);
   virtual void drawArc(int centerX, int centerY, int radius, int startAngle, int endAngle, uint16_t color);
-  
+  virtual void drawCircle(int centerX, int centerY, int radius, uint16_t color);
+  virtual void fillCircle(int centerX, int centerY, int radius, uint16_t color);
   friend class BPanel;
 };
 

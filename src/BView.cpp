@@ -266,7 +266,13 @@ BPanel::ReverseIterator& BPanel::ReverseIterator::operator++() {
 }
 
 BPanel::Iterator BPanel::begin() {
-    return Iterator(*this, 0);
+    if (!_children.Length()) {
+      return end();
+    }
+
+    auto i = Iterator(*this, -1);
+    i++;
+    return i;
 }
 
 BPanel::Iterator BPanel::end() {
@@ -274,7 +280,13 @@ BPanel::Iterator BPanel::end() {
 }
 
 BPanel::ReverseIterator BPanel::rbegin() {
-    return ReverseIterator(*this, _children.Length() - 1);
+    if (!_children.Length()) {
+      return rend();
+    }
+    
+    auto i = ReverseIterator(*this, _children.Length() - 1);
+    i++;
+    return i;
 }
 
 BPanel::ReverseIterator BPanel::rend() {

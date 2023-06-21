@@ -13,6 +13,10 @@ class BPanel;
 
 using namespace Buratino;
 
+class BMouseInputEvent;
+class BKeyboardInputEvent;
+class BCommandInputEvent;
+
 struct BInputEvent {
   enum EventType {
     evNothing = 0x0000,
@@ -31,6 +35,29 @@ struct BInputEvent {
   };
 
   EventType type;
+
+  bool isMouse() {
+    return type & evMouse;
+  }
+  bool isKeyboard() {
+    return type & evKeyboard;
+  }
+  bool isCommand() {
+    return type == evCommand;
+  }
+
+  BMouseInputEvent& asMouse() {
+    return (BMouseInputEvent&)*this;
+  }
+
+  BKeyboardInputEvent& asKeyboard() {
+    return (BKeyboardInputEvent&)*this;
+  }
+
+  BCommandInputEvent& asCommand() {
+    return (BCommandInputEvent&)*this;
+  }
+
 };
 
 struct BMouseInputEvent: BInputEvent {
@@ -45,8 +72,9 @@ struct BKeyboardInputEvent: BInputEvent {
 
 struct BCommandInputEvent: BInputEvent {
   enum CommandType {
-    cmFocus = 0x0001,
-    cmBlur = 0x0002,
+    cmFocus,
+    cmBlur,
+    cmRadioGroup
   };
 
   uint16_t command;
@@ -97,6 +125,7 @@ protected:
 
   void touchTree(BView& view);
 
+  void broadcastCommandHelper(BView& view, BCommandInputEvent& event);
 public:
   template<size_t N>
   BFocusManager(BGraphics& g, BView* (&stack)[N], BTheme& theme) 
@@ -113,7 +142,8 @@ public:
   BTheme& theme();
   
   void handleEvent(BInputEvent& event);
-
+  void broadcastCommand(BCommandInputEvent& event);
+  
   BView* focus(BView& view);
   BView* focusedControl();
   BView* focusFirst();
@@ -141,7 +171,6 @@ public:
   void popToTop(BPanel& panel);
 
   void loop();
-
 
   friend void focuspocus();
 };

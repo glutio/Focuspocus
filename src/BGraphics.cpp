@@ -123,3 +123,11 @@ void BGraphics::drawContour(int16_t x, int16_t y, uint8_t mask[], int16_t width,
   }
   _g.endWrite();
 }
+
+void BGraphics::drawCircle(int centerX, int centerY, int radius, uint16_t color) {
+  _g.drawCircle(this->x + centerX, this->y + centerY, radius, color);
+}
+
+void BGraphics::fillCircle(int centerX, int centerY, int radius, uint16_t color) {
+  _g.fillCircle(this->x + centerX, this->y + centerY, radius, color);
+}
