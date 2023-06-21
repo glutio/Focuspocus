@@ -19,6 +19,7 @@
 #include "Adafruit_ILI9341.h"
 #include <Adafruit_FT6206.h>
 #include "Focuspocus.h"
+#include "Bitmaps.h"
 
 // For the Adafruit shield, these are the default.
 #define TFT_DC 9
@@ -35,16 +36,16 @@ BGraphics _g(tft);
 BTheme theme;
 
 namespace ButtonViewStatic {
+  BBitmapButton bitmapButton;
   BButton buttonYes;
   BButton buttonNo;
   BView* confirmContent[] = { &buttonYes, &buttonNo }; 
   BStackPanel confirm(confirmContent);
-
   BButton buttonOk;
   BButton buttonCancel;
   BScrollbar scrollbar;
   BTextLabel label;
-  BView* mainContent[] = { &buttonOk, &buttonCancel, &confirm, &scrollbar, &label };
+  BView* mainContent[] = { &buttonOk, &bitmapButton, &buttonCancel, &confirm, &scrollbar, &label };
   BStackPanel main(mainContent);
 
   BScrollbar vscrollbar;
@@ -68,16 +69,21 @@ namespace ButtonViewStatic {
     label.height = 0;
     // label.verticalAlignment = BTextLabel::bottom;
     label.horizontalAlignment = BTextLabel::right;
+    bitmapButton.width = BUTTON_W;
+    bitmapButton.height = BUTTON_H;
+    bitmapButton.bitmap = buttonPixMap;
+    bitmapButton.mask = buttonAlphaMask;
     root.tag = "root";
     root.padding(10);
     root.horizontalAlignment = BStackPanel::right;  
-    root.spacing = 1;
-    root.margin(10);
-    
+    root.spacing = 10;
+   // root.margin(10);
+    root.background = 0xf736;
     main.orientation = BStackPanel::vertical;
     main.padding(10);
     main.spacing = 10;
     main.tag = "main";
+    main.background = 0x7ddd;
     vscrollbar.width = 15;
     vscrollbar.minimum = -10;
     vscrollbar.maximum = 100;
@@ -89,9 +95,12 @@ namespace ButtonViewStatic {
     buttonOk.width = 50;
     buttonOk.text = "OK";
     buttonOk.tag = "ok";
-    buttonOk.fontSize = 3;
-    buttonOk.margin.left = 20;    
-
+    buttonOk.fontSize = 2;
+    buttonOk.fontColor = 0x39a6;
+    buttonOk.background = 0xbdf7;
+    buttonOk.color = 0;
+    label.width = 0;
+    bitmapButton.text="Bitmap";
     scrollbar.minimum = -10;
     scrollbar.maximum = 10;
     scrollbar.value = 0;
@@ -104,6 +113,8 @@ namespace ButtonViewStatic {
     confirm.padding(10);
     confirm.tag = "Confirm";
     confirm.tag = "confirm";
+    confirm.focusable = true;
+
     buttonYes.text = "Yes";
     buttonYes.tag="yes";
     buttonNo.text = "No";

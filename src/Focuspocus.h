@@ -8,5 +8,6 @@
 #include "BHWButton.h"
 #include "BScrollbar.h"
 #include "BTextLabel.h"
+#include "BBitmapButton.h"
 
 #endif

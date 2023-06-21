@@ -126,7 +126,6 @@ void BScrollbar::handleKeyboard(BKeyboardInputEvent& event) {
       {
         switch (event.code) {
           case BKeyboard::kbLeft: 
-        Serial.print(":");
             value = max(minimum, value - step);
             break;
           case BKeyboard::kbRight:

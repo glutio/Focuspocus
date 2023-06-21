@@ -8,7 +8,7 @@
 
 class BView;
 class BPoint;
-class BControl;
+class BView;
 class BPanel;
 
 using namespace Buratino;
@@ -57,15 +57,15 @@ struct BCommandInputEvent: BInputEvent {
 };
 
 struct BFocusInputEvent: BCommandInputEvent {
-  BControl* blurred;
-  BControl* focused;
+  BView* blurred;
+  BView* focused;
 };
 
 class BFocusManager {
 protected:
   BList<BPanel*> _stack;
   BGraphics& _g;
-  BControl* _focused;
+  BView* _focused;
   BView* _capture;
   bool _isDirty;
   bool _needsLayout;
@@ -78,12 +78,12 @@ protected:
   void mapScreenToViewHelper(BView& view, int16_t& x, int16_t& y);
   void mapViewToScreenHelper(BView& view, int16_t& x, int16_t& y);
 
-  BControl* focusNextHelper(BPanel& panel, int16_t tabIndex);
-  BControl* focusNextHelper(BView& view);
-  BControl* focusPrevHelper(BPanel& panel, int16_t tabIndex);
-  BControl* focusPrevHelper(BView& view);
-  BControl* focusFirstHelper(BView& view);
-  void focusLastHelper(BView& view, BControl*& control);
+  BView* focusNextHelper(BPanel& panel, int16_t tabIndex);
+  BView* focusNextHelper(BView& view);
+  BView* focusPrevHelper(BPanel& panel, int16_t tabIndex);
+  BView* focusPrevHelper(BView& view);
+  BView* focusFirstHelper(BView& view);
+  void focusLastHelper(BView& view, BView*& control);
 
   void applyOffset(BView& view, int16_t& x, int16_t& y, int8_t sign = 1);
   void applyOffset(BView& view, int16_t& x, int16_t& y, int16_t& width, int16_t& height);
@@ -114,12 +114,12 @@ public:
   
   void handleEvent(BInputEvent& event);
 
-  BControl* focus(BControl& view);
-  BControl* focusedControl();
-  BControl* focusFirst();
-  BControl* focusLast();
-  BControl* focusNext();
-  BControl* focusPrev();
+  BView* focus(BView& view);
+  BView* focusedControl();
+  BView* focusFirst();
+  BView* focusLast();
+  BView* focusNext();
+  BView* focusPrev();
 
   BView* findView(BMouseInputEvent& event);
   BPoint mapScreenToView(BView& view, int16_t x, int16_t y);

@@ -7,12 +7,6 @@ bool BView::showBoundingBox(false);
 void BView::handleEvent(BInputEvent& event) {
   if (event.type & BInputEvent::evMouse) {
     onMouse(this, (BMouseInputEvent&)event);
-    // auto pt = focusManager().mapScreenToView(*this,((BMouseInputEvent&)event).x, ((BMouseInputEvent&)event).y);
-    // Serial.print(tag);
-    // Serial.print(" ");
-    // Serial.print(pt.x);
-    // Serial.print(" ");
-    // Serial.println(pt.y);
   }
 }
 
@@ -20,20 +14,20 @@ BView::BView()
 : x(0), y(0), width(-1), height(-1), 
   minWidth(-1), minHeight(-1), maxWidth(-1), maxHeight(-1), 
   actualWidth(0), actualHeight(0),
-  _isDirty(true) {}
-
-BRect BView::boundingBox() {
-  BRect rt;
-  rt.x = x;
-  rt.y = y;
-  rt.width = actualWidth + margin.right + margin.left;
-  rt.height = actualWidth + margin.bottom + margin.top;
-}
+  _isDirty(true), focusable(true) {}
 
 bool BView::hitTest(int16_t ptX, int16_t ptY) {
   auto hit = ptX >= margin.left && ptX <= margin.left + actualWidth &&
              ptY >= margin.top && ptY <= margin.top + actualHeight;
   return hit;
+}
+
+void BView::setParent(BPanel& parent) {
+  if (_parent != &parent) {
+    auto old = _parent;
+    _parent = &parent;
+    parentChanged(old);
+  }
 }
 
 BPanel* BView::parent() {
@@ -55,13 +49,25 @@ void BView::clearDirty() {
   _isDirty = false;
 }
 
+void BView::focus() {
+  if (focusable) {
+    focusManager().focus(*this);
+  }
+}
+
+bool BView::isFocused() {
+  return focusManager().focusedControl() == this;
+}
+
 BFocusManager& BView::focusManager() {
+  BPanel* panel = asPanel();
+  if (panel) {
+    return panel->focusManager();
+  }
+
   if (_parent) {
     return _parent->focusManager();
   }
-
-  BPanel* panel = asPanel();
-  return panel->focusManager();
 }
 
 void BView::parentChanged(BPanel* oldParent) {
@@ -81,17 +87,7 @@ void BView::draw(BGraphics& g) {
 
 /* 
   BControl
-*/
-BControl::BControl() {};
-
-void BControl::focus() {
-  focusManager().focus(*this);
-}
-
-bool BControl::isFocused() {
-  return focusManager().focusedControl() == this;
-}
-
+// */
 void BControl::handleEvent(BInputEvent& event) {
   BView::handleEvent(event);
   if (event.type == BInputEvent::evCommand) {
@@ -114,7 +110,7 @@ BFontAware::BFontAware() : fontSize(1), fontColor(0xFFFF) {
 BColorAware::BColorAware() : color(0xFFFF), background(0) {
 }
 
-BButton::BButton() : _isDown(false) {
+BButton::BButton() : _isDown(false), _animate(true) {
 }
 
 void BButton::handleEvent(BInputEvent& event) {
@@ -124,7 +120,7 @@ void BButton::handleEvent(BInputEvent& event) {
     handleMouse((BMouseInputEvent&)event);
   } else if (event.type & BInputEvent::evKeyboard) {
     handleKeyboard((BKeyboardInputEvent&)event);
-  }
+  } 
 }
 
 void BButton::handleKeyboard(BKeyboardInputEvent& event) {
@@ -133,7 +129,9 @@ void BButton::handleKeyboard(BKeyboardInputEvent& event) {
       if (event.code == BKeyboard::kbEnter) {
         if (!_isDown) {
           _isDown = true;      
-          dirty();
+          if (_animate) {
+            dirty();
+          }
         }
       }
       break;
@@ -142,7 +140,9 @@ void BButton::handleKeyboard(BKeyboardInputEvent& event) {
       if (event.code == BKeyboard::kbEnter) {
         if (_isDown) {
           _isDown = false;
-          dirty();
+          if (_animate) {
+            dirty();
+          }
           onClick(this, true);
         }
       }
@@ -154,12 +154,13 @@ void BButton::handleKeyboard(BKeyboardInputEvent& event) {
 void BButton::handleMouse(BMouseInputEvent& event) {
   switch (event.type) {
     case BInputEvent::evMouseDown: 
-    {
+    {     
       focus();
       if (!_isDown) {
-        Serial.println("down");
         _isDown = true;        
-        dirty();
+        if (_animate) {
+          dirty();
+        }
         focusManager().captureMouse(*this);        
       }
       break;
@@ -171,7 +172,9 @@ void BButton::handleMouse(BMouseInputEvent& event) {
       if(_isDown)
       {
         _isDown = false;
-        dirty();
+        if (_animate) {
+          dirty();
+        }
       }
       BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
       bool isDown = hitTest(pt.x, pt.y);
@@ -183,13 +186,11 @@ void BButton::handleMouse(BMouseInputEvent& event) {
       if (event.buttonDown && focusManager().capturingView() == this) {
         BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
         auto isDown = hitTest(pt.x, pt.y);
-        Serial.println(pt.x);
-        Serial.println(pt.y);
         if (isDown != _isDown) {
-          Serial.print("move ");
-          Serial.println(isDown);
           _isDown = isDown;
-          dirty();
+          if (_animate) {
+            dirty();
+          }
         }
       }
       break;
@@ -282,6 +283,7 @@ BPanel::ReverseIterator BPanel::rend() {
 
 BPanel::BPanel(BView* children[], unsigned count, unsigned capacity) 
   : _children(children, count, capacity), _needsLayout(true) {
+  focusable = false;
 }
 
 void BPanel::add(BView* view) {
@@ -293,9 +295,9 @@ void BPanel::remove(BView* view) {
 }
 
 void BPanel::draw(BGraphics& g) {
-  BView::draw(g);
-  g.fillRect(1, 1, g.width-2, g.height-2, 0);
-  g.drawRect(0, 0, g.width, g.height, 0xFFFF);
+  BView::draw(g);  
+  g.fillRect(1, 1, g.width-2, g.height-2, background);
+  g.drawRect(0, 0, g.width, g.height, color);
   for(BView& v : *this) {
     v.dirty();
   }
@@ -319,6 +321,11 @@ int16_t BPanel::applyMinMax(int16_t val, int16_t minimum, int16_t maximum) {
   return val;
 }
 
+void BPanel::setParent(BPanel& parent) {
+  _focusManager = parent._focusManager;
+  BView::setParent(parent);
+}
+
 void BPanel::dirtyLayout() {
   dirty();
   _needsLayout = true;
@@ -340,20 +347,12 @@ BFocusManager& BPanel::focusManager() {
 }
 
 void BPanel::touchView(BView& view) {
-  setViewParent(view);
+  view.setParent(*this);
   view.dirty();
   BPanel* panel = view.asPanel();
   if (panel) {
     panel->_focusManager = _focusManager;
     panel->dirtyLayout();
-  }
-}
-
-void BPanel::setViewParent(BView& view) {
-  if (view._parent != this) {
-    auto old = view._parent;
-    view._parent = this;
-    view.parentChanged(old);
   }
 }
 

@@ -3,7 +3,7 @@
 
 #include "BList.h"
 #include "Eventfun.h"
-#include "BGraphics.h"
+#include "BColor.h"
 
 using namespace Buratino;
 
@@ -53,9 +53,14 @@ struct BMargin {
 };
 
 class BView {
+private:
+  virtual void setParent(BPanel& parent);
+
+private:
+  BPanel* _parent;
+
 protected:
   bool _isDirty;
-  BPanel* _parent;
 
 public:
   int16_t x;
@@ -70,26 +75,18 @@ public:
   int16_t actualWidth;
   int16_t actualHeight;
   const char* tag;
+  bool focusable;
   static bool showBoundingBox;
 
 protected:
   virtual BPanel* asPanel() {
     return nullptr;
   }
-  virtual BControl* asControl() {
-    return nullptr;
-  }
-
-  void applyOffset(int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyOffset(int16_t& x, int16_t& y, int16_t& width, int16_t& height);
-  void applyMargins(int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyMargins(int16_t& x, int16_t& y, int16_t& width, int16_t& height);  
-  BRect boundingBox();
 
 public:
   typedef EventDelegate<BView, BMouseInputEvent&> MouseEvent;
   EventSource<MouseEvent> onMouse;
-
+  
 public:
   BView();
   
@@ -107,47 +104,39 @@ public:
   bool isDirty();
   void clearDirty();
 
-  friend class BPanel;
-  friend class BFocusManager;
-};
-
-class BControl: public BView {
-protected:
-  virtual BControl* asControl() {
-    return this;
-  }
-  
-public:
-  typedef EventDelegate<BControl, BFocusInputEvent&> FocusEvent;
-  EventSource<FocusEvent> onFocus;
-
-public:
-  BControl();
-
-  virtual void handleEvent(BInputEvent& event);
-
   void focus();
   bool isFocused();
+
+  friend class BPanel;
+  friend class BFocusManager;
 };
 
 class BFontAware {
 public:
   uint8_t fontSize;
-  uint16_t fontColor;
+  BColor fontColor;
   BFontAware();
 };
 
 class BColorAware {
 public:
-  uint16_t color;
-  uint16_t background;
+  BColor color;
+  BColor background;
   BColorAware();
+};
+
+class BControl: public BView {
+public:
+  typedef EventDelegate<BControl, BFocusInputEvent&> FocusEvent;
+  EventSource<FocusEvent> onFocus;
+public:
+  virtual void handleEvent(BInputEvent& event);
 };
 
 class BButton: public BControl, public BFontAware, public BColorAware {
 protected:
   bool _isDown;
-
+  bool _animate;
 public:
   typedef EventDelegate<BButton, bool> ClickEvent;
   EventSource<ClickEvent> onClick;
@@ -155,21 +144,18 @@ public:
 
 protected:
   virtual void drawContent(BGraphics& g);
+  void handleMouse(BMouseInputEvent& event);
+  void handleKeyboard(BKeyboardInputEvent& event);
+  void handleFocus(BFocusInputEvent& event);
 
 public:
   BButton();
 
-  void handleMouse(BMouseInputEvent& event);
-  void handleKeyboard(BKeyboardInputEvent& event);
-
   virtual void handleEvent(BInputEvent& event);
-
   virtual void draw(BGraphics& g);
-
-  friend class BFocusManager;
 };
 
-class BPanel: public BView, public BColorAware {
+class BPanel: public BControl, public BColorAware {
 public:
     class Iterator {
     private:
@@ -197,6 +183,8 @@ public:
     Iterator end();
     ReverseIterator rbegin();
     ReverseIterator rend();
+private: 
+  virtual void setParent(BPanel& parent);
 
 protected:
   virtual BPanel* asPanel() {
@@ -212,8 +200,6 @@ public:
   BMargin padding;
 
 protected:
-  void applyPadding(int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyPadding(int16_t& x, int16_t& y, int16_t& width, int16_t& height);
   int16_t applyMinMax(int16_t val, int16_t minimum, int16_t maximum);    
   int16_t indexOf(BView& view);
   void touchView(BView& view);
@@ -224,6 +210,7 @@ public:
   template<size_t N>
   BPanel(BView* (&children)[N]) 
     : _children(children, N, N), _needsLayout(true) {
+    focusable = false;
   }
 
   void add(BView* view);

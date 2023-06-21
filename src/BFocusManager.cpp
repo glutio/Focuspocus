@@ -156,7 +156,7 @@ BTheme& BFocusManager::theme() {
   return *_theme;
 }
   
-BControl* BFocusManager::focus(BControl& view) {  
+BView* BFocusManager::focus(BView& view) {  
   if (_focused != &view)
   {
     auto old = _focused;  
@@ -180,120 +180,111 @@ BControl* BFocusManager::focus(BControl& view) {
   return _focused;
 }
 
-BControl* BFocusManager::focusedControl() {
+BView* BFocusManager::focusedControl() {
   return _focused;
 }
 
-BControl* BFocusManager::focusNextHelper(BPanel& panel, int16_t tabIndex) {
-  for(auto i = BPanel::Iterator(panel, tabIndex); i != panel.end(); i++) {
-    BControl* ctl = (*i).asControl();      
-    if (ctl) {
-      return ctl;
-    }
-
+BView* BFocusManager::focusNextHelper(BPanel& panel, int16_t tabIndex) {
+  for(auto i = BPanel::Iterator(panel, tabIndex); i != panel.end(); i++) {    
     BPanel* ctlPanel = (*i).asPanel();
-    if (ctlPanel) {            
+    if (ctlPanel && !ctlPanel->focusable) {
       return focusNextHelper(*ctlPanel, 0);
     }
+
+    if ((*i).focusable) {
+      return &(*i);
+    }
   }
 
   return nullptr;
 }
 
-BControl* BFocusManager::focusNextHelper(BView& view) {
+BView* BFocusManager::focusNextHelper(BView& view) {
   int16_t tabIndex;
   auto parent = view.parent();
   BView* pview = &view;
-  if (parent) {
-    while (parent) {      
-      BPanel* panel = parent->asPanel();
-      if (panel) {
-        tabIndex = panel->indexOf(*pview);
-        auto ctl = focusNextHelper(*panel, tabIndex + 1);
-        if (ctl) {
-          return ctl;
-        }        
-      }
-      pview = parent;
-      parent = parent->parent();
-    }
-  }
-
-  return nullptr;
-}
-
-
-BControl* BFocusManager::focusPrevHelper(BPanel& panel, int16_t tabIndex) {
-  for(auto i = BPanel::ReverseIterator(panel, tabIndex); i != panel.rend(); i++) {
-    BControl* ctl = (*i).asControl();      
-    if (ctl) {
-      return ctl;
-    }
-
-    BPanel* ctlPanel = (*i).asPanel();
-    if (ctlPanel) {            
-      return focusPrevHelper(*ctlPanel, ctlPanel->_children.Length() - 1);
-    }
-  }
-  return nullptr;
-}
-
-BControl* BFocusManager::focusPrevHelper(BView& view) {
-  int16_t tabIndex;
-  auto parent = view.parent();
-  BView* pview = &view;
-  if (parent) {
-    while (parent) {      
-      BPanel* panel = parent->asPanel();
-      if (panel) {
-        tabIndex = panel->indexOf(*pview);
-        auto ctl = focusPrevHelper(*panel, tabIndex - 1);
-        if (ctl) {
-          return ctl;
-        }        
-      }
-      pview = parent;
-      parent = parent->parent();
-    }
-  }
-
-  return nullptr;
-}
-
-BControl* BFocusManager::focusFirstHelper(BView& view) {
-  BControl* ctl = view.asControl();
-  if (ctl) {
-    return ctl;
-  }
-  
-  BPanel* panel = view.asPanel();
-  if (panel) {
-    for(BView& v : *panel) {
-      ctl = focusFirstHelper(v);
+  while (parent) {      
+    BPanel* panel = parent->asPanel();
+    if (panel) {
+      tabIndex = panel->indexOf(*pview);
+      auto ctl = focusNextHelper(*panel, tabIndex + 1);
       if (ctl) {
         return ctl;
-      }
+      }        
     }
+    pview = parent;
+    parent = parent->parent();
   }
 
   return nullptr;
 }
 
-void BFocusManager::focusLastHelper(BView& view, BControl*& control) {
-  auto ctl = view.asControl();
-  if (ctl) {
-    control = ctl;
+
+BView* BFocusManager::focusPrevHelper(BPanel& panel, int16_t tabIndex) {
+  for(auto i = BPanel::ReverseIterator(panel, tabIndex); i != panel.rend(); i++) {
+    BPanel* ctlPanel = (*i).asPanel();
+    if (ctlPanel && !ctlPanel->focusable) {            
+      return focusPrevHelper(*ctlPanel, ctlPanel->_children.Length() - 1);
+    }
+
+    if ((*i).focusable) {
+      return &(*i);
+    }
+  }
+  return nullptr;
+}
+
+BView* BFocusManager::focusPrevHelper(BView& view) {
+  int16_t tabIndex;
+  auto parent = view.parent();
+  BView* pview = &view;
+  while (parent) {      
+    BPanel* panel = parent->asPanel();
+    if (panel) {
+      tabIndex = panel->indexOf(*pview);
+      auto ctl = focusPrevHelper(*panel, tabIndex - 1);
+      if (ctl) {
+        return ctl;
+      }        
+    }
+    pview = parent;
+    parent = parent->parent();
+  }
+
+  return nullptr;
+}
+
+BView* BFocusManager::focusFirstHelper(BView& view) {
+  BPanel* panel = view.asPanel();
+  if (panel && !panel->focusable) {
+    for(BView& v : *panel) {
+      auto control = focusFirstHelper(v);
+      if (control) {
+        return control;
+      }
+    }
+  }
+
+  if (view.focusable) {
+    return &view;
+  }
+  return nullptr;
+}
+
+void BFocusManager::focusLastHelper(BView& view, BView*& control) {
+  if (view.focusable) {
+    control = &view;
   }
 
   BPanel* panel = view.asPanel();
-  if (panel) {
+  if (panel && !panel->focusable) {
     for(BView& v : *panel) {
       focusLastHelper(v, control);
     }
   }
 }
 
-BControl* BFocusManager::focusFirst() {
+BView* BFocusManager::focusFirst() {
   auto r = root();  
   if (r) {
     auto first = focusFirstHelper(*r);
@@ -307,10 +298,10 @@ BControl* BFocusManager::focusFirst() {
   return _focused;
 }
 
-BControl* BFocusManager::focusLast() {
+BView* BFocusManager::focusLast() {
   auto r = root();  
   if (r) {
-    BControl* last = nullptr;
+    BView* last = nullptr;
     focusLastHelper(*r, last);
     if (last) {
       focus(*last);
@@ -322,7 +313,7 @@ BControl* BFocusManager::focusLast() {
   return _focused;
 }
 
-BControl* BFocusManager::focusNext() {
+BView* BFocusManager::focusNext() {
   if (!_focused) {
     return focusFirst();
   }
@@ -336,7 +327,7 @@ BControl* BFocusManager::focusNext() {
   return focusFirst();
 }
 
-BControl* BFocusManager::focusPrev() {
+BView* BFocusManager::focusPrev() {
   if (!_focused) {
     return focusLast();
   }

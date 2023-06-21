@@ -3,12 +3,10 @@
 #include "BFocusManager.h"
 
 BTextLabel::BTextLabel() : horizontalAlignment(left), verticalAlignment(top), text(0) {
+  focusable = false;
 }
 
 void BTextLabel::measure(int16_t availableWidth, int16_t availableHeight) {
-  Serial.print(availableWidth);
-  Serial.print(" ");
-  Serial.println(availableHeight);
   if (!width || !height) {
     BGraphics g = focusManager().getGraphics();
     BRect rt = g.getTextBounds(text, fontSize);
