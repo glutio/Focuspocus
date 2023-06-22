@@ -20,8 +20,8 @@ class BControl;
 struct BRect {
   int16_t x;
   int16_t y;
-  int16_t width;
-  int16_t height;
+  uint16_t width;
+  uint16_t height;
 
   bool pointInRect(int16_t ptX, int16_t ptY) {
     return ptX >= x && ptX <= x + width && ptY >= y && ptY <= y + height;
@@ -44,7 +44,7 @@ struct BMargin {
   
   BMargin() : top(0), left(0), bottom(0), right(0) {}
 
-  operator ()(int16_t val) {
+  void operator ()(int16_t val) {
     top = val;
     left = val;
     bottom = val;
@@ -67,13 +67,13 @@ public:
   int16_t y;
   int16_t width;
   int16_t height;
-  int16_t minWidth;
-  int16_t minHeight;
-  int16_t maxWidth;
-  int16_t maxHeight;
+  uint16_t minWidth;
+  uint16_t minHeight;
+  uint16_t maxWidth;
+  uint16_t maxHeight;
   BMargin margin;
-  int16_t actualWidth;
-  int16_t actualHeight;
+  uint16_t actualWidth;
+  uint16_t actualHeight;
   const char* tag;
   bool focusable;
   static bool showBoundingBox;
@@ -91,7 +91,7 @@ public:
   BView();
   
   virtual void parentChanged(BPanel* oldParent);
-  virtual void measure(int16_t availableWidth, int16_t availableHeight);
+  virtual void measure(uint16_t availableWidth, uint16_t availableHeight);
   virtual void layout();
   virtual void draw(BGraphics& g) = 0;
   virtual bool hitTest(int16_t ptX, int16_t ptY);
@@ -233,10 +233,10 @@ public:
 
 class BStackPanel: public BPanel {
 private:
-  int16_t marginWidth(BView& view) {
+  uint16_t marginWidth(BView& view) {
     return view.margin.left + view.margin.right;
   }
-  int16_t marginHeight(BView& view) {
+  uint16_t marginHeight(BView& view) {
     return view.margin.top + view.margin.bottom;
   }
   int16_t viewWidth(BView& view) {
@@ -260,14 +260,14 @@ public:
   };
 
 public:
-  int16_t spacing;
+  uint16_t spacing;
   Orientation orientation;
   Alignment horizontalAlignment;
   Alignment verticalAlignment;
 
 public:
   template<size_t N>
-  BStackPanel::BStackPanel(BView* (&children)[N]) 
+  BStackPanel(BView* (&children)[N]) 
     : BPanel(children), orientation(horizontal), horizontalAlignment(left), verticalAlignment(top) {}
   
   virtual void layout();

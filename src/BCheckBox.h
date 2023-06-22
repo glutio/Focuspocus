@@ -132,7 +132,7 @@ public:
     }
   }
 
-  raiseOnChange(bool state) {
+  void raiseOnChange(bool state) {
     onChange(this, state);
   }
 

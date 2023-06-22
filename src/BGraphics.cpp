@@ -4,47 +4,47 @@
 
 BGraphics::BGraphics(Adafruit_GFX& g) : x(0), y(0), width(g.width()), height(g.height()), _g(g) {  }  
 
-void BGraphics::drawRect(int16_t x, int16_t y, int16_t width, int16_t height, int16_t color) {
+void BGraphics::drawRect(int16_t x, int16_t y, uint16_t width, uint16_t height, uint16_t color) {
   _g.drawRect(this->x + x, this->y + y, width, height, color);
 }
 
-void BGraphics::fillRect(int16_t x, int16_t y, int16_t width, int16_t height, int16_t color) {
+void BGraphics::fillRect(int16_t x, int16_t y, uint16_t width, uint16_t height, uint16_t color) {
   _g.fillRect(this->x + x, this->y + y, width, height, color);
 }
 
-void BGraphics::drawRoundRect(int16_t x, int16_t y, int16_t width, int16_t height, int16_t radius, int16_t color) {
+void BGraphics::drawRoundRect(int16_t x, int16_t y, uint16_t width, uint16_t height, uint16_t radius, uint16_t color) {
   _g.drawRoundRect(this->x + x, this->y + y, width, height, radius, color);
 }
 
-void BGraphics::fillRoundRect(int16_t x, int16_t y, int16_t width, int16_t height, int16_t radius, int16_t color) {
+void BGraphics::fillRoundRect(int16_t x, int16_t y, uint16_t width, uint16_t height, uint16_t radius, uint16_t color) {
   _g.fillRoundRect(this->x + x, this->y + y, width, height, radius, color);
 }
 
-void BGraphics::drawText(const char* str, int16_t x, int16_t y, int8_t size, int16_t color) {
+void BGraphics::drawText(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color) {
   _g.setCursor(this->x + x, this->y + y);
   _g.setTextColor(color);
   _g.setTextSize(size);
   _g.print(str);
 }
 
-BRect BGraphics::getTextBounds(const char* str, int8_t size) {
+BRect BGraphics::getTextBounds(const char* str, uint8_t size) {
   BRect rt;
   _g.setTextSize(size);
   _g.getTextBounds(str, 0, 0, &rt.x, &rt.y, &rt.width, &rt.height);
   return rt;
 }
 
-void BGraphics::drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[], int16_t w, int16_t h) {
+void BGraphics::drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[], uint16_t w, uint16_t h) {
   _g.drawRGBBitmap(this->x + x, this->y + y, bitmap, w, h);
 }
 
-void BGraphics::drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[], const uint8_t mask[], int16_t w, int16_t h) {
+void BGraphics::drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[], const uint8_t mask[], uint16_t w, uint16_t h) {
   _g.drawRGBBitmap(this->x + x, this->y + y, bitmap, mask, w, h);
 }
 
 //#define PI 3.14159265
 
-void BGraphics::drawArc(int centerX, int centerY, int radius, int startAngle, int endAngle, uint16_t color) {
+void BGraphics::drawArc(int16_t centerX, int16_t centerY, uint16_t radius, int16_t startAngle, int16_t endAngle, uint16_t color) {
     // Convert the start and end angles to radians
     double startRad = startAngle * PI / 180.0;
     double endRad = endAngle * PI / 180.0;
@@ -64,7 +64,7 @@ void BGraphics::drawArc(int centerX, int centerY, int radius, int startAngle, in
     }
 }
 
-void BGraphics::drawContour(int16_t x, int16_t y, uint8_t mask[], int16_t width, int16_t height, int16_t color) {
+void BGraphics::drawContour(int16_t x, int16_t y, uint8_t mask[], uint16_t width, uint16_t height, uint16_t color) {
   _g.startWrite();
   int16_t bw = (width + 7) / 8;
   for (int16_t i = 0; i < height; i++) {
@@ -124,10 +124,10 @@ void BGraphics::drawContour(int16_t x, int16_t y, uint8_t mask[], int16_t width,
   _g.endWrite();
 }
 
-void BGraphics::drawCircle(int centerX, int centerY, int radius, uint16_t color) {
+void BGraphics::drawCircle(int16_t centerX, int16_t centerY, uint16_t radius, uint16_t color) {
   _g.drawCircle(this->x + centerX, this->y + centerY, radius, color);
 }
 
-void BGraphics::fillCircle(int centerX, int centerY, int radius, uint16_t color) {
+void BGraphics::fillCircle(int16_t centerX, int16_t centerY, uint16_t radius, uint16_t color) {
   _g.fillCircle(this->x + centerX, this->y + centerY, radius, color);
 }

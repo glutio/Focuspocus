@@ -6,6 +6,14 @@
 #include "BMouse.h"
 #include "BTheme.h"
 
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
+
 class BView;
 class BPoint;
 class BView;
@@ -114,11 +122,11 @@ protected:
   void focusLastHelper(BView& view, BView*& control);
 
   void applyOffset(BView& view, int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyOffset(BView& view, int16_t& x, int16_t& y, int16_t& width, int16_t& height);
+  void applyOffset(BView& view, int16_t& x, int16_t& y, uint16_t& width, uint16_t& height);
   void applyMargins(BView& view, int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyMargins(BView& view, int16_t& x, int16_t& y, int16_t& width, int16_t& height);
+  void applyMargins(BView& view, int16_t& x, int16_t& y, uint16_t& width, uint16_t& height);
   void applyPadding(BPanel& panel, int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyPadding(BPanel& panel, int16_t& x, int16_t& y, int16_t& width, int16_t& height);
+  void applyPadding(BPanel& panel, int16_t& x, int16_t& y, uint16_t& width, uint16_t& height);
 
   void drawPass(BView& view, BGraphics& g);
   void layoutPass(BPanel& panel);

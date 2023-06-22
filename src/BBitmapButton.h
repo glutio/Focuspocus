@@ -5,7 +5,7 @@
 
 class BBitmapButton: public BButton {
 public:
-  BColor* bitmap;
+  uint16_t* bitmap;
   uint8_t* mask;
 public:  
   BBitmapButton();

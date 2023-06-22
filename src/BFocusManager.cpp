@@ -7,7 +7,7 @@ void BFocusManager::applyOffset(BView& view, int16_t& x, int16_t& y, int8_t sign
   y += sign * view.y;
 }
 
-void BFocusManager::applyOffset(BView& view, int16_t& x, int16_t& y, int16_t& width, int16_t& height) {
+void BFocusManager::applyOffset(BView& view, int16_t& x, int16_t& y, uint16_t& width, uint16_t& height) {
   x += view.x;
   y += view.y;
 
@@ -20,7 +20,7 @@ void BFocusManager::applyMargins(BView& view, int16_t& x, int16_t& y, int8_t sig
   y += sign * view.margin.top;
 }
 
-void BFocusManager::applyMargins(BView& view, int16_t& x, int16_t& y, int16_t& width, int16_t& height) {
+void BFocusManager::applyMargins(BView& view, int16_t& x, int16_t& y, uint16_t& width, uint16_t& height) {
   x += view.margin.left;
   y += view.margin.top;
   width -= view.margin.left + view.margin.right;
@@ -32,7 +32,7 @@ void BFocusManager::applyPadding(BPanel& panel, int16_t& x, int16_t& y, int8_t s
   y += sign * (panel.padding.top + panel.border);
 }
 
-void BFocusManager::applyPadding(BPanel& panel, int16_t& x, int16_t& y, int16_t& width, int16_t& height) {
+void BFocusManager::applyPadding(BPanel& panel, int16_t& x, int16_t& y, uint16_t& width, uint16_t& height) {
   x += panel.padding.left + panel.border;
   y += panel.padding.top + panel.border;
   width -= panel.padding.left + panel.padding.right + panel.border * 2;
@@ -203,7 +203,7 @@ BView* BFocusManager::focusedControl() {
 }
 
 BView* BFocusManager::focusNextHelper(BPanel& panel, int16_t tabIndex) {
-  for(auto i = BPanel::Iterator(panel, tabIndex); i != panel.end(); i++) {    
+  for(auto i = BPanel::Iterator(panel, tabIndex); i != panel.end(); ++i) {    
     BPanel* ctlPanel = (*i).asPanel();
     if (ctlPanel && !ctlPanel->focusable) {
       return focusNextHelper(*ctlPanel, 0);
@@ -239,7 +239,7 @@ BView* BFocusManager::focusNextHelper(BView& view) {
 
 
 BView* BFocusManager::focusPrevHelper(BPanel& panel, int16_t tabIndex) {
-  for(auto i = BPanel::ReverseIterator(panel, tabIndex); i != panel.rend(); i++) {
+  for(auto i = BPanel::ReverseIterator(panel, tabIndex); i != panel.rend(); ++i) {
     BPanel* ctlPanel = (*i).asPanel();
     if (ctlPanel && !ctlPanel->focusable) {            
       return focusPrevHelper(*ctlPanel, ctlPanel->_children.Length() - 1);

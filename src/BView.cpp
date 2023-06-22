@@ -73,7 +73,7 @@ BFocusManager& BView::focusManager() {
 void BView::parentChanged(BPanel* oldParent) {
 }
 
-void BView::measure(int16_t availableWidth, int16_t availableHeight) {
+void BView::measure(uint16_t availableWidth,uint16_t availableHeight) {
 }
 
 void BView::layout() {
@@ -267,7 +267,7 @@ BPanel::Iterator BPanel::begin() {
     }
 
     auto i = Iterator(*this, -1);
-    i++;
+    ++i;
     return i;
 }
 
@@ -281,7 +281,7 @@ BPanel::ReverseIterator BPanel::rbegin() {
     }
     
     auto i = ReverseIterator(*this, _children.Length() - 1);
-    i++;
+    ++i;
     return i;
 }
 
@@ -313,10 +313,10 @@ void BPanel::draw(BGraphics& g) {
   }
 }
 
-int BPanel::indexOf(BView& view) {
+int16_t BPanel::indexOf(BView& view) {
   for(unsigned i = 0; i < _children.Length(); ++i) {
     if (_children[i] == &view) {
-      return (int)i;
+      return (int16_t)i;
     }
   }
   return -1;
