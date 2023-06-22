@@ -18,6 +18,7 @@
 #include "Adafruit_GFX.h"
 #include "Adafruit_ILI9341.h"
 #include <Adafruit_FT6206.h>
+#include <Adafruit_SSD1306.h>
 #include "Focuspocus.h"
 #include "Bitmaps.h"
 
@@ -26,139 +27,57 @@
 #define TFT_CS 10
 #define TS_CS 8
 
-Adafruit_FT6206 ctp = Adafruit_FT6206();
-// Use hardware SPI (on Uno, #13, #12, #11) and the above for CS/DC
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
-// If using the breakout, change pins as desired
-//Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_RST, TFT_MISO);
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
-BGraphics _g(tft);
+Adafruit_FT6206 ctp = Adafruit_FT6206();
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire);
+
+BGraphics _gTft(tft);
+BGraphics _gOled(display);
 BTheme theme;
+BBWTheme bwtheme;
 
 namespace ButtonViewStatic {
- BRadioButton radio1;
- BRadioButton radio2;
-//  X x;
-  BBitmapButton bitmapButton;
-  BButton buttonYes;
-  BButton buttonNo;
-  BView* confirmContent[] = { &buttonYes, &buttonNo }; 
-  BStackPanel confirm(confirmContent);
-  BButton buttonOk;
-  BButton buttonCancel;
-  BScrollbar scrollbar;
-  BTextLabel label;
-  BView* mainContent[] = { &buttonOk, &bitmapButton, &radio1, &radio2, &buttonCancel, &confirm, &scrollbar, &label };
-  BStackPanel main(mainContent);
-
-  BScrollbar vscrollbar;
-  BView* rootContent[] = { &main, &vscrollbar };
-  BStackPanel root(rootContent);
-
-  void onClick(BButton* sender, bool clicked) {
-    // auto width = sender->width*4;
-    // if (width != sender->width) {
-    //   sender->width=width;
-    //   sender->parent()->dirtyLayout();
-    // }
-  }
-  void onChange(BScrollbar* sender, int16_t value) {
-    Serial.println(value);
-  }
+  BButton button1;
+  BButton button2;
+  BView* rootContent[] { &button1, &button2 };
+  BStackPanel root(rootContent);  
+  
+  BButton _button1;
+  BButton _button2;
+  BView* _rootContent[] { &_button1, &_button2 };
+  BStackPanel _root(_rootContent);  
 
   void Initialize() {
-    BView::showBoundingBox = true;
-    //x.background = 0xFFFF;
-    label.text = "hello";
-    label.height = 0;
-    // label.verticalAlignment = BTextLabel::bottom;
-    label.horizontalAlignment = BTextLabel::right;
-    bitmapButton.width = BUTTON_W;
-    bitmapButton.height = BUTTON_H;
-    bitmapButton.bitmap = buttonPixMap;
-    bitmapButton.mask = buttonAlphaMask;
-    bitmapButton.tag = "bitmap";
-    bitmapButton.focusable = false;
-    //x.tag = "x";
     root.tag = "root";
-    root.padding(10);
-    root.horizontalAlignment = BStackPanel::right;  
-    root.spacing = 10;
-   // root.margin(10);
-    root.background = 0xf736;
-    radio1.text = "radio1";
-    radio2.text = "radio2";
-    radio1.background = root.background;
-    radio1.padding(5);
-    radio1.margin(5);
-    radio1.group = "g";
-    radio2.group = "g";
-    main.orientation = BStackPanel::vertical;
-    main.padding(10);
-    main.spacing = 10;
-    main.tag = "main";
-    main.background = 0x7ddd;
-    vscrollbar.width = 7;
-    vscrollbar.minimum = -10;
-    vscrollbar.maximum = 100;
-    vscrollbar.value = 10;
-    vscrollbar.step = 10;
-    vscrollbar.tag="vscrollbar";
-    vscrollbar.orientation = BScrollbar::vertical;
-    buttonOk.height = 30;
-    buttonOk.width = 50;
-    buttonOk.text = "OK";
-    buttonOk.tag = "ok";
-    buttonOk.fontSize = 2;
-    buttonOk.fontColor = 0x39a6;
-    buttonOk.background = 0xbdf7;
-    buttonOk.color = 0;
-    label.width = 0;
-    bitmapButton.text="Bitmap";
-    scrollbar.minimum = -10;
-    scrollbar.maximum = 10;
-    scrollbar.value = 0;
-    scrollbar.height = 15;
-    scrollbar.tag="scrollbar";
-    //checkBox.alignment = BCheckBox::right;
-    // checkBox.padding(2);
-    // checkBox.spacing = 5;
-    // checkBox.height = 25;
-    // checkBox.width=-1;
-    buttonCancel.text = "Cancel";
-    buttonCancel.tag = "cancel";
-    confirm.spacing = 10;
-    confirm.padding(10);
-    confirm.tag = "Confirm";
-    confirm.tag = "confirm";
-    confirm.focusable = true;
-
-    buttonYes.text = "Yes";
-    buttonYes.tag="yes";
-    buttonNo.text = "No";
-    buttonNo.tag = "no";
-
-    buttonOk.onClick += onClick;
-    scrollbar.onChange += onChange;
+    _root.tag = "_root";
+    root.maxHeight = 200;
+    root.maxWidth = 150;
+    root.padding(1);
+    root.orientation = BStackPanel::vertical;    
+    //BView::showBoundingBox = true;
+    button1.text = "button";
+    button1.tag = "btn1";
+    button1.background = 0xF0F0;
+    button2.text = "button2";
+    button2.tag = "btn2";    
+    _root.padding(1);
+    _root.orientation = BStackPanel::vertical;    
+    _button1.text = "b1";
+    _button2.text = "b2";
   }  
-
 }
 
-BView* _stack[] = { &ButtonViewStatic::root };
-// struct ButtonViewDynamic : BPanel {
-//   BButton button1;
-//   BButton button2;
-//   BView* rootContent[2];
-//   ButtonViewDynamic() : BPanel(rootContent) 
-//   {
-//     rootContent[0] = &button1;
-//     rootContent[1] = &button2;
-//   }
-// };
+BView* stack[] = { &ButtonViewStatic::root };
+BView* _stack[] = {&ButtonViewStatic::_root };
 
-BFocusManager fm(_g, _stack, theme);
-BMouse mouse(fm);
+BFocusManager fm(_gOled, _stack, bwtheme);
+BFocusManager fm2(_gTft, stack, theme);
+BMouse mouse(fm2);
 BKeyboard kbd(fm);
+BKeyboard kbd2(fm2);
 
 #define LEFT_PIN 7
 #define CLICK_PIN 6
@@ -167,36 +86,65 @@ BKeyboard kbd(fm);
 BDigitalPin btnLeft(LEFT_PIN, INPUT_PULLUP, 40);
 BDigitalPin btnClick(CLICK_PIN, INPUT_PULLUP, 40);
 BDigitalPin btnRight(RIGHT_PIN, INPUT_PULLUP, 40);
+BDigitalPin encoderDT(2, INPUT, 0);
+BDigitalPin encoderCLK(3, INPUT, 0);
 
 void onChange(BDigitalPin* sender, bool state) {
   if (sender->pin() == LEFT_PIN) {
     //kbd.sendKey(BKeyboard::kbLeft, !state);
-    if (!state) fm.focusPrev();      
+    if (!state) {
+      fm.focusPrev();      
+      fm2.focusPrev();
+    }
   } else if (sender->pin() == RIGHT_PIN) {
-    if (!state) fm.focusNext();
+    if (!state) {
+      fm.focusNext();
+      Serial.print("hi");
+      Serial.print(fm.focusedView()->tag);
+      fm2.focusNext();
+    }
     //kbd.sendKey(BKeyboard::kbRight, !state);
   } else if (sender->pin() == CLICK_PIN) {
     kbd.sendKey(BKeyboard::kbEnter, !state);
+    kbd2.sendKey(BKeyboard::kbEnter, !state);
+  }
+}
+
+void clkChange(BDigitalPin* pin, bool state) {
+  if (!state) {
+  if (!encoderDT) {
+    fm.focusNext();
+    Serial.println("Rotated clockwise ⏩");
+  }
+  if (encoderDT) {
+    fm.focusPrev();
+    Serial.println("Rotated counterclockwise ⏪");
+  }  
+
   }
 }
 
 void setup() {
-  pinMode(7, INPUT_PULLUP);
-  pinMode(6, INPUT_PULLUP);
-  pinMode(5, INPUT_PULLUP);
+  // pinMode(7, INPUT_PULLUP);
+  // pinMode(6, INPUT_PULLUP);
+  // pinMode(5, INPUT_PULLUP);
   Serial.begin(9600);
   Serial.println("ILI9341 Test!"); 
   ctp.begin(40);
   tft.begin();
-
   btnLeft.init();
   btnLeft.onChange += onChange;
   btnClick.init();
   btnClick.onChange += onChange;
   btnRight.init();
   btnRight.onChange += onChange;
-
+  encoderCLK.init();
+  encoderDT.init();
+  encoderCLK.onChange += clkChange;
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3D);
+  display.display();
   ButtonViewStatic::Initialize();
+  fm.onAfterRender += [](BFocusManager*,bool) -> void { display.display(); };
 }
 
 
@@ -220,7 +168,12 @@ void loop(void) {
   btnLeft.update();
   btnRight.update();
 
+  encoderDT.update();
+  encoderCLK.update();
+
   fm.loop();
+  fm2.loop();
+  //display.display();
 }
 
 unsigned long testFillScreen() {

@@ -3,7 +3,7 @@
 
 #include "BList.h"
 #include "Eventfun.h"
-#include "BColor.h"
+#include "BNullable.h"
 
 using namespace Buratino;
 
@@ -113,16 +113,41 @@ public:
 
 class BFontAware {
 public:
-  uint8_t fontSize;
-  BColor fontColor;
-  BFontAware();
+  BNullable<uint8_t> fontSize;
+  BNullable<uint16_t> fontColor;
+
+  template<typename T>
+  uint8_t viewFontSize(T& view) {
+    if (view.fontSize.hasValue())
+      return view.fontSize;
+    return view.focusManager().theme().fontSize;
+  }
+  template<typename T>
+  uint16_t viewFontColor(T& view) {
+    if (view.fontColor.hasValue())
+      return view.fontColor;
+    return view.focusManager().theme().fontColor;
+  }
 };
 
 class BColorAware {
 public:
-  BColor color;
-  BColor background;
-  BColorAware();
+  BNullable<uint16_t> color;
+  BNullable<uint16_t> background;
+
+  template<typename T>
+  uint16_t viewColor(T& view) {
+    if (view.color.hasValue())
+      return view.color;
+    return view.focusManager().theme().color;
+  }
+
+  template<typename T>
+  uint16_t viewBackground(T& view) {
+    if (view.background.hasValue())
+      return view.background;
+    return view.focusManager().theme().background;
+  }
 };
 
 class BControl: public BView {
@@ -200,7 +225,7 @@ public:
   BMargin padding;
   bool border;
 protected:
-  int16_t applyMinMax(int16_t val, int16_t minimum, int16_t maximum);    
+  uint16_t applyMinMax(uint16_t val, uint16_t minimum, uint16_t maximum);
   int16_t indexOf(BView& view);
   void touchView(BView& view);
   void setViewParent(BView& view);
@@ -223,8 +248,8 @@ public:
   bool isDirtyLayout();
   void clearDirtyLayout();
   
-  int16_t clientWidth();
-  int16_t clientHeight();
+  uint16_t clientWidth();
+  uint16_t clientHeight();
 
   BFocusManager& focusManager();
 
@@ -239,10 +264,10 @@ private:
   uint16_t marginHeight(BView& view) {
     return view.margin.top + view.margin.bottom;
   }
-  int16_t viewWidth(BView& view) {
+  uint16_t viewWidth(BView& view) {
     return (view.width) ? view.width : view.actualWidth;
   }
-  int16_t viewHeight(BView& view) {
+  uint16_t viewHeight(BView& view) {
     return (view.height) ? view.height : view.actualHeight;
   }
 public:

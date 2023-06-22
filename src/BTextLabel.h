@@ -3,7 +3,7 @@
 
 #include "BView.h"
 
-class BTextLabel : public BView, public BColorAware, public BFontAware 
+class BTextLabel : public BView, public BColorAware, public BFontAware
 {
 public:
   enum Alignment {

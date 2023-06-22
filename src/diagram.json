@@ -121,7 +121,15 @@
       "top": 165.94,
       "left": 510.89,
       "attrs": { "color": "yellow", "bounce": "0" }
-    }
+    },
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": -91.7,
+      "left": 124.25,
+      "attrs": { "i2cAddress": "0x3d" }
+    },
+    { "type": "wokwi-ky-040", "id": "encoder1", "top": -198.61, "left": 623.18, "attrs": {} }
   ],
   "connections": [
     [ "mega:12", "r5:1", "cyan", [ "h29.22", "v6.17" ] ],
@@ -163,7 +171,15 @@
     [ "btn3:1.l", "mega:6", "green", [ "v56.2", "h-312.15" ] ],
     [ "btn3:2.l", "mega:GND.1", "green", [ "v54.04", "h-312.15" ] ],
     [ "btn2:1.l", "mega:5", "green", [ "v65.32", "h-387.92" ] ],
-    [ "btn2:2.l", "mega:GND.1", "green", [ "v30.19", "h-387.92" ] ]
+    [ "btn2:2.l", "mega:GND.1", "green", [ "v30.19", "h-387.92" ] ],
+    [ "oled1:GND", "mega:GND.2", "black", [ "h-216.73", "v292.84" ] ],
+    [ "oled1:VCC", "mega:5V", "red", [ "h-199.36", "v283.09" ] ],
+    [ "oled1:SCL", "mega:21", "green", [ "h-273.19", "v456.09" ] ],
+    [ "oled1:SDA", "mega:20", "green", [ "h-265.14", "v446.59" ] ],
+    [ "encoder1:GND", "mega:GND.2", "black", [ "h82.42", "v627.15", "h-835.17", "v-263.81" ] ],
+    [ "encoder1:VCC", "mega:5V", "red", [ "h67.07", "v633.41", "h-830.76", "v-29.25" ] ],
+    [ "encoder1:CLK", "mega:2", "green", [ "h52.46", "v457.41" ] ],
+    [ "encoder1:DT", "mega:3", "green", [ "h35.45", "v438.46" ] ]
   ],
   "dependencies": {}
 }

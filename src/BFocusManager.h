@@ -5,6 +5,7 @@
 #include "BGraphics.h"
 #include "BMouse.h"
 #include "BTheme.h"
+#include "Eventfun.h"
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -98,6 +99,13 @@ struct BFocusInputEvent: BCommandInputEvent {
 };
 
 class BFocusManager {
+public:
+  typedef EventDelegate<BFocusManager, bool> AfterRenderEvent;
+  EventSource<AfterRenderEvent> onAfterRender;
+
+  typedef EventDelegate<BFocusManager, bool> TimerTickEvent;
+  EventSource<TimerTickEvent> onTimerTick;
+
 protected:
   BList<BPanel*> _stack;
   BGraphics& _g;
@@ -107,7 +115,7 @@ protected:
   bool _needsLayout;
   bool _needsRootLayout;
   BTheme* _theme;
-
+  unsigned long _msTimer;
 protected:
   bool findViewHelper(BView& view, int16_t x, int16_t y, BView*& target);
   
@@ -137,7 +145,7 @@ protected:
 public:
   template<size_t N>
   BFocusManager(BGraphics& g, BView* (&stack)[N], BTheme& theme) 
-    : _g(g), _stack(stack, N, N), _theme(&theme) {
+    : _g(g), _stack(stack, N, N), _theme(&theme), _msTimer(0) {
     for(int i = _stack.Length() - 1; i >= 0; --i) {
       if (!_stack[i]) {
         _stack.Remove(i);
@@ -153,7 +161,7 @@ public:
   void broadcastCommand(BCommandInputEvent& event);
   
   BView* focus(BView& view);
-  BView* focusedControl();
+  BView* focusedView();
   BView* focusFirst();
   BView* focusLast();
   BView* focusNext();
@@ -171,7 +179,7 @@ public:
 
   void dirty();
   void dirtyLayout();
-
+  
   void layoutRoot();
 
   void push(BPanel& panel);

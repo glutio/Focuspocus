@@ -67,21 +67,17 @@ public:
   };
 
   virtual void handleDraw(BGraphics& g) {
-      int16_t c = color;
-      int16_t b = color;
-      if (_box.isFocused()) {
-        c = focusManager().theme().focusColor;
-        b = focusManager().theme().focusBackground;
-      }
+      int16_t c = (_box.isFocused()) ? viewColor(*this) : focusManager().theme().focusBackground;
+      int16_t b = c;
       
       g.drawRect(0, 0, g.width, g.height, c);
-      g.drawRect(1, 1, g.width - 2, g.height - 2, background);
+      g.drawRect(1, 1, g.width - 2, g.height - 2, viewBackground(*this));
       if (_box.isDown()) {
-        g.drawRect(2, 2, g.width - 4, g.height - 4, background);
+        g.drawRect(2, 2, g.width - 4, g.height - 4, viewBackground(*this));
       }
       else {
         if (!state) {
-          b = background;
+          b = viewBackground(*this);
         }
       }
       int pad = (_box.isDown()) ? 3 : 2;
@@ -188,21 +184,18 @@ public:
 
 protected:
   virtual void handleDraw(BGraphics& g) {
-    int16_t c = color;
-    int16_t b = color;
-    if (_box.isFocused()) {
-      c = focusManager().theme().focusColor;
-      b = focusManager().theme().focusBackground;
-    }
+    int16_t c = _box.isFocused() ? viewColor(*this) : focusManager().theme().focusBackground;
+    int16_t b = c;
+
     auto org = g.height / 2;
     g.drawCircle(org, org, g.height / 2, c);
-    g.drawCircle(org, org, (g.height - 2) / 2, background);
+    g.drawCircle(org, org, (g.height - 2) / 2, viewBackground(*this));
     if (_box.isDown()) {
-      g.drawCircle(org, org, (g.height - 4) / 2, background);
+      g.drawCircle(org, org, (g.height - 4) / 2, viewBackground(*this));
     }
     else {
       if (!state) {
-        b = background;
+        b = viewBackground(*this);
       }
     }
     int pad = (_box.isDown()) ? 3 : 2;

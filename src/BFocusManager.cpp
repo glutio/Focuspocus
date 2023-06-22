@@ -110,21 +110,32 @@ void BFocusManager::layoutRoot() {
     panel._focusManager = this;
     if (panel.width < 0) {
       panel.actualWidth = _g.width - panel.margin.left - panel.margin.right;
-      panel.x = 0;
+      if (panel.actualWidth < panel.minWidth) {
+        panel.actualWidth = panel.minWidth;
+      }
+      else if (panel.actualWidth > panel.maxWidth) {
+        panel.actualWidth = panel.maxWidth;
+      }
     }
     else {
       panel.actualWidth = panel.width;
-      panel.x = (_g.width + panel.width) / 2;
     }
+    panel.x = (_g.width - panel.actualWidth) / 2;
 
     if (panel.height < 0) {
       panel.actualHeight = _g.height - panel.margin.top - panel.margin.bottom;
-      panel.y = 0;
+      if (panel.actualHeight < panel.minHeight) {
+        panel.actualHeight = panel.minHeight; 
+      }
+      else if (panel.actualHeight > panel.maxHeight) {
+        panel.actualHeight = panel.maxHeight;
+      }
     }
     else {
       panel.actualHeight = panel.height;
-      panel.y = (_g.height + panel.height) / 2;
     }
+    panel.y = (_g.height - panel.actualHeight) / 2;
+
     touchTree(*r);
   }
 }
@@ -198,7 +209,7 @@ BView* BFocusManager::focus(BView& view) {
   return _focused;
 }
 
-BView* BFocusManager::focusedControl() {
+BView* BFocusManager::focusedView() {
   return _focused;
 }
 
@@ -446,6 +457,12 @@ void BFocusManager::loop() {
       applyMargins(*panel, g.x, g.y, g.width, g.height);
       drawPass(*panel, g);
       _isDirty = false;
+      onAfterRender(this, true);
+    }
+    auto ms = millis();
+    if (ms - _msTimer >= 16) {
+      _msTimer = ms;
+      onTimerTick(this, true);
     }
   }
 }
