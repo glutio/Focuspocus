@@ -78,6 +78,7 @@ namespace ButtonViewStatic {
     bitmapButton.bitmap = buttonPixMap;
     bitmapButton.mask = buttonAlphaMask;
     bitmapButton.tag = "bitmap";
+    bitmapButton.focusable = false;
     //x.tag = "x";
     root.tag = "root";
     root.padding(10);
@@ -87,6 +88,9 @@ namespace ButtonViewStatic {
     root.background = 0xf736;
     radio1.text = "radio1";
     radio2.text = "radio2";
+    radio1.background = root.background;
+    radio1.padding(5);
+    radio1.margin(5);
     radio1.group = "g";
     radio2.group = "g";
     main.orientation = BStackPanel::vertical;
@@ -94,7 +98,7 @@ namespace ButtonViewStatic {
     main.spacing = 10;
     main.tag = "main";
     main.background = 0x7ddd;
-    vscrollbar.width = 15;
+    vscrollbar.width = 7;
     vscrollbar.minimum = -10;
     vscrollbar.maximum = 100;
     vscrollbar.value = 10;

@@ -28,15 +28,15 @@ void BFocusManager::applyMargins(BView& view, int16_t& x, int16_t& y, int16_t& w
 }
 
 void BFocusManager::applyPadding(BPanel& panel, int16_t& x, int16_t& y, int8_t sign) {
-  x += sign * panel.padding.left;
-  y += sign * panel.padding.top;
+  x += sign * (panel.padding.left + panel.border);
+  y += sign * (panel.padding.top + panel.border);
 }
 
 void BFocusManager::applyPadding(BPanel& panel, int16_t& x, int16_t& y, int16_t& width, int16_t& height) {
-  x += panel.padding.left;
-  y += panel.padding.top;
-  width -= panel.padding.left + panel.padding.right;
-  height -= panel.padding.top + panel.padding.bottom;
+  x += panel.padding.left + panel.border;
+  y += panel.padding.top + panel.border;
+  width -= panel.padding.left + panel.padding.right + panel.border * 2;
+  height -= panel.padding.top + panel.padding.bottom + panel.border * 2;
 }
 
 bool BFocusManager::findViewHelper(BView& view, int16_t x, int16_t y, BView*& target) {  

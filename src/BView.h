@@ -198,7 +198,7 @@ protected:
 
 public:
   BMargin padding;
-
+  bool border;
 protected:
   int16_t applyMinMax(int16_t val, int16_t minimum, int16_t maximum);    
   int16_t indexOf(BView& view);
@@ -209,7 +209,7 @@ public:
 
   template<size_t N>
   BPanel(BView* (&children)[N]) 
-    : _children(children, N, N), _needsLayout(true) {
+    : _children(children, N, N), _needsLayout(true), border(true) {
     focusable = false;
   }
 

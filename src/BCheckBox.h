@@ -56,6 +56,7 @@ public:
     width = 0;
     height = 0;
     spacing = 4;
+    border = false;
     _box.onClick += BButton::ClickEvent(this, &BCheckBoxBase::handleClick);
     _label.onMouse += BView::MouseEvent(this, &BCheckBoxBase::handleMouse);
   };
@@ -145,8 +146,8 @@ public:
   void handleMouse(BView* sender, BMouseInputEvent& event) {
     switch(event.type) {
       case BInputEvent::evMouseDown: {
-        _box.focus();
         focusManager().captureMouse(*sender);
+        _box.focus();
         _box.isDown(true);
         break;
       }
@@ -159,9 +160,11 @@ public:
         break;
       }
       case BInputEvent::evMouseMove: {
-        BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
-        bool hit = hitTest(pt.x, pt.y);
-        _box.isDown(hit);
+        if (focusManager().capturingView() == sender) {
+          BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
+          bool hit = hitTest(pt.x, pt.y);
+          _box.isDown(hit);
+        }
         break;
       }
     }

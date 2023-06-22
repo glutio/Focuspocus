@@ -8,7 +8,7 @@ struct BTheme {
   const int16_t focusColor = 0x0077;
   const int16_t focusBackground = 0xFF20;
   const int16_t boundingBoxColor = 0x00FF;
-  const int16_t scrollbarMinThumb = 25;
+  const int16_t scrollbarMinThumb = 15;
   const int16_t buttonRadius = 7;
 };
 

@@ -155,39 +155,35 @@ void BButton::handleMouse(BMouseInputEvent& event) {
   switch (event.type) {
     case BInputEvent::evMouseDown: 
     {     
+      focusManager().captureMouse(*this);        
       focus();
-      if (!_isDown) {
-        _isDown = true;        
-        if (_animate) {
-          dirty();
-        }
-        focusManager().captureMouse(*this);        
+      _isDown = true;        
+      if (_animate) {
+        dirty();
       }
       break;
     }
     case BInputEvent::evMouseUp:
     {
       focusManager().releaseMouse(*this);
-      auto x = event.x; auto y = event.y;
-      if(_isDown)
-      {
-        _isDown = false;
-        if (_animate) {
-          dirty();
-        }
+      _isDown = false;
+      if (_animate) {
+        dirty();
       }
       BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
-      bool isDown = hitTest(pt.x, pt.y);
-      onClick(this, isDown);
+      bool hit = hitTest(pt.x, pt.y);
+      if (hit) {
+        onClick(this, hit);
+      }     
       break;
     }
     case BInputEvent::evMouseMove:
     {
-      if (event.buttonDown && focusManager().capturingView() == this) {
+      if (focusManager().capturingView() == this) {
         BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
-        auto isDown = hitTest(pt.x, pt.y);
-        if (isDown != _isDown) {
-          _isDown = isDown;
+        bool hit = hitTest(pt.x, pt.y);      
+        if (hit != _isDown) {
+          _isDown = hit;
           if (_animate) {
             dirty();
           }
@@ -294,7 +290,7 @@ BPanel::ReverseIterator BPanel::rend() {
 }
 
 BPanel::BPanel(BView* children[], unsigned count, unsigned capacity) 
-  : _children(children, count, capacity), _needsLayout(true) {
+  : _children(children, count, capacity), _needsLayout(true), border(true) {
   focusable = false;
 }
 
@@ -308,8 +304,10 @@ void BPanel::remove(BView* view) {
 
 void BPanel::draw(BGraphics& g) {
   BView::draw(g);  
-  g.fillRect(1, 1, g.width-2, g.height-2, background);
-  g.drawRect(0, 0, g.width, g.height, color);
+  g.fillRect(border, border, g.width - border * 2, g.height - border * 2, background);
+  if (border) {
+    g.drawRect(0, 0, g.width, g.height, color);
+  }
   for(BView& v : *this) {
     v.dirty();
   }
