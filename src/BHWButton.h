@@ -11,8 +11,7 @@ protected:
   bool _debouncing;
 public:
   // declare event
-  typedef EventDelegate<BDigitalPin, bool> ChangeEvent;
-  EventSource<ChangeEvent> onChange;
+  BEVENT(Change, BDigitalPin, bool)
 
 public:
   // initialize DigitalPin object

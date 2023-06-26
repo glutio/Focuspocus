@@ -5,7 +5,7 @@
 #include "BGraphics.h"
 #include "BMouse.h"
 #include "BTheme.h"
-#include "Eventfun.h"
+#include "BEvent.h"
 
 #ifndef min
 #define min(a,b) ((a)<(b)?(a):(b))
@@ -100,15 +100,17 @@ struct BFocusInputEvent: BCommandInputEvent {
 
 class BFocusManager {
 public:
-  typedef EventDelegate<BFocusManager, bool> AfterRenderEvent;
-  EventSource<AfterRenderEvent> onAfterRender;
+  typedef BEventDelegate<BFocusManager, bool> AfterRenderEvent;
+  BEventSource<AfterRenderEvent> onAfterRender;
+  raiseOnAfterRender() {
+    onAfterRender(this, true);
+  }
 
-  typedef EventDelegate<BFocusManager, bool> TimerTickEvent;
-  EventSource<TimerTickEvent> onTimerTick;
+  BEVENT(TimerTick, BFocusManager, bool)
 
 protected:
   BList<BPanel*> _stack;
-  BGraphics& _g;
+  BGraphics _g;
   BView* _focused;
   BView* _capture;
   bool _isDirty;
@@ -130,21 +132,22 @@ protected:
   void focusLastHelper(BView& view, BView*& control);
 
   void applyOffset(BView& view, int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyOffset(BView& view, int16_t& x, int16_t& y, uint16_t& width, uint16_t& height);
+  void applyOffset(BView& view, BGraphics& g);
   void applyMargins(BView& view, int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyMargins(BView& view, int16_t& x, int16_t& y, uint16_t& width, uint16_t& height);
+  void applyMargins(BView& view, BGraphics& g);
   void applyPadding(BPanel& panel, int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyPadding(BPanel& panel, int16_t& x, int16_t& y, uint16_t& width, uint16_t& height);
+  void applyPadding(BPanel& panel, BGraphics& g);
 
   void drawPass(BView& view, BGraphics& g);
-  void layoutPass(BPanel& panel);
+  void measurePass(BView& view, uint16_t availableWidth, uint16_t availableHeight);
+  void layoutPass(BView& view);
 
   void touchTree(BView& view);
 
   void broadcastCommandHelper(BView& view, BCommandInputEvent& event);
 public:
   template<size_t N>
-  BFocusManager(BGraphics& g, BView* (&stack)[N], BTheme& theme) 
+  BFocusManager(BGraphicsApi& g, BView* (&stack)[N], BTheme& theme) 
     : _g(g), _stack(stack, N, N), _theme(&theme), _msTimer(0) {
     for(int i = _stack.Length() - 1; i >= 0; --i) {
       if (!_stack[i]) {

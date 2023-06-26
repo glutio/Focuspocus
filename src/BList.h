@@ -36,10 +36,7 @@ public:
         return;
       }
 
-      if (!_capacity) {
-        _capacity = 1;
-      }
-      Resize(_capacity * 2);
+      Resize(_capacity ? _capacity * 2 : 2);
     }
 
     _array[_count++] = item;
@@ -91,7 +88,7 @@ public:
   void Resize(unsigned capacity) {
     if (!_owner) {
       return;
-    }
+    }    
     T* array = new T[capacity];
     for (unsigned i = 0; i < min(capacity, _capacity); ++i) {
       array[i] = _array[i];

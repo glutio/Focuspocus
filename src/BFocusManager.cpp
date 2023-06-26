@@ -7,12 +7,12 @@ void BFocusManager::applyOffset(BView& view, int16_t& x, int16_t& y, int8_t sign
   y += sign * view.y;
 }
 
-void BFocusManager::applyOffset(BView& view, int16_t& x, int16_t& y, uint16_t& width, uint16_t& height) {
-  x += view.x;
-  y += view.y;
+void BFocusManager::applyOffset(BView& view, BGraphics& g) {
+  g.x += view.x;
+  g.y += view.y;
 
-  width = view.actualWidth + view.margin.left + view.margin.right;
-  height = view.actualHeight + view.margin.top + view.margin.bottom;
+  g.width = view.actualWidth + view.margin.left + view.margin.right;
+  g.height = view.actualHeight + view.margin.top + view.margin.bottom;
 }
 
 void BFocusManager::applyMargins(BView& view, int16_t& x, int16_t& y, int8_t sign) {
@@ -20,11 +20,11 @@ void BFocusManager::applyMargins(BView& view, int16_t& x, int16_t& y, int8_t sig
   y += sign * view.margin.top;
 }
 
-void BFocusManager::applyMargins(BView& view, int16_t& x, int16_t& y, uint16_t& width, uint16_t& height) {
-  x += view.margin.left;
-  y += view.margin.top;
-  width -= view.margin.left + view.margin.right;
-  height -= view.margin.top + view.margin.bottom;
+void BFocusManager::applyMargins(BView& view, BGraphics& g) {
+  g.x += view.margin.left;
+  g.y += view.margin.top;
+  g.width -= view.margin.left + view.margin.right;
+  g.height -= view.margin.top + view.margin.bottom;
 }
 
 void BFocusManager::applyPadding(BPanel& panel, int16_t& x, int16_t& y, int8_t sign) {
@@ -32,15 +32,15 @@ void BFocusManager::applyPadding(BPanel& panel, int16_t& x, int16_t& y, int8_t s
   y += sign * (panel.padding.top + panel.border);
 }
 
-void BFocusManager::applyPadding(BPanel& panel, int16_t& x, int16_t& y, uint16_t& width, uint16_t& height) {
-  x += panel.padding.left + panel.border;
-  y += panel.padding.top + panel.border;
-  width -= panel.padding.left + panel.padding.right + panel.border * 2;
-  height -= panel.padding.top + panel.padding.bottom + panel.border * 2;
+void BFocusManager::applyPadding(BPanel& panel, BGraphics& g) {
+  g.x += panel.padding.left + panel.border;
+  g.y += panel.padding.top + panel.border;
+  g.width -= panel.padding.left + panel.padding.right + panel.border * 2;
+  g.height -= panel.padding.top + panel.padding.bottom + panel.border * 2;
 }
 
 bool BFocusManager::findViewHelper(BView& view, int16_t x, int16_t y, BView*& target) {  
-  if (view.hitTest(x - view.x, y - view.y)) {
+  if (view.hitTest(x - view.x - view.margin.left, y - view.y - view.margin.top)) {
     target = &view;
     BPanel* panel = view.asPanel();
     if (panel) {
@@ -59,8 +59,8 @@ bool BFocusManager::findViewHelper(BView& view, int16_t x, int16_t y, BView*& ta
 }
 
 void BFocusManager::mapScreenToViewHelper(BView& view, int16_t& x, int16_t& y) {
-  x -= view.x;
-  y -= view.y; 
+  applyMargins(view, x, y, -1);
+  applyOffset(view, x, y, -1);
   BPanel* parent = view.parent();
   while(parent) {
     BPanel& panel = *parent;
@@ -72,8 +72,8 @@ void BFocusManager::mapScreenToViewHelper(BView& view, int16_t& x, int16_t& y) {
 }
 
 void BFocusManager::mapViewToScreenHelper(BView& view, int16_t& x, int16_t& y) {
-  x += view.x;
-  y += view.y; 
+  applyMargins(view, x, y);
+  applyOffset(view, x, y);
   BPanel* parent = view.parent();
   while(parent) {
     BPanel& panel = *parent;
@@ -85,7 +85,7 @@ void BFocusManager::mapViewToScreenHelper(BView& view, int16_t& x, int16_t& y) {
 }
 
 BPanel* BFocusManager::root() {
-  if (_stack.Length()) {
+  if (_stack.Length()) {    
     return _stack[_stack.Length() - 1];
   }
 
@@ -93,10 +93,10 @@ BPanel* BFocusManager::root() {
 }
 
 void BFocusManager::touchTree(BView& view) {
-  view.dirty();
+  view._isDirty = true;
   BPanel* panel = view.asPanel();
   if (panel) {
-    panel->dirtyLayout();
+    panel->_needsLayout = true;
     for(BView& v : *panel) {      
       touchTree(v);
     }
@@ -107,36 +107,19 @@ void BFocusManager::layoutRoot() {
   auto r = root();
   if (r) {
     BPanel& panel = *r;
-    panel._focusManager = this;
     if (panel.width < 0) {
       panel.actualWidth = _g.width - panel.margin.left - panel.margin.right;
-      if (panel.actualWidth < panel.minWidth) {
-        panel.actualWidth = panel.minWidth;
-      }
-      else if (panel.actualWidth > panel.maxWidth) {
-        panel.actualWidth = panel.maxWidth;
-      }
+      panel.actualWidth = panel.applyMinMax(panel.actualWidth, panel.minWidth, panel.maxWidth);
     }
-    else {
-      panel.actualWidth = panel.width;
-    }
-    panel.x = (_g.width - panel.actualWidth) / 2;
-
+    panel.x = (_g.width - panel.actualWidth - panel.margin.left - panel.margin.right) / 2;
+    
     if (panel.height < 0) {
       panel.actualHeight = _g.height - panel.margin.top - panel.margin.bottom;
-      if (panel.actualHeight < panel.minHeight) {
-        panel.actualHeight = panel.minHeight; 
-      }
-      else if (panel.actualHeight > panel.maxHeight) {
-        panel.actualHeight = panel.maxHeight;
-      }
+      panel.actualHeight = panel.applyMinMax(panel.actualHeight, panel.minHeight, panel.maxHeight);
     }
-    else {
-      panel.actualHeight = panel.height;
-    }
-    panel.y = (_g.height - panel.actualHeight) / 2;
+    panel.y = (_g.height - panel.actualHeight - panel.margin.top - panel.margin.bottom) / 2;
 
-    touchTree(*r);
+    _isDirty = true;
   }
 }
 
@@ -406,34 +389,51 @@ BView* BFocusManager::findView(BMouseInputEvent& event) {
   return target;
 }
 
-void BFocusManager::layoutPass(BPanel& panel) {
-  if (panel.isDirtyLayout()) {        
-    panel.layout();
-    panel.clearDirtyLayout();
-  }
-
-  for(BView& v : panel) {
-    BPanel* child = v.asPanel();
-    if (child) {
-      layoutPass(*child);
-    }
-  }
-}
-
 void BFocusManager::drawPass(BView& view, BGraphics& g) {
+  BGraphics gv(g);
+  applyOffset(view, gv);
+  applyMargins(view, gv);
   if (view.isDirty()) {  
-    view.draw(g);
-    view.clearDirty();
+    view.draw(gv);
   }
 
   BPanel* panel = view.asPanel();
   if (panel) {
+    applyPadding(*panel, gv);
     for(BView& v : *panel) {
-      BGraphics gg(g);
-      applyPadding(*panel, gg.x, gg.y, gg.width, gg.height);
-      applyOffset(v, gg.x, gg.y, gg.width, gg.height);
-      applyMargins(v, gg.x, gg.y, gg.width, gg.height);
-      drawPass(v, gg);
+      if (panel->isDirty()) {
+        v.dirty();
+      }
+      drawPass(v, gv);
+    }
+  }
+  view.clearDirty();
+}
+
+void BFocusManager::measurePass(BView& view, uint16_t availableWidth, uint16_t availableHeight) {
+  if (view.isDirtyLayout()) {    
+    view.measure(availableWidth, availableHeight);
+  }
+  else {
+    BPanel* panel = view.asPanel();
+    if (panel) {
+      for(BView& child : *panel) {
+        measurePass(child, panel->clientWidth(), panel->clientHeight());
+      }
+    }
+  }
+}
+
+void BFocusManager::layoutPass(BView& view) {  
+  if (view.isDirtyLayout()) {
+    view.layout();
+  } 
+  else {
+    BPanel* panel = view.asPanel();
+    if (panel) {
+      for(BView& child : *panel) {
+        layoutPass(child);
+      }
     }
   }
 }
@@ -442,23 +442,27 @@ void BFocusManager::loop() {
   BPanel* panel = root();
   if (panel) {
     if (_needsRootLayout) {
+      panel->_focusManager = this;
+      touchTree(*panel);
       _needsRootLayout = false;
-      layoutRoot();
+      _needsLayout = true;
     }
-    if (_needsLayout) {
-      do {
-        _needsLayout = false;
-        layoutPass(*panel);
-      } while (_needsLayout);
+    
+    for(auto i = 0; i < 20 && _needsLayout; ++i) {
+      _needsLayout = false;      
+      measurePass(*panel, _g.width, _g.height);      
+      if (panel->isDirtyLayout()) {
+        layoutRoot();
+      }
+      layoutPass(*panel);
     }
+
     if (_isDirty) {
-      BGraphics g(_g);
-      applyOffset(*panel, g.x, g.y, g.width, g.height);
-      applyMargins(*panel, g.x, g.y, g.width, g.height);
-      drawPass(*panel, g);
+      drawPass(*panel, _g);
       _isDirty = false;
       onAfterRender(this, true);
     }
+
     auto ms = millis();
     if (ms - _msTimer >= 16) {
       _msTimer = ms;
@@ -491,10 +495,10 @@ void BFocusManager::dirtyLayout() {
 
 void BFocusManager::push(BPanel& panel) {
   _stack.Add(&panel);
-  layoutRoot();
+  _needsRootLayout = true;
 }
 
 void BFocusManager::pop() {
   _stack.Remove(_stack.Length() - 1);
-  layoutRoot();
+  _needsRootLayout = true;
 }

@@ -11,14 +11,14 @@ void BView::handleEvent(BInputEvent& event) {
 }
 
 BView::BView() 
-: x(0), y(0), width(-1), height(-1), 
+: x(0), y(0), width(0), height(0), 
   minWidth(0), minHeight(0), maxWidth(-1), maxHeight(-1), 
   actualWidth(0), actualHeight(0),
   _isDirty(true), focusable(true) {}
 
 bool BView::hitTest(int16_t ptX, int16_t ptY) {
-  auto hit = ptX >= margin.left && ptX <= margin.left + actualWidth &&
-             ptY >= margin.top && ptY <= margin.top + actualHeight;
+  auto hit = ptX >= 0 && ptX <= actualWidth &&
+             ptY >= 0 && ptY <= actualHeight;
   return hit;
 }
 
@@ -36,9 +36,7 @@ BPanel* BView::parent() {
 
 void BView::dirty() {
   _isDirty = true;
-  if (_parent) {
-    _parent->focusManager().dirty();
-  }
+  focusManager().dirty();
 }
 
 bool BView::isDirty() {
@@ -47,6 +45,27 @@ bool BView::isDirty() {
 
 void BView::clearDirty() {
   _isDirty = false;
+}
+
+void BView::dirtyLayout() {
+  _needsLayout = true;
+  focusManager().dirtyLayout();
+
+  if (!width || !height) {
+    BPanel* p = parent();
+    while(p) {
+      p->_needsLayout = true;
+      p = p->parent();
+    }
+  }
+}
+
+bool BView::isDirtyLayout() {
+  return _needsLayout;
+}
+
+void BView::clearDirtyLayout() {
+  _needsLayout = false;
 }
 
 void BView::focus() {
@@ -62,7 +81,6 @@ bool BView::isFocused() {
 BFocusManager& BView::focusManager() {
   BPanel* panel = asPanel();
   if (panel) {
-    Serial.println("hi");
     return panel->focusManager();
   }
 
@@ -78,6 +96,7 @@ void BView::measure(uint16_t availableWidth,uint16_t availableHeight) {
 }
 
 void BView::layout() {
+  clearDirtyLayout();
 }
 
 void BView::draw(BGraphics& g) {
@@ -189,6 +208,34 @@ void BButton::handleMouse(BMouseInputEvent& event) {
   }
 }
 
+void BButton::measure(uint16_t availableHeight, uint16_t availableWidth) {
+  if (!width || !height) {
+    int16_t themeWidth = focusManager().theme().buttonWidth;
+    auto themeHeight = focusManager().theme().buttonHeight;
+    if (text) {
+      BRect rt = focusManager().getGraphics().getTextBounds(text, viewFontSize(*this));
+      if (!width) {
+        actualWidth = rt.width + focusManager().theme().buttonPadding * 2;
+      }
+      if (!height) {
+        actualHeight = rt.height + focusManager().theme().buttonPadding * 2;
+      }
+    }
+    if (!width && actualWidth < themeWidth) {
+      actualWidth = themeWidth;
+    }
+    if (!height && actualHeight < themeHeight) {
+      actualHeight = themeHeight;
+    }
+    if (!width) {
+      actualWidth = max(minWidth, min(maxWidth, actualWidth));
+    }
+    if (!height) {
+      actualHeight = max(minHeight, min(maxHeight, actualHeight)); 
+    }
+  }
+}
+
 void BButton::draw(BGraphics& g) {
   BView::draw(g);
   auto parentBackground = viewBackground(*parent());
@@ -284,11 +331,6 @@ BPanel::ReverseIterator BPanel::rend() {
     return ReverseIterator(*this, -1);
 }
 
-BPanel::BPanel(BView* children[], unsigned count, unsigned capacity) 
-  : _children(children, count, capacity), _needsLayout(true), border(true) {
-  focusable = false;
-}
-
 void BPanel::add(BView* view) {
   _children.Add(view);
 }
@@ -298,14 +340,11 @@ void BPanel::remove(BView* view) {
 }
 
 void BPanel::draw(BGraphics& g) {
-  BView::draw(g);  
   g.fillRect(border, border, g.width - border * 2, g.height - border * 2, viewBackground(*this));
   if (border) {
     g.drawRect(0, 0, g.width, g.height, viewColor(*this));
   }
-  for(BView& v : *this) {
-    v.dirty();
-  }
+  BView::draw(g);  
 }
 
 int16_t BPanel::indexOf(BView& view) {
@@ -331,20 +370,8 @@ void BPanel::setParent(BPanel& parent) {
   BView::setParent(parent);
 }
 
-void BPanel::dirtyLayout() {
-  dirty();
-  _needsLayout = true;
-  if (_focusManager) {
-    _focusManager->dirtyLayout();
-  }
-}
-
-bool BPanel::isDirtyLayout() {
-  return _needsLayout;
-}
-
-void BPanel::clearDirtyLayout() {
-  _needsLayout = false;
+void BPanel::setViewParent(BView& view) {
+  view.setParent(*this);
 }
 
 BFocusManager& BPanel::focusManager() {
@@ -352,50 +379,135 @@ BFocusManager& BPanel::focusManager() {
 }
 
 void BPanel::touchView(BView& view) {
-  view.setParent(*this);
-  view.dirty();
+  view._isDirty = true;
   BPanel* panel = view.asPanel();
   if (panel) {
-    panel->_focusManager = _focusManager;
-    panel->dirtyLayout();
+    panel->_needsLayout = true;
   }
 }
 
 void BPanel::layout() {
   for(BView& view: *this) {
+    setViewParent(view);
     touchView(view);
-    measure(actualWidth, actualHeight);
-    view.actualWidth = view.width;
-    view.actualHeight = view.height;
+    if (view.width > 0) {
+      view.actualWidth = view.width;
+    }
+    if (view.height > 0) {
+      view.actualHeight = view.height;
+    }
     view.layout();
+  }
+  clearDirtyLayout();
+  dirty();
+}
+
+void BPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {  
+  int16_t minX = INT16_MAX, minY = INT16_MAX;
+  int16_t maxX = 0, maxY = 0;
+  for(BView& view : *this) {
+    setViewParent(view);      
+    view.measure(availableWidth - paddingWidth() - marginWidth(view), availableHeight - paddingHeight() - marginHeight(view));
+    if (width == 0 || height == 0) {
+      minX = min(view.x, minX);
+      minY = min(view.y, minY);
+      maxX = max(view.x + view.actualWidth + marginWidth(view), maxX);
+      maxY = max(view.y + view.actualHeight + marginHeight(view), maxY);
+    }
+    if (width == 0) {
+      actualWidth = max(minWidth, min(maxWidth, maxX - minX));      
+    }
+    if (height == 0) {
+      actualHeight = max(minHeight, min(maxHeight, maxY - minY));
+    }
   }
 }
 
-uint16_t BPanel::clientWidth() {
-  return actualWidth - padding.left - padding.right - border * 2;
+int16_t BPanel::clientWidth() {
+  return actualWidth - paddingWidth();
 };
 
-uint16_t BPanel::clientHeight() {
-  return actualHeight - padding.top - padding.bottom - border * 2;
+int16_t BPanel::clientHeight() {
+  return actualHeight - paddingWidth();
+}
+
+uint16_t BPanel::childrenCount() {
+  uint16_t ct = 0;
+  for(BView& view : *this) {
+    ++ct;
+  }
+  return ct;
+}
+
+void BStackPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {
+  int16_t finalSize;
+  int16_t len = 0;
+  int16_t w = 0, h = 0;
+  // uint16_t hmax = 0, wmax = 0;
+  for(BView& view : *this) {
+    setViewParent(view);
+    view.measure(availableWidth - paddingWidth() - marginWidth(view), availableHeight - paddingHeight() - marginHeight(view));
+    if (!width || !height) {
+      if (viewWidth(view) > 0 && viewHeight(view) > 0) {
+        ++len;
+      }
+      if (!width && viewWidth(view) > 0) {
+        if (orientation == B::horizontal) {
+          w += viewWidth(view) + marginWidth(view);
+          //hmax = max(hmax, view.actualHeight + marginHeight(view));
+        } else {
+          w = max(w, viewWidth(view) + marginWidth(view));
+          //hmax += view.actualHeight + marginHeight(view);
+        }
+      }
+      if (!height && viewHeight(view) > 0) {
+        if (orientation == B::horizontal) {
+          h = max(h, viewHeight(view) + marginHeight(view));
+          //wmax += view.actualWidth + marginWidth(view);
+        } else {
+          h += viewHeight(view) + marginHeight(view);
+         // wmax = max(wmax, view.actualWidth + marginWidth(view));
+        }
+      }
+    }
+  }
+
+  if (!width) {
+    if (orientation == B::horizontal) {
+      actualWidth = w + spacing * (len - 1) + paddingWidth();
+    } else {
+      actualWidth = w + paddingWidth();
+    }
+    actualWidth = max(minWidth, min(maxWidth, actualWidth));
+  }
+  if (!height) {
+    if (orientation == B::horizontal) {
+      actualHeight = h + paddingHeight();
+    } else {
+      actualHeight = h + spacing * (len - 1) + paddingHeight();
+    }
+    actualHeight = max(minHeight, min(maxHeight, actualHeight));
+  }
 }
 
 void BStackPanel::layout() {
-  if (orientation == horizontal) {
+  if (orientation == B::horizontal) {
     layoutHorizontal();
   }
   else {
     layoutVertical();
   }
+  clearDirtyLayout();
+  dirty();
 }
 
 void BStackPanel::layoutVertical() {
-  int16_t totalSize = clientHeight() - (spacing * (_children.Length() - 1));
+  int16_t len = 0;
   int16_t totalFactor = 0;
   int16_t fixedSize = 0;
 
   for(BView& view : *this) {
     touchView(view);
-    view.measure(clientWidth(), totalSize - fixedSize);
     if (view.height < 0) {
       totalFactor += abs(view.height);
       view.actualHeight = -1;
@@ -410,8 +522,17 @@ void BStackPanel::layoutVertical() {
     else if (view.width > 0) {
       view.actualWidth = view.width;
     }
+
+    if (view.actualHeight && view.actualWidth) {
+      ++len;
+    }
   }
 
+  if (!len) {
+    return;
+  }
+
+  int16_t totalSize = clientHeight() - (spacing * (len - 1));
   int16_t unitSize = (totalSize - fixedSize) / totalFactor;
   for(int i = 0; i < 10 * _children.Length(); ++i) {
     bool converged = true;
@@ -420,8 +541,6 @@ void BStackPanel::layoutVertical() {
         uint16_t proposedSize = abs(view.height) * unitSize - marginHeight(view);
         uint16_t minmaxSize = applyMinMax(proposedSize, view.minHeight, view.maxHeight);
         if (proposedSize != minmaxSize) {
-          Serial.print(view.tag); Serial.print(" ");
-          Serial.print(proposedSize); Serial.print(" "); Serial.println(minmaxSize);
           view.actualHeight = minmaxSize;
           fixedSize += minmaxSize + marginHeight(view);
           totalFactor -= abs(view.height);
@@ -444,20 +563,20 @@ void BStackPanel::layoutVertical() {
   }
 
   int16_t startPos = 0;
-  if (verticalAlignment == bottom) {
-    startPos = clientHeight() - totalSize - ((_children.Length() - 1) * spacing);
-  } else if (verticalAlignment == center) {
-    startPos = (clientHeight() - totalSize - ((_children.Length() -1) * spacing)) /2;
+  if (verticalAlignment == B::bottom) {
+    startPos = clientHeight() - totalSize - ((len - 1) * spacing);
+  } else if (verticalAlignment == B::center) {
+    startPos = (clientHeight() - totalSize - ((len -1) * spacing)) /2;
   }
 
   for(BView& view : *this) {
     view.y = startPos;
     startPos += view.actualHeight + marginHeight(view) + spacing;    
 
-    if (horizontalAlignment == right) {
+    if (horizontalAlignment == B::right) {
       view.x = clientWidth() - view.actualWidth - marginWidth(view);
-    } else if (horizontalAlignment == center) {
-      view.x = (clientWidth() - view.actualWidth - marginWidth(view)) /2;
+    } else if (horizontalAlignment == B::center) {
+      view.x = (clientWidth() - view.actualWidth - marginWidth(view)) / 2;
     }
 
     view.layout();
@@ -466,13 +585,12 @@ void BStackPanel::layoutVertical() {
 
 void BStackPanel::layoutHorizontal() {
   // compute size available for controls
-  int16_t totalSize = clientWidth() - (spacing * (_children.Length() - 1));
+  int16_t len = 0;
   int16_t totalFactor = 0; // sum of proportion factors
   int16_t fixedSize = 0; // sum of sizes of fixed-size controls
 
   for(BView& view : *this) {
     touchView(view);
-    view.measure(totalSize - fixedSize, clientHeight());
     if (view.width < 0) {
       totalFactor += abs(view.width);
       view.actualWidth = -1; // mark for auto layout     
@@ -488,8 +606,17 @@ void BStackPanel::layoutHorizontal() {
     else if (view.height > 0) {
       view.actualHeight = view.height;
     }
+
+    if (view.actualHeight && view.actualWidth) {
+      ++len;
+    }
+  }
+  
+  if (!len) {
+    return;
   }
 
+  int16_t totalSize = clientWidth() - (spacing * (len - 1));
   // unit of proportion
   int16_t unitSize = (totalSize - fixedSize) / totalFactor;
   // autosize controls, apply minmax, repeat until all minmax conditions are met, limit number of attempts
@@ -525,10 +652,10 @@ void BStackPanel::layoutHorizontal() {
 
   // compute render origin based on alignment
   int16_t startPos = 0;
-  if (horizontalAlignment == right) {
-    startPos = clientWidth() - totalSize - ((_children.Length() - 1) * spacing);
-  } else if (horizontalAlignment == center) {
-    startPos = (clientWidth() - totalSize - ((_children.Length() -1) * spacing)) / 2;
+  if (horizontalAlignment == B::right) {
+    startPos = clientWidth() - totalSize - ((len - 1) * spacing);
+  } else if (horizontalAlignment == B::center) {
+    startPos = (clientWidth() - totalSize - ((len - 1) * spacing)) / 2;
   }
 
   // position controls starting from origin
@@ -537,9 +664,9 @@ void BStackPanel::layoutHorizontal() {
     startPos += view.actualWidth + marginWidth(view) + spacing;    
 
     // position controls in the other dimension    
-    if (verticalAlignment == bottom) {
+    if (verticalAlignment == B::bottom) {
       view.y = clientHeight() - view.actualHeight - marginHeight(view);
-    } else if (verticalAlignment == center) {
+    } else if (verticalAlignment == B::center) {
       view.y = (clientHeight() - view.actualHeight - marginHeight(view)) /2;
     }
 

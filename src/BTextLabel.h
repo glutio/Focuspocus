@@ -6,19 +6,12 @@
 class BTextLabel : public BView, public BColorAware, public BFontAware
 {
 public:
-  enum Alignment {
-    top,
-    bottom,
-    center,
-    left,
-    right
-  };
-  Alignment horizontalAlignment;
-  Alignment verticalAlignment;
+  B::Alignment horizontalAlignment;
+  B::Alignment verticalAlignment;
   const char* text;
 public:
   BTextLabel();
-  virtual void measure(int16_t availableWidth, int16_t availableHeight);
+  virtual void measure(uint16_t availableWidth, uint16_t availableHeight);
   virtual void draw(BGraphics& g);
 };
 

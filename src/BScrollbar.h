@@ -5,13 +5,7 @@
 
 class BScrollbar: public BControl, public BColorAware {
 public:
-  enum Orientation {
-    vertical,
-    horizontal
-  };
-public:
-  typedef EventDelegate<BScrollbar, int16_t> ChangeEvent;
-  EventSource<ChangeEvent> onChange;
+  BEVENT(Change, BScrollbar, int16_t)
 
 protected:
   int16_t _oldX;
@@ -24,7 +18,7 @@ public:
   int16_t maximum;
   int16_t value;
   int16_t step;
-  Orientation orientation;
+  B::Orientation orientation;
 
 protected:
   void redrawThumb(int16_t pos);
@@ -40,7 +34,7 @@ public:
   virtual void draw(BGraphics& g);
   virtual void handleEvent(BInputEvent& event);
   virtual void layout();
-
+  virtual void measure(uint16_t availableWidth, uint16_t availableHeight);
 };
 
 #endif

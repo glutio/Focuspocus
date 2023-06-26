@@ -19,8 +19,10 @@
 #include "Adafruit_ILI9341.h"
 #include <Adafruit_FT6206.h>
 #include <Adafruit_SSD1306.h>
+#include "BAdafruitGraphics.h"
 #include "Focuspocus.h"
 #include "Bitmaps.h"
+#include "BPlane.h"
 
 // For the Adafruit shield, these are the default.
 #define TFT_DC 9
@@ -34,49 +36,142 @@ Adafruit_FT6206 ctp = Adafruit_FT6206();
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire);
 
-BGraphics _gTft(tft);
-BGraphics _gOled(display);
-BTheme theme;
+BAdafruitGraphics _gTft(tft);
+BAdafruitGraphics _gOled(display);
+BWinTheme theme;
 BBWTheme bwtheme;
 
 namespace ButtonViewStatic {
-  BButton button1;
-  BButton button2;
-  BView* rootContent[] { &button1, &button2 };
-  BStackPanel root(rootContent);  
+  BBitmapButton bitmapButton;
+  BButton buttonYes;
+  BButton buttonNo;
   
-  BButton _button1;
-  BButton _button2;
-  BView* _rootContent[] { &_button1, &_button2 };
-  BStackPanel _root(_rootContent);  
+  BView* buttonsContent[] = { &bitmapButton, &buttonYes, &buttonNo };
+  BStackPanel buttons(buttonsContent);
+
+  BCheckBox checkbox1;
+  BCheckBox checkbox2;
+  BRadioButton radio1;
+  BRadioButton radio2;
+
+  BView* checkboxLeftContent[] = { &checkbox1, &radio1 };
+  BStackPanel checkboxLeft(checkboxLeftContent);
+  BView* checkboxRightContent[] = { &checkbox2, &radio2 };
+  BStackPanel checkboxRight(checkboxRightContent);
+  BView* checkboxesContent[] { &checkboxLeft, &checkboxRight };
+  BStackPanel checkboxes(checkboxesContent);
+
+  BTextLabel label1;
+  BTextLabel label2;
+  BView* labelsContent[] { &label1, &label2 };
+  BStackPanel labels(labelsContent);
+  
+  BPlane plane;
+
+  BView* mainContent[] = { &buttons, &checkboxes, &labels, &plane };
+  BStackPanel main(mainContent);
+  BScrollbar hscrollbar;
+  BScrollbar vscrollbar;
+
+  BView* rootContent[] = {&main, &hscrollbar, &vscrollbar};
+  BPanel root(rootContent);
 
   void Initialize() {
-    root.tag = "root";
-    _root.tag = "_root";
-    root.maxHeight = 200;
-    root.maxWidth = 150;
-    root.padding(1);
-    root.orientation = BStackPanel::vertical;    
     //BView::showBoundingBox = true;
-    button1.text = "button";
-    button1.tag = "btn1";
-    button1.background = 0xF0F0;
-    button2.text = "button2";
-    button2.tag = "btn2";    
-    _root.padding(1);
-    _root.orientation = BStackPanel::vertical;    
-    _button1.text = "b1";
-    _button2.text = "b2";
+
+    bitmapButton.bitmap = buttonPixMap;
+    bitmapButton.mask = buttonAlphaMask;
+    bitmapButton.width = 89;
+    bitmapButton.height = 40;
+    bitmapButton.text = "fixed size";
+    bitmapButton.tag = "bmp";
+
+    buttonYes.height = -1;
+    buttonYes.text = "auto";
+    buttonYes.tag = "yes";
+    buttonYes.onClick += [](BButton* b, bool click)->void { if (click) { b->height*=2; b->dirtyLayout(); }};
+    buttonNo.height = -1;
+    buttonNo.text = "height";
+    buttonNo.tag = "no";
+    buttonNo.margin(10);
+
+    buttons.spacing = 5;
+    buttons.width = -1;
+    buttons.horizontalAlignment = B::center;
+    buttons.border = true;
+    buttons.padding(3);
+
+    checkbox1.text = "Left aligned";
+    checkbox2.text = "Right aligned";
+    checkbox2.alignment = B::right;
+
+    radio1.text = "Option 1";
+    radio2.text = "Option 2";
+    radio2.alignment = B::right;
+
+    checkboxLeft.orientation = B::vertical;
+    checkboxLeft.width = -1;
+    checkboxLeft.spacing = 5;
+    checkboxRight.orientation = B::vertical;
+    checkboxRight.width = -1;
+    checkboxRight.spacing = 5;
+    checkboxRight.horizontalAlignment = B::right;
+
+    checkboxes.width = -1;
+    checkboxes.padding(3);
+    checkboxes.border = true;
+
+    label1.text = "use color";
+    label1.fontColor = 0xa0b6;
+    label1.fontSize = 2;
+    label1.background = 0xa69d;
+    label2.text = "and font";
+    label2.fontColor = 0xe361;
+    label2.fontSize = 3;
+    label2.background = 0xa69d;
+    labels.orientation = B::vertical;
+    labels.spacing = 5;
+    labels.background = 0xa69d;
+    labels.border = true;
+    labels.width = -1;
+
+    plane.margin(20);
+    plane.width = 50;
+    plane.height = 50;
+
+    main.spacing = 10;
+    main.orientation = B::vertical;
+    main.width = _gTft.displayWidth() - theme.scrollbarSize - 5;
+    main.height = _gTft.displayHeight() - theme.scrollbarSize - 5;
+    main.horizontalAlignment = B::center;
+    
+    hscrollbar.width = main.width;
+    hscrollbar.orientation = B::horizontal;
+    hscrollbar.y = _gTft.displayHeight() - theme.scrollbarSize - 1;
+    hscrollbar.minimum = -90; 
+    hscrollbar.maximum = 90;
+    hscrollbar.step = 20;
+    hscrollbar.onChange += [](BScrollbar*, int16_t value) -> void { plane.hidePlane(); plane.transverseAngle = value; plane.dirtyLayout(); };
+    vscrollbar.height = _gTft.displayHeight();
+    vscrollbar.x = _gTft.displayWidth() - theme.scrollbarSize - 1;
+    vscrollbar.orientation = B::vertical;
+    vscrollbar.minimum = -90; 
+    vscrollbar.maximum = 90;
+    vscrollbar.step = 20;
+    vscrollbar.onChange += [](BScrollbar*, int16_t value) -> void { plane.hidePlane(); plane.coronalAngle = value; plane.dirtyLayout(); };
+
+    root.width = -1;
+    root.height = -1;
   }  
 }
 
-BView* stack[] = { &ButtonViewStatic::root };
-BView* _stack[] = {&ButtonViewStatic::_root };
+BView* stack[] = { &ButtonViewStatic::root, 0 };
+//BView* _stack[] = {&ButtonViewStatic::_root };
 
-BFocusManager fm(_gOled, _stack, bwtheme);
+//BFocusManager fm(_gOled, _stack, bwtheme);
 BFocusManager fm2(_gTft, stack, theme);
 BMouse mouse(fm2);
-BKeyboard kbd(fm);
+//BKeyboard kbd(fm);
 BKeyboard kbd2(fm2);
 
 #define LEFT_PIN 7
@@ -93,19 +188,19 @@ void onChange(BDigitalPin* sender, bool state) {
   if (sender->pin() == LEFT_PIN) {
     //kbd.sendKey(BKeyboard::kbLeft, !state);
     if (!state) {
-      fm.focusPrev();      
+     // fm.focusPrev();      
       fm2.focusPrev();
     }
   } else if (sender->pin() == RIGHT_PIN) {
     if (!state) {
-      fm.focusNext();
+     // fm.focusNext();
       Serial.print("hi");
-      Serial.print(fm.focusedView()->tag);
+      //Serial.print(fm.focusedView()->tag);
       fm2.focusNext();
     }
     //kbd.sendKey(BKeyboard::kbRight, !state);
   } else if (sender->pin() == CLICK_PIN) {
-    kbd.sendKey(BKeyboard::kbEnter, !state);
+    //kbd.sendKey(BKeyboard::kbEnter, !state);
     kbd2.sendKey(BKeyboard::kbEnter, !state);
   }
 }
@@ -113,11 +208,11 @@ void onChange(BDigitalPin* sender, bool state) {
 void clkChange(BDigitalPin* pin, bool state) {
   if (!state) {
   if (!encoderDT) {
-    fm.focusNext();
+  //  fm.focusNext();
     Serial.println("Rotated clockwise ⏩");
   }
   if (encoderDT) {
-    fm.focusPrev();
+  //  fm.focusPrev();
     Serial.println("Rotated counterclockwise ⏪");
   }  
 
@@ -144,7 +239,7 @@ void setup() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3D);
   display.display();
   ButtonViewStatic::Initialize();
-  fm.onAfterRender += [](BFocusManager*,bool) -> void { display.display(); };
+  //fm.onAfterRender += [](BFocusManager*,bool) -> void { display.display(); };
 }
 
 
@@ -171,7 +266,7 @@ void loop(void) {
   encoderDT.update();
   encoderCLK.update();
 
-  fm.loop();
+  //fm.loop();
   fm2.loop();
   //display.display();
 }

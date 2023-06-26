@@ -3,7 +3,7 @@
 #include "BScrollbar.h"
 
 BScrollbar::BScrollbar() 
-  : minimum(0), maximum(0), value(0), _thumbPos(0), _thumbSize(0), orientation(horizontal), step(1) {
+  : minimum(0), maximum(0), value(0), _thumbPos(0), _thumbSize(0), orientation(B::horizontal), step(1) {    
 }
 
 void BScrollbar::handleEvent(BInputEvent& event) {
@@ -18,7 +18,7 @@ void BScrollbar::handleEvent(BInputEvent& event) {
 bool BScrollbar::thumbHitTest(BMouseInputEvent& event) {
   BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
   BRect rt = clientRect();
-  if (orientation == horizontal) {
+  if (orientation == B::horizontal) {
     return pt.x >= _thumbPos && pt.x <= _thumbPos + _thumbSize && pt.y >= rt.y && pt.y <= rt.y + rt.height;
   } else {
     return pt.y >= _thumbPos && pt.y <= _thumbPos + _thumbSize && pt.x >= rt.x && pt.x <= rt.x + rt.width;
@@ -40,7 +40,7 @@ void BScrollbar::moveThumb(BMouseInputEvent& event) {
   int val;
   int16_t pos;
   auto rt = clientRect();
-  if (orientation == horizontal) {
+  if (orientation == B::horizontal) {
     auto scrollArea = rt.width - _thumbSize;
     pos = min(rt.x + scrollArea, max(_thumbPos + (event.x - _oldX), rt.x));
     float normalizedThumbPos = pos * 1.0 / scrollArea;
@@ -62,14 +62,15 @@ void BScrollbar::moveThumb(BMouseInputEvent& event) {
     }
   }
 
-  BGraphics g = focusManager().getGraphics(*this);
-  hideThumb(g);
-  _thumbPos = pos;
-  showThumb(g);
   if (value != val) {
     value = val;
     onChange(this, value);
   }
+  BGraphics g = focusManager().getGraphics(*this);
+  hideThumb(g);
+  _thumbPos = pos;
+  showThumb(g);
+  focusManager().raiseOnAfterRender();
 }
 
 void BScrollbar::handleMouse(BMouseInputEvent& event) {
@@ -85,7 +86,7 @@ void BScrollbar::handleMouse(BMouseInputEvent& event) {
         auto pt = focusManager().mapScreenToView(*this, event.x, event.y);
         BKeyboardInputEvent kbdEvent;
         kbdEvent.type = BInputEvent::evKeyDown;
-        if (orientation == horizontal) {
+        if (orientation == B::horizontal) {
           if (pt.x < _thumbPos) {
             kbdEvent.code = BKeyboard::kbLeft;
           }
@@ -121,27 +122,33 @@ void BScrollbar::handleMouse(BMouseInputEvent& event) {
 void BScrollbar::handleKeyboard(BKeyboardInputEvent& event) {
   switch (event.type) {
     case BInputEvent::evKeyDown: {
-      if ((orientation == horizontal && (event.code == BKeyboard::kbLeft || event.code == BKeyboard::kbRight)) ||
-          (orientation == vertical   && (event.code == BKeyboard::kbUp   || event.code == BKeyboard::kbDown))) 
+      if ((orientation == B::horizontal && (event.code == BKeyboard::kbLeft || event.code == BKeyboard::kbRight)) ||
+          (orientation == B::vertical   && (event.code == BKeyboard::kbUp   || event.code == BKeyboard::kbDown))) 
       {
+        int16_t val;
         switch (event.code) {
           case BKeyboard::kbLeft: 
-            value = max(minimum, value - step);
+            val = max(minimum, value - step);
             break;
           case BKeyboard::kbRight:
-              value = min(maximum, value + step);
+            val = min(maximum, value + step);
             break;
           case BKeyboard::kbUp: 
-            value = max(minimum, value - step);
+            val = max(minimum, value - step);
             break;
           case BKeyboard::kbDown:
-              value = min(maximum, value + step);
+            val = min(maximum, value + step);
             break;
+        }
+        if (value != val) {
+          value = val;
+          onChange(this, value);
         }
         BGraphics g = focusManager().getGraphics(*this);
         hideThumb(g);
         layout();
         showThumb(g);
+        focusManager().raiseOnAfterRender();
       }
     }
     break;
@@ -152,7 +159,7 @@ void BScrollbar::hideThumb(BGraphics& g) {
   BRect rt = clientRect();
   auto b = (isFocused()) ? focusManager().theme().focusBackground : viewBackground(*this);  
   auto radius = focusManager().theme().buttonRadius;
-  if (orientation == horizontal) {
+  if (orientation == B::horizontal) {
     g.fillRoundRect(_thumbPos, rt.y, _thumbSize, rt.height, radius, b);
   } else {
     g.fillRoundRect(rt.x, _thumbPos, rt.width, _thumbSize, radius, b);
@@ -163,7 +170,7 @@ void BScrollbar::showThumb(BGraphics& g) {
   BRect rt = clientRect();
   auto c = (isFocused()) ? focusManager().theme().focusColor : viewColor(*this);
   auto radius = focusManager().theme().buttonRadius;
-  if (orientation == horizontal) {
+  if (orientation == B::horizontal) {
     g.fillRoundRect(_thumbPos, rt.y, _thumbSize, rt.height, radius, c);
   } else {
     g.fillRoundRect(rt.x, _thumbPos, rt.width, _thumbSize, radius, c);
@@ -178,9 +185,8 @@ void BScrollbar::draw(BGraphics& g) {
   auto radius = focusManager().theme().buttonRadius;
   g.fillRoundRect(0, 0, actualWidth, actualHeight, radius, b);
   g.drawRoundRect(0, 0, actualWidth, actualHeight, radius, c);
-
   BRect rt = clientRect();
-  if (orientation == horizontal) {
+  if (orientation == B::horizontal) {
     g.fillRoundRect(_thumbPos, rt.y, _thumbSize, rt.height, radius, c);
   } else {    
     g.fillRoundRect(rt.x, _thumbPos, rt.width, _thumbSize, radius, c);
@@ -193,7 +199,7 @@ void BScrollbar::layout() {
     auto rt = clientRect();
     auto minThumb = focusManager().theme().scrollbarMinThumb;
     int16_t scrollArea;
-    if (orientation == horizontal) {    
+    if (orientation == B::horizontal) {    
       _thumbSize = min(rt.width, max(minThumb, step * 1.0 / range * rt.width));
       scrollArea = rt.width - _thumbSize;
       _thumbPos = rt.x;     
@@ -206,6 +212,16 @@ void BScrollbar::layout() {
     _thumbPos += abs((int32_t)value - minimum) * scrollArea / range;
   } else {
     _thumbPos = 0;
-    _thumbSize = 0;
+    _thumbSize = 0;    
+  }  
+  clearDirtyLayout();
+  dirty();
+}
+
+void BScrollbar::measure(uint16_t availableWidth, uint16_t availableHeight) {
+  if (orientation == B::horizontal && !height) {
+    actualHeight = focusManager().theme().scrollbarSize;
+  } else if (orientation == B::vertical && !width) {
+    actualWidth = focusManager().theme().scrollbarSize;
   }
 }

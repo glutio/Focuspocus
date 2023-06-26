@@ -2,11 +2,12 @@
 #include "BTextLabel.h"
 #include "BFocusManager.h"
 
-BTextLabel::BTextLabel() : horizontalAlignment(left), verticalAlignment(top), text(0) {
+BTextLabel::BTextLabel() : horizontalAlignment(B::left), verticalAlignment(B::top), text(0) {
   focusable = false;
 }
 
-void BTextLabel::measure(int16_t availableWidth, int16_t availableHeight) {
+void BTextLabel::measure(uint16_t availableWidth, uint16_t availableHeight) {
+  BView::measure(availableWidth, availableHeight);
   if (!width || !height) {
     BGraphics g = focusManager().getGraphics();
     BRect rt = g.getTextBounds(text, viewFontSize(*this));
@@ -24,14 +25,14 @@ void BTextLabel::draw(BGraphics& g) {
   BRect rt = g.getTextBounds(text, viewFontSize(*this));
   int16_t x = 0;
   int16_t y = 0;
-  if (horizontalAlignment == right) {    
+  if (horizontalAlignment == B::right) {    
     x = g.width - rt.width;  
-  } else if (horizontalAlignment == center) {
+  } else if (horizontalAlignment == B::center) {
     x = (g.width - rt.width) / 2;
   }
-  if (verticalAlignment == bottom) {    
+  if (verticalAlignment == B::bottom) {    
     y = g.height - rt.height;  
-  } else if (verticalAlignment == center) {
+  } else if (verticalAlignment == B::center) {
     y = (g.height - rt.height) / 2;
   }
   g.fillRect(1, 1, g.width - 2, g.height - 2, viewBackground(*this));

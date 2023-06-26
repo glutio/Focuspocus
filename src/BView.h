@@ -2,7 +2,7 @@
 #define __BVIEW_H__
 
 #include "BList.h"
-#include "Eventfun.h"
+#include "BEvent.h"
 #include "BNullable.h"
 
 using namespace Buratino;
@@ -20,8 +20,8 @@ class BControl;
 struct BRect {
   int16_t x;
   int16_t y;
-  uint16_t width;
-  uint16_t height;
+  int16_t width;
+  int16_t height;
 
   bool pointInRect(int16_t ptX, int16_t ptY) {
     return ptX >= x && ptX <= x + width && ptY >= y && ptY <= y + height;
@@ -52,6 +52,21 @@ struct BMargin {
   }
 };
 
+struct B {
+  enum Orientation {
+    vertical,
+    horizontal
+  };
+
+  enum Alignment {
+    top,
+    bottom,
+    center,
+    left,
+    right
+  };
+};
+
 class BView {
 private:
   virtual void setParent(BPanel& parent);
@@ -61,6 +76,7 @@ private:
 
 protected:
   bool _isDirty;
+  bool _needsLayout;
 
 public:
   int16_t x;
@@ -72,8 +88,8 @@ public:
   uint16_t maxWidth;
   uint16_t maxHeight;
   BMargin margin;
-  uint16_t actualWidth;
-  uint16_t actualHeight;
+  int16_t actualWidth;
+  int16_t actualHeight;
   const char* tag;
   bool focusable;
   static bool showBoundingBox;
@@ -84,8 +100,7 @@ protected:
   }
 
 public:
-  typedef EventDelegate<BView, BMouseInputEvent&> MouseEvent;
-  EventSource<MouseEvent> onMouse;
+  BEVENT(Mouse, BView, BMouseInputEvent&)
   
 public:
   BView();
@@ -103,6 +118,10 @@ public:
   void dirty();
   bool isDirty();
   void clearDirty();
+
+  void dirtyLayout();
+  bool isDirtyLayout();
+  void clearDirtyLayout();
 
   void focus();
   bool isFocused();
@@ -152,8 +171,7 @@ public:
 
 class BControl: public BView {
 public:
-  typedef EventDelegate<BControl, BFocusInputEvent&> FocusEvent;
-  EventSource<FocusEvent> onFocus;
+  BEVENT(Focus, BControl, BFocusInputEvent&)
 public:
   virtual void handleEvent(BInputEvent& event);
 };
@@ -163,8 +181,9 @@ protected:
   bool _isDown;
   bool _animate;
 public:
-  typedef EventDelegate<BButton, bool> ClickEvent;
-  EventSource<ClickEvent> onClick;
+  BEVENT(Click, BButton, bool)
+
+public:
   const char* text;
 
 protected:
@@ -175,7 +194,7 @@ protected:
 
 public:
   BButton();
-
+  virtual void measure(uint16_t availableHeight, uint16_t availableWidth);
   virtual void handleEvent(BInputEvent& event);
   virtual void draw(BGraphics& g);
 };
@@ -217,24 +236,42 @@ protected:
   }
 
 protected:
+  int16_t marginWidth(BView& view) {
+    return view.margin.left + view.margin.right;
+  }
+  int16_t marginHeight(BView& view) {
+    return view.margin.top + view.margin.bottom;
+  }
+  int16_t viewWidth(BView& view) {
+    return (view.width) ? view.width : view.actualWidth;
+  }
+  int16_t viewHeight(BView& view) {
+    return (view.height) ? view.height : view.actualHeight;
+  }
+  int16_t paddingWidth() {
+    return padding.left + padding.right + border * 2;
+  }
+  int16_t paddingHeight() {
+    return padding.top + padding.bottom + border * 2;
+  }
+
+protected:
   BFocusManager* _focusManager;
   BList<BView*> _children;
-  bool _needsLayout;
 
 public:
   BMargin padding;
   bool border;
 protected:
   uint16_t applyMinMax(uint16_t val, uint16_t minimum, uint16_t maximum);
+  uint16_t childrenCount();
   int16_t indexOf(BView& view);
   void touchView(BView& view);
   void setViewParent(BView& view);
 public:
-  BPanel(BView* children[], unsigned count, unsigned capacity);
-
   template<size_t N>
   BPanel(BView* (&children)[N]) 
-    : _children(children, N, N), _needsLayout(true), border(true) {
+    : _children(children, N, N), border(false) {
     focusable = false;
   }
 
@@ -244,12 +281,10 @@ public:
   virtual void draw(BGraphics& graphics);
 
   virtual void layout();
-  void dirtyLayout();
-  bool isDirtyLayout();
-  void clearDirtyLayout();
+  virtual void measure(uint16_t availableWidth, uint16_t availableHeight);
   
-  uint16_t clientWidth();
-  uint16_t clientHeight();
+  virtual int16_t clientWidth();
+  virtual int16_t clientHeight();
 
   BFocusManager& focusManager();
 
@@ -257,46 +292,19 @@ public:
 };
 
 class BStackPanel: public BPanel {
-private:
-  uint16_t marginWidth(BView& view) {
-    return view.margin.left + view.margin.right;
-  }
-  uint16_t marginHeight(BView& view) {
-    return view.margin.top + view.margin.bottom;
-  }
-  uint16_t viewWidth(BView& view) {
-    return (view.width) ? view.width : view.actualWidth;
-  }
-  uint16_t viewHeight(BView& view) {
-    return (view.height) ? view.height : view.actualHeight;
-  }
 public:
-  enum Orientation {
-    vertical,
-    horizontal
-  };
-
-  enum Alignment {
-    top,
-    bottom,
-    center,
-    left,
-    right
-  };
-
-public:
-  uint16_t spacing;
-  Orientation orientation;
-  Alignment horizontalAlignment;
-  Alignment verticalAlignment;
+  int16_t spacing;
+  B::Orientation orientation;
+  B::Alignment horizontalAlignment;
+  B::Alignment verticalAlignment;
 
 public:
   template<size_t N>
   BStackPanel(BView* (&children)[N]) 
-    : BPanel(children), orientation(horizontal), horizontalAlignment(left), verticalAlignment(top) {}
+    : BPanel(children), orientation(B::horizontal), horizontalAlignment(B::left), verticalAlignment(B::top) {}
   
   virtual void layout();
-
+  virtual void measure(uint16_t availableWidth, uint16_t availableHeight);
   void layoutHorizontal();
   void layoutVertical();
 };

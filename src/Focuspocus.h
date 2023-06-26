@@ -10,5 +10,6 @@
 #include "BTextLabel.h"
 #include "BBitmapButton.h"
 #include "BCheckBox.h"
+#include "BPopup.h"
 
 #endif

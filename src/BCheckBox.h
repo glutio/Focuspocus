@@ -6,10 +6,9 @@
 #include "BFocusManager.h"
 
 
-class BCheckBoxBase: public BStackPanel, BFontAware {
+class BCheckBoxBase: public BStackPanel, public BFontAware {
 public:
-  typedef EventDelegate<BCheckBoxBase, bool> ChangedEvent;
-  EventSource<ChangedEvent> onChange;
+  BEVENT(Change, BCheckBoxBase, bool)
 
 protected:
   class BBox: public BButton {
@@ -18,13 +17,11 @@ protected:
   public:
     BBox(BCheckBoxBase& checkbox) : _checkbox(checkbox) {
     }
+
     virtual void draw(BGraphics& g) {
       _checkbox.handleDraw(g);
     }
 
-    virtual void measure(int16_t availableWidth, int16_t availableHeight) {
-      width = height = availableHeight;
-    }
     bool isDown() {
       return _isDown;
     }
@@ -42,23 +39,25 @@ protected:
   BTextLabel _label;
   BView* _content[2];
 public:
-  enum Alignment {
-    left,
-    right
-  };
-
-  Alignment alignment;
+  B::Alignment alignment;
   bool state;
+  BNullable<int16_t> boxSize;
   const char* text;
 public:
-  BCheckBoxBase() : _content{0}, BStackPanel(_content), alignment(left), state(false), text(0), _box(*this)
+  BCheckBoxBase() : _content{0}, BStackPanel(_content), alignment(B::left), state(false), text(0), _box(*this)
   {
     width = 0;
     height = 0;
     spacing = 4;
-    border = false;
+    border = false;  
+    _label.width = 0;
+    _label.height = 0;
+    _box.width = 0;
+    _box.height = 0;
+    verticalAlignment = B::center;  
     _box.onClick += BButton::ClickEvent(this, &BCheckBoxBase::handleClick);
     _label.onMouse += BView::MouseEvent(this, &BCheckBoxBase::handleMouse);
+    _box.onFocus += BControl::FocusEvent(this, &BCheckBoxBase::handleFocus);
   };
 
   ~BCheckBoxBase() {
@@ -66,10 +65,14 @@ public:
     _label.onMouse -= BView::MouseEvent(this, &BCheckBoxBase::handleMouse);
   };
 
+  void handleFocus(BControl*, BFocusInputEvent& event) {
+    _label.fontColor = !_box.isFocused() ? viewColor(*this) : focusManager().theme().focusColor;
+    _label.dirty();
+  }
+
   virtual void handleDraw(BGraphics& g) {
-      int16_t c = (_box.isFocused()) ? viewColor(*this) : focusManager().theme().focusBackground;
+      int16_t c = (!_box.isFocused()) ? viewColor(*this) : focusManager().theme().focusColor;
       int16_t b = c;
-      
       g.drawRect(0, 0, g.width, g.height, c);
       g.drawRect(1, 1, g.width - 2, g.height - 2, viewBackground(*this));
       if (_box.isDown()) {
@@ -86,50 +89,42 @@ public:
 
   void applyStyle() {
     _label.text = text;
-    _label.fontSize = fontSize;
-    _label.fontColor = fontColor;
-    _label.color = color;
-    _label.background = background;
+    _label.fontSize = viewFontSize(*this);
+    _label.fontColor = !_box.isFocused() ? viewFontColor(*this) : focusManager().theme().focusColor;
+    _label.color = viewColor(*this);
+    _label.background = viewBackground(*this);
   }
 
-  virtual void layout() {
-    applyStyle();
-    
-    _label.verticalAlignment = BTextLabel::center;
-    if (alignment == left) {
-      horizontalAlignment = BStackPanel::left;
+  void applyAlignment() {
+    if (alignment == B::left) {
+      horizontalAlignment = B::left;
       _content[0] = &_box;
       _content[1] = &_label;
-      _label.horizontalAlignment = BTextLabel::left;
     } else {
       _content[0] = &_label;
       _content[1] = &_box;
-      _label.horizontalAlignment = BTextLabel::right;
-      horizontalAlignment = BStackPanel::right;
-    }
-
-    if (!width && _box.actualHeight != clientHeight()) {            
-      actualWidth += clientHeight() + padding.left + padding.right;
-      parent()->dirtyLayout();
-    }
-
-    BStackPanel::layout();
-  }
-
-  virtual void measure(int16_t availableWidth, int16_t availableHeight) {
-    if (!width || !height) {
-      BRect rt = focusManager().getGraphics().getTextBounds(text, fontSize);
-      if (!height) {
-        actualHeight = rt.height + padding.top + padding.bottom;
-      }
-      if (!width && _box.actualHeight != clientHeight()) {
-        actualWidth = rt.width + spacing;
-      }      
+      horizontalAlignment = B::right;
     }
   }
 
-  void raiseOnChange(bool state) {
-    onChange(this, state);
+  virtual void measure(uint16_t availableWidth, uint16_t availableHeight) {
+    applyStyle();
+    applyAlignment();
+    BView::measure(availableWidth, availableHeight);
+    setViewParent(_box);
+    setViewParent(_label);
+    _label.measure(availableWidth, availableHeight);    
+    if (boxSize.hasValue()) {
+      _box.actualHeight = _box.actualWidth = (!boxSize) ? _label.actualHeight : (int16_t)boxSize;
+    } else {
+      _box.actualHeight = _box.actualWidth = focusManager().theme().checkboxSize;
+    }
+    if (!height) {
+      actualHeight = max(_box.actualHeight, _label.actualHeight) + paddingHeight();
+    }
+    if (!width) {
+      actualWidth = _label.actualWidth + _box.actualWidth + spacing + paddingWidth();
+    }
   }
 
   virtual void handleClick(BButton* sender, bool isClick) {
@@ -143,7 +138,7 @@ public:
     switch(event.type) {
       case BInputEvent::evMouseDown: {
         focusManager().captureMouse(*sender);
-        _box.focus();
+        _box.focus();        
         _box.isDown(true);
         break;
       }
@@ -157,8 +152,8 @@ public:
       }
       case BInputEvent::evMouseMove: {
         if (focusManager().capturingView() == sender) {
-          BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
-          bool hit = hitTest(pt.x, pt.y);
+          BPoint pt = focusManager().mapScreenToView(_label, event.x, event.y);
+          bool hit = _label.hitTest(pt.x, pt.y);
           _box.isDown(hit);
         }
         break;
@@ -184,7 +179,7 @@ public:
 
 protected:
   virtual void handleDraw(BGraphics& g) {
-    int16_t c = _box.isFocused() ? viewColor(*this) : focusManager().theme().focusBackground;
+    int16_t c = (!_box.isFocused()) ? viewColor(*this) : focusManager().theme().focusColor;
     int16_t b = c;
 
     auto org = g.height / 2;
