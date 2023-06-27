@@ -6,7 +6,7 @@ BMouse::BMouse(BFocusManager& focusManager, int16_t x, int16_t y, bool buttonDow
  _x(x), _y(y), _buttonDown(buttonDown), _focusManager(focusManager) {
 }
 
-void BMouse::update(int16_t x, int16_t y, bool buttonDown) {
+void BMouse::move(int16_t x, int16_t y, bool buttonDown) {
   BMouseInputEvent event;
   event.x = x; 
   event.y = y;
@@ -24,8 +24,8 @@ void BMouse::update(int16_t x, int16_t y, bool buttonDown) {
   }
 }
 
-void BMouse::update(bool buttonDown) {
-  update(_x, _y, buttonDown);
+void BMouse::button(bool buttonDown) {
+  move(_x, _y, buttonDown);
 }
 
 BKeyboard::BKeyboard(BFocusManager& focusManager) : _focusManager(focusManager) {

@@ -55,6 +55,9 @@ void BView::dirtyLayout() {
     BPanel* p = parent();
     while(p) {
       p->_needsLayout = true;
+      if (p->width && p->height) {
+        break;
+      }
       p = p->parent();
     }
   }
@@ -84,9 +87,7 @@ BFocusManager& BView::focusManager() {
     return panel->focusManager();
   }
 
-  if (_parent) {
-    return _parent->focusManager();
-  }
+  return _parent->focusManager();
 }
 
 void BView::parentChanged(BPanel* oldParent) {
@@ -107,7 +108,7 @@ void BView::draw(BGraphics& g) {
 
 /* 
   BControl
-// */
+ */
 void BControl::handleEvent(BInputEvent& event) {
   BView::handleEvent(event);
   if (event.type == BInputEvent::evCommand) {
@@ -124,6 +125,9 @@ void BControl::handleEvent(BInputEvent& event) {
   }
 }
 
+/*
+ BButton
+*/
 BButton::BButton() : _isDown(false), _animate(true) {
 }
 
@@ -378,18 +382,9 @@ BFocusManager& BPanel::focusManager() {
   return *_focusManager;
 }
 
-void BPanel::touchView(BView& view) {
-  view._isDirty = true;
-  BPanel* panel = view.asPanel();
-  if (panel) {
-    panel->_needsLayout = true;
-  }
-}
-
 void BPanel::layout() {
   for(BView& view: *this) {
     setViewParent(view);
-    touchView(view);
     if (view.width > 0) {
       view.actualWidth = view.width;
     }
@@ -507,7 +502,6 @@ void BStackPanel::layoutVertical() {
   int16_t fixedSize = 0;
 
   for(BView& view : *this) {
-    touchView(view);
     if (view.height < 0) {
       totalFactor += abs(view.height);
       view.actualHeight = -1;
@@ -590,7 +584,6 @@ void BStackPanel::layoutHorizontal() {
   int16_t fixedSize = 0; // sum of sizes of fixed-size controls
 
   for(BView& view : *this) {
-    touchView(view);
     if (view.width < 0) {
       totalFactor += abs(view.width);
       view.actualWidth = -1; // mark for auto layout     

@@ -67,10 +67,11 @@ void BScrollbar::moveThumb(BMouseInputEvent& event) {
     onChange(this, value);
   }
   BGraphics g = focusManager().getGraphics(*this);
+  focusManager().beginDraw();
   hideThumb(g);
   _thumbPos = pos;
   showThumb(g);
-  focusManager().raiseOnAfterRender();
+  focusManager().endDraw();
 }
 
 void BScrollbar::handleMouse(BMouseInputEvent& event) {
@@ -145,10 +146,11 @@ void BScrollbar::handleKeyboard(BKeyboardInputEvent& event) {
           onChange(this, value);
         }
         BGraphics g = focusManager().getGraphics(*this);
+        focusManager().beginDraw();
         hideThumb(g);
         layout();
         showThumb(g);
-        focusManager().raiseOnAfterRender();
+        focusManager().endDraw();
       }
     }
     break;

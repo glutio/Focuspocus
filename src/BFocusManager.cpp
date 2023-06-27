@@ -84,23 +84,19 @@ void BFocusManager::mapViewToScreenHelper(BView& view, int16_t& x, int16_t& y) {
   }
 }
 
+BRootView* BFocusManager::top() {
+  return _stack[_stack.Length() - 1];
+}
+
 BPanel* BFocusManager::root() {
-  if (_stack.Length()) {    
-    return _stack[_stack.Length() - 1];
+  if (_stack.Length()) {
+    auto r = top();
+    if (r) {
+      return &r->root;
+    }
   }
 
   return nullptr;
-}
-
-void BFocusManager::touchTree(BView& view) {
-  view._isDirty = true;
-  BPanel* panel = view.asPanel();
-  if (panel) {
-    panel->_needsLayout = true;
-    for(BView& v : *panel) {      
-      touchTree(v);
-    }
-  }
 }
 
 void BFocusManager::layoutRoot() {
@@ -158,8 +154,9 @@ void BFocusManager::broadcastCommandHelper(BView& view, BCommandInputEvent& even
 }
 
 void BFocusManager::broadcastCommand(BCommandInputEvent& event) {
-  if (root()) {
-    broadcastCommandHelper(*root(), event);
+  auto r = root();
+  if (r) {
+    broadcastCommandHelper(*r, event);
   }
 }
 
@@ -382,10 +379,10 @@ BGraphics BFocusManager::getGraphics(BView& view) {
 
 BView* BFocusManager::findView(BMouseInputEvent& event) {
   BView* target = nullptr;
-  if (root()) {
-    findViewHelper(*root(), event.x, event.y, target);
+  auto r = root();
+  if (r) {
+    findViewHelper(*r, event.x, event.y, target);
   }
-  if (target) Serial.println(target->tag);
   return target;
 }
 
@@ -439,28 +436,26 @@ void BFocusManager::layoutPass(BView& view) {
 }
 
 void BFocusManager::loop() {
-  BPanel* panel = root();
-  if (panel) {
+  auto r = root();
+  if (r) {
+    BPanel& panel = *r;
     if (_needsRootLayout) {
-      panel->_focusManager = this;
-      touchTree(*panel);
+      panel._focusManager = this;
+      panel.parentChanged(nullptr);
+      panel.dirtyLayout();
+      _focused = top()->focused;
       _needsRootLayout = false;
-      _needsLayout = true;
     }
     
     for(auto i = 0; i < 20 && _needsLayout; ++i) {
-      _needsLayout = false;      
-      measurePass(*panel, _g.width, _g.height);      
-      if (panel->isDirtyLayout()) {
+      _needsLayout = false;
+      auto availableWidth = _g.width - panel.margin.left - panel.margin.right;
+      auto availableHeight = _g.height - panel.margin.top - panel.margin.bottom;      
+      measurePass(panel, availableWidth, availableHeight);      
+      if (panel.isDirtyLayout()) {
         layoutRoot();
       }
-      layoutPass(*panel);
-    }
-
-    if (_isDirty) {
-      drawPass(*panel, _g);
-      _isDirty = false;
-      onAfterRender(this, true);
+      layoutPass(panel);
     }
 
     auto ms = millis();
@@ -468,8 +463,23 @@ void BFocusManager::loop() {
       _msTimer = ms;
       onTimerTick(this, true);
     }
+
+    if (_isDirty) {
+      beginDraw();
+      drawPass(panel, _g);
+      _isDirty = false;
+      endDraw();
+    }
   }
 }
+
+void BFocusManager::beginDraw() {
+  raiseOnBeforeRender(true);
+}
+void BFocusManager::endDraw() {
+  raiseOnAfterRender(true);
+}
+
 
 void BFocusManager::captureMouse(BView& view) {
   _capture = &view;
@@ -493,12 +503,23 @@ void BFocusManager::dirtyLayout() {
   _needsLayout = true;
 }
 
-void BFocusManager::push(BPanel& panel) {
-  _stack.Add(&panel);
+void BFocusManager::push(BRootView& root) {
+  if (_stack.Length()) {
+    top()->focused = _focused;
+  }
+
+  _stack.Add(&root);
+  _focused = root.focused;
   _needsRootLayout = true;
 }
 
 void BFocusManager::pop() {
-  _stack.Remove(_stack.Length() - 1);
+  if (_stack.Length()) {
+    top()->focused = _focused;
+    _stack.Remove(_stack.Length() - 1);    
+  }
+  if (_stack.Length()) {
+    _focused = top()->focused;
+  }
   _needsRootLayout = true;
 }

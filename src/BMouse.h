@@ -11,8 +11,8 @@ protected:
   BFocusManager& _focusManager;
 public:
   BMouse(BFocusManager& focusManager, int16_t x = -1, int16_t y = -1, bool buttonDown = false);
-  void update(int16_t x, int16_t y, bool buttonDown);
-  void update(bool buttonDown);
+  void move(int16_t x, int16_t y, bool buttonDown);
+  void button(bool buttonDown);
 };
 
 class BKeyboard {

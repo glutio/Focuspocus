@@ -266,7 +266,6 @@ protected:
   uint16_t applyMinMax(uint16_t val, uint16_t minimum, uint16_t maximum);
   uint16_t childrenCount();
   int16_t indexOf(BView& view);
-  void touchView(BView& view);
   void setViewParent(BView& view);
 public:
   template<size_t N>

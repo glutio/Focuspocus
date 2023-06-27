@@ -98,18 +98,20 @@ struct BFocusInputEvent: BCommandInputEvent {
   BView* focused;
 };
 
+struct BRootView {
+  BPanel& root;
+  BView* focused;
+  BRootView(BPanel& panel) : root(panel), focused(0) {
+  }
+};
+
 class BFocusManager {
 public:
-  typedef BEventDelegate<BFocusManager, bool> AfterRenderEvent;
-  BEventSource<AfterRenderEvent> onAfterRender;
-  raiseOnAfterRender() {
-    onAfterRender(this, true);
-  }
-
   BEVENT(TimerTick, BFocusManager, bool)
-
+  BEVENT(BeforeRender, BFocusManager, bool)
+  BEVENT(AfterRender, BFocusManager, bool)
 protected:
-  BList<BPanel*> _stack;
+  BList<BRootView*> _stack;
   BGraphics _g;
   BView* _focused;
   BView* _capture;
@@ -142,12 +144,10 @@ protected:
   void measurePass(BView& view, uint16_t availableWidth, uint16_t availableHeight);
   void layoutPass(BView& view);
 
-  void touchTree(BView& view);
-
   void broadcastCommandHelper(BView& view, BCommandInputEvent& event);
 public:
   template<size_t N>
-  BFocusManager(BGraphicsApi& g, BView* (&stack)[N], BTheme& theme) 
+  BFocusManager(BGraphicsApi& g, BRootView* (&stack)[N], BTheme& theme) 
     : _g(g), _stack(stack, N, N), _theme(&theme), _msTimer(0) {
     for(int i = _stack.Length() - 1; i >= 0; --i) {
       if (!_stack[i]) {
@@ -158,6 +158,7 @@ public:
   }
   
   BPanel* root();
+  BRootView* top();
   BTheme& theme();
   
   void handleEvent(BInputEvent& event);
@@ -176,6 +177,9 @@ public:
   BGraphics getGraphics(BView& view);
   BGraphics getGraphics();
 
+  void beginDraw();
+  void endDraw();
+
   void captureMouse(BView& view);
   void releaseMouse(BView& view);
   BView* capturingView();
@@ -185,7 +189,7 @@ public:
   
   void layoutRoot();
 
-  void push(BPanel& panel);
+  void push(BRootView& panel);
   void pop();
   void popToTop(BPanel& panel);
 
