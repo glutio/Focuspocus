@@ -2,7 +2,7 @@
 
 GUI core for Arduino. Create your own UI elements. The library provides the GUI framework which you can use to create the UI you want. Easily create custom UI elements and let the framework take care of layout and rendering, focus navigation and dispatching input events. 
 
-There are three main classes `BView`, `BPanel` and `BFocusManager`. All UI elements derive from `BView` including `BPanel` which is a UI element that can contain UI elements. `BFocusManager` is provides the GUI render and event loop, focus navigation and holds the referrence to the screen that's currently active.
+There are three main classes `BView`, `BPanel` and `BFocusManager`. All UI elements derive from `BView` including `BPanel` which is a UI element that can contain other UI elements. `BFocusManager` provides the GUI render and event loop, focus navigation and holds the reference to the screen that is currently active.
 
 ## Quickstart
 
