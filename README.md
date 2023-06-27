@@ -1,6 +1,9 @@
 # Focuspocus
 
-GUI core for Arduino. Create your own UI elements. The library provides the GUI framework which you can use to create the UI you want. Concentrate on creating your control and let the framework take care of layout and render, focus navigation, dispatching input events to appropriate controls. 
+GUI core for Arduino. Create your own UI elements. The library provides the GUI framework which you can use to create the UI you want. Easily create custom UI elements and let the framework take care of layout and rendering, focus navigation and dispatching input events. 
+
+There are three main classes `BView`, `BPanel` and `BFocusManager`. All UI elements derive from `BView` including `BPanel` which is a UI element that can contain UI elements. `BFocusManager` is provides the GUI render and event loop, focus navigation and holds the referrence to the screen that's currently active.
+
 ## Quickstart
 
 Create a simple UI. Each screen is declared as a C++ namespace. The first screen is a "Click me" button. When clicked the button triggers onClick event which executes the handler function which pushes another screen on top of the screen stack. The new screen is a message box, made of a StackPanel a Label and a Button. 
