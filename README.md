@@ -6,7 +6,7 @@ There are three main classes `BView`, `BPanel` and `BFocusManager`. All UI eleme
 
 ## Quickstart
 
-Create a simple UI. Each screen is declared as a C++ namespace. The first screen is a "Click me" button. When clicked the button triggers onClick event which executes the handler function which pushes another screen on top of the screen stack. The new screen is a message box, made of a StackPanel a Label and a Button. 
+Create a simple UI with two screens. Each screen is declared as a C++ namespace. The first screen is a "Click me" button. When clicked the button triggers onClick event which executes the handler function which pushes another screen on top of the screen stack. The new screen is a message box, made of a StackPanel a Label and a Button, clicking the button pops the screen off the screen stack revealing the previous screen.
 
 ![Focuspocus - Wokwi ESP32, STM32, Arduino Simulator and 11 more pages - Work - Microsoft_ Edge 2023-06-27 06-50-25 (online-video-cutter com)](https://github.com/glutio/Focuspocus/assets/22550674/25cf0087-8195-406b-9b31-f1989eaa7ac1)
 
