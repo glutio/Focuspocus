@@ -4,7 +4,6 @@ If you wanted to create a GUI for your project, no matter how simple, there is s
 
 ![Focuspocus - Wokwi ESP32, STM32, Arduino Simulator and 10 more pages - Work - Microsoft_ Edge 2023-06-26 08-10-32(1) (online-video-cutter com)](https://github.com/glutio/Focuspocus/assets/22550674/8a114a07-abbc-4933-879d-d3f1f1537d18)
 
-
 The library provides three main classes that form the foundation of the framework. `BView` is the base class for all UI elements (views). `BPanel` is a view that can contin other views. `BFocusManager` provides focus navigation, input event dispatching and the layout and render loop.
 
 There are two layout panels, the base `BPanel` for manual positioning and `BStackPanel` for displaying elements in a row or a column. A view can have margins and a panel additionally has padding. The layout system allows for proportional sizing, fixed size, and autosize (size to content). A UI element's `width` or `height` property indicates how the layout panel should treat the element. If width (or height) is less than zero, then the width (height) of the UI element will be set by the panel during layout. If width (height) is greater than zero, then the width (height) value is used as is. If width (height) is zero, then the UI element is expected to calculate its own size based on its content. 
