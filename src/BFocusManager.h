@@ -110,6 +110,7 @@ public:
   BEVENT(TimerTick, BFocusManager, bool)
   BEVENT(BeforeRender, BFocusManager, bool)
   BEVENT(AfterRender, BFocusManager, bool)
+
 protected:
   BList<BRootView*> _stack;
   BGraphics _g;
@@ -120,8 +121,10 @@ protected:
   bool _needsRootLayout;
   BTheme* _theme;
   unsigned long _msTimer;
+
 protected:
   bool findViewHelper(BView& view, int16_t x, int16_t y, BView*& target);
+  BView* findView(BMouseInputEvent& event);
   
   void mapScreenToViewHelper(BView& view, int16_t& x, int16_t& y);
   void mapViewToScreenHelper(BView& view, int16_t& x, int16_t& y);
@@ -140,11 +143,17 @@ protected:
   void applyPadding(BPanel& panel, int16_t& x, int16_t& y, int8_t sign = 1);
   void applyPadding(BPanel& panel, BGraphics& g);
 
-  void drawPass(BView& view, BGraphics& g);
+  void setupPass(BPanel& panel);
   void measurePass(BView& view, uint16_t availableWidth, uint16_t availableHeight);
+  void layoutRoot();
   void layoutPass(BView& view);
+  void drawPass(BView& view, BGraphics& g);
 
   void broadcastCommandHelper(BView& view, BCommandInputEvent& event);
+
+  BPanel* root();
+  BRootView* top();
+
 public:
   template<size_t N>
   BFocusManager(BGraphicsApi& g, BRootView* (&stack)[N], BTheme& theme) 
@@ -157,8 +166,6 @@ public:
     _needsRootLayout = true;
   }
   
-  BPanel* root();
-  BRootView* top();
   BTheme& theme();
   
   void handleEvent(BInputEvent& event);
@@ -171,7 +178,6 @@ public:
   BView* focusNext();
   BView* focusPrev();
 
-  BView* findView(BMouseInputEvent& event);
   BPoint mapScreenToView(BView& view, int16_t x, int16_t y);
   BPoint mapViewToScreen(BView& view, int16_t x, int16_t y);
   BGraphics getGraphics(BView& view);
@@ -187,11 +193,8 @@ public:
   void dirty();
   void dirtyLayout();
   
-  void layoutRoot();
-
   void push(BRootView& panel);
   void pop();
-  void popToTop(BPanel& panel);
 
   void loop();
 

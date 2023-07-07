@@ -5,7 +5,6 @@
 #include "BTextLabel.h"
 #include "BFocusManager.h"
 
-
 class BCheckBoxBase: public BStackPanel, public BFontAware {
 public:
   BEVENT(Change, BCheckBoxBase, bool)
@@ -44,7 +43,7 @@ public:
   BNullable<int16_t> boxSize;
   const char* text;
 public:
-  BCheckBoxBase() : _content{0}, BStackPanel(_content), alignment(B::left), state(false), text(0), _box(*this)
+  BCheckBoxBase() : BStackPanel(_content), alignment(B::left), state(false), text(0), _box(*this)
   {
     width = 0;
     height = 0;
@@ -58,6 +57,8 @@ public:
     _box.onClick += BButton::ClickEvent(this, &BCheckBoxBase::handleClick);
     _label.onMouse += BView::MouseEvent(this, &BCheckBoxBase::handleMouse);
     _box.onFocus += BControl::FocusEvent(this, &BCheckBoxBase::handleFocus);
+    _content[0] = &_box;
+    _content[1] = &_label;
   };
 
   ~BCheckBoxBase() {
@@ -110,9 +111,6 @@ public:
   virtual void measure(uint16_t availableWidth, uint16_t availableHeight) {
     applyStyle();
     applyAlignment();
-    BView::measure(availableWidth, availableHeight);
-    setViewParent(_box);
-    setViewParent(_label);
     _label.measure(availableWidth, availableHeight);    
     if (boxSize.hasValue()) {
       _box.actualHeight = _box.actualWidth = (!boxSize) ? _label.actualHeight : (int16_t)boxSize;
@@ -186,7 +184,7 @@ protected:
     g.drawCircle(org, org, g.height / 2, c);
     g.drawCircle(org, org, (g.height - 2) / 2, viewBackground(*this));
     if (_box.isDown()) {
-      g.drawCircle(org, org, (g.height - 4) / 2, viewBackground(*this));
+      g.fillCircle(org, org, (g.height - 4) / 2, viewBackground(*this));
     }
     else {
       if (!state) {

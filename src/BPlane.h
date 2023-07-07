@@ -17,8 +17,6 @@ public:
   }
 
   void drawPlane(BGraphics& g, uint16_t color) {
-    // Drawing the rectangle
-    // Draw the rectangle
     for (int i = 0; i < 4; ++i) {
         g.drawLine(rotated[i][0], rotated[i][1], rotated[(i+1)%4][0], rotated[(i+1)%4][1], color);
     }   
@@ -49,8 +47,6 @@ public:
         { halfWidth,  halfHeight},
         {-halfWidth,  halfHeight},
     };
-
-    rotated[4][2];
 
     for (int i = 0; i < 4; ++i) {
         // Skew and scale for x/y plane "rotation"

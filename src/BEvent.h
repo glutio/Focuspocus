@@ -1,5 +1,5 @@
-#ifndef __EVENTFUN_H__
-#define __EVENTFUN_H__
+#ifndef __BEVENT_H__
+#define __BEVENT_H__
 
 #include "BPtr.h"
 #include "BList.h"

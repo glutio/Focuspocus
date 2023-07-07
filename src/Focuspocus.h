@@ -11,5 +11,6 @@
 #include "BBitmapButton.h"
 #include "BCheckBox.h"
 #include "BPopup.h"
+#include "BProgressBar.h"
 
 #endif

@@ -264,9 +264,8 @@ public:
   bool border;
 protected:
   uint16_t applyMinMax(uint16_t val, uint16_t minimum, uint16_t maximum);
-  uint16_t childrenCount();
   int16_t indexOf(BView& view);
-  void setViewParent(BView& view);
+
 public:
   template<size_t N>
   BPanel(BView* (&children)[N]) 
@@ -274,8 +273,9 @@ public:
     focusable = false;
   }
 
-  void add(BView* view);
-  void remove(BView* view);
+  void add(BView& view);
+  void insert(uint16_t pos, BView& view);
+  void remove(BView& view);
 
   virtual void draw(BGraphics& graphics);
 

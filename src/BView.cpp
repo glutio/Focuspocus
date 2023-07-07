@@ -2,7 +2,7 @@
 #include "BView.h"
 #include "BFocusManager.h"
 
-bool BView::showBoundingBox(false);
+bool BView::showBoundingBox = false;
 
 void BView::handleEvent(BInputEvent& event) {
   if (event.type & BInputEvent::evMouse) {
@@ -335,12 +335,27 @@ BPanel::ReverseIterator BPanel::rend() {
     return ReverseIterator(*this, -1);
 }
 
-void BPanel::add(BView* view) {
-  _children.Add(view);
+void BPanel::add(BView& view) {
+  _children.Add(&view);
 }
 
-void BPanel::remove(BView* view) {
-  _children.Remove(view);
+void BPanel::insert(uint16_t pos, BView& view) {
+  if (pos < _children.Length()) {
+    if (!_children[pos]) {
+      _children[pos] = &view;
+    } else {
+      _children.Insert(pos, &view);
+    }
+  }
+}
+
+void BPanel::remove(BView& view) {
+  for(unsigned i = 0; i < _children.Length(); ++i) {
+    if (_children[i] == &view) {
+      _children[i] = nullptr;
+      break;
+    }
+  }
 }
 
 void BPanel::draw(BGraphics& g) {
@@ -374,17 +389,12 @@ void BPanel::setParent(BPanel& parent) {
   BView::setParent(parent);
 }
 
-void BPanel::setViewParent(BView& view) {
-  view.setParent(*this);
-}
-
 BFocusManager& BPanel::focusManager() {
   return *_focusManager;
 }
 
 void BPanel::layout() {
   for(BView& view: *this) {
-    setViewParent(view);
     if (view.width > 0) {
       view.actualWidth = view.width;
     }
@@ -400,20 +410,19 @@ void BPanel::layout() {
 void BPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {  
   int16_t minX = INT16_MAX, minY = INT16_MAX;
   int16_t maxX = 0, maxY = 0;
-  for(BView& view : *this) {
-    setViewParent(view);      
+  for(BView& view : *this) {    
     view.measure(availableWidth - paddingWidth() - marginWidth(view), availableHeight - paddingHeight() - marginHeight(view));
     if (width == 0 || height == 0) {
       minX = min(view.x, minX);
       minY = min(view.y, minY);
       maxX = max(view.x + view.actualWidth + marginWidth(view), maxX);
       maxY = max(view.y + view.actualHeight + marginHeight(view), maxY);
-    }
-    if (width == 0) {
-      actualWidth = max(minWidth, min(maxWidth, maxX - minX));      
-    }
-    if (height == 0) {
-      actualHeight = max(minHeight, min(maxHeight, maxY - minY));
+      if (width == 0) {
+        actualWidth = max(minWidth, min(maxWidth, maxX - minX + paddingWidth()));      
+      }
+      if (height == 0) {
+        actualHeight = max(minHeight, min(maxHeight, maxY - minY + paddingHeight()));
+      }
     }
   }
 }
@@ -426,21 +435,12 @@ int16_t BPanel::clientHeight() {
   return actualHeight - paddingWidth();
 }
 
-uint16_t BPanel::childrenCount() {
-  uint16_t ct = 0;
-  for(BView& view : *this) {
-    ++ct;
-  }
-  return ct;
-}
-
 void BStackPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {
   int16_t finalSize;
   int16_t len = 0;
   int16_t w = 0, h = 0;
   // uint16_t hmax = 0, wmax = 0;
   for(BView& view : *this) {
-    setViewParent(view);
     view.measure(availableWidth - paddingWidth() - marginWidth(view), availableHeight - paddingHeight() - marginHeight(view));
     if (!width || !height) {
       if (viewWidth(view) > 0 && viewHeight(view) > 0) {
@@ -461,7 +461,7 @@ void BStackPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {
           //wmax += view.actualWidth + marginWidth(view);
         } else {
           h += viewHeight(view) + marginHeight(view);
-         // wmax = max(wmax, view.actualWidth + marginWidth(view));
+        // wmax = max(wmax, view.actualWidth + marginWidth(view));
         }
       }
     }
