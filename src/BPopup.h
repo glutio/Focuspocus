@@ -11,6 +11,11 @@ public:
     horizontalAlignment = B::center;
   }
 
+  explicit BPopup(unsigned capacity = 0) : BStackPanel(capacity) {
+    verticalAlignment = B::center;
+    horizontalAlignment = B::center;
+  }
+
   virtual void draw(BGraphics& g) {
     auto c = focusManager().theme().popupScreenColor;
     g.drawShade(0, 0, g.width, g.height, c);

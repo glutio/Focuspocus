@@ -8,8 +8,7 @@ public:
   BEVENT(Change, BScrollbar, int16_t)
 
 protected:
-  int16_t _oldX;
-  int16_t _oldY;
+  int16_t _grabOffset;
   int16_t _thumbPos;
   int16_t _thumbSize;
 
@@ -21,7 +20,8 @@ public:
   B::Orientation orientation;
 
 protected:
-  void redrawThumb(int16_t pos);
+  void updateThumb();
+  void stepBy(int16_t delta);
   void moveThumb(BMouseInputEvent& pos);
   bool thumbHitTest(BMouseInputEvent& event);
   BRect clientRect();
@@ -30,7 +30,11 @@ protected:
   void handleMouse(BMouseInputEvent& event);
   void handleKeyboard(BKeyboardInputEvent& event);
 public:
-  BScrollbar();  
+  BScrollbar();
+  // Clamps to [minimum, maximum] and redraws. Does not raise onChange
+  // (onChange reports user input only). After changing minimum, maximum or
+  // step at runtime, call dirtyLayout().
+  void setValue(int16_t val);
   virtual void draw(BGraphics& g);
   virtual void handleEvent(BInputEvent& event);
   virtual void layout();

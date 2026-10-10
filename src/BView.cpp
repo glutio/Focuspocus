@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include "BView.h"
 #include "BFocusManager.h"
 
@@ -11,10 +10,11 @@ void BView::handleEvent(BInputEvent& event) {
 }
 
 BView::BView() 
-: x(0), y(0), width(0), height(0), 
+: _parent(nullptr), _isDirty(true), _needsLayout(false),
+  x(0), y(0), width(0), height(0), 
   minWidth(0), minHeight(0), maxWidth(-1), maxHeight(-1), 
-  actualWidth(0), actualHeight(0),
-  _isDirty(true), focusable(true) {}
+  actualWidth(0), actualHeight(0), tag(nullptr),
+  focusable(true) {}
 
 bool BView::hitTest(int16_t ptX, int16_t ptY) {
   auto hit = ptX >= 0 && ptX <= actualWidth &&
@@ -128,7 +128,7 @@ void BControl::handleEvent(BInputEvent& event) {
 /*
  BButton
 */
-BButton::BButton() : _isDown(false), _animate(true) {
+BButton::BButton() : _isDown(false), _animate(true), text(nullptr) {
 }
 
 void BButton::handleEvent(BInputEvent& event) {
@@ -212,7 +212,7 @@ void BButton::handleMouse(BMouseInputEvent& event) {
   }
 }
 
-void BButton::measure(uint16_t availableHeight, uint16_t availableWidth) {
+void BButton::measure(uint16_t availableWidth, uint16_t availableHeight) {
   if (!width || !height) {
     int16_t themeWidth = focusManager().theme().buttonWidth;
     auto themeHeight = focusManager().theme().buttonHeight;
@@ -267,13 +267,17 @@ void BButton::draw(BGraphics& g) {
 void BButton::drawContent(BGraphics& g) {
   auto rt = g.getTextBounds(text, viewFontSize(*this));
   int16_t c = (isFocused()) ? focusManager().theme().focusColor : viewFontColor(*this);
-  g.drawText(text, (g.width - rt.width)/2, (g.height - rt.height)/2, fontSize, c);
+  g.drawText(text, (g.width - rt.width)/2, (g.height - rt.height)/2, viewFontSize(*this), c);
 }
 
 /*
   BPanel
 */
-BPanel::Iterator::Iterator(BPanel& panel, unsigned index) : panel(panel), index(index) {}
+BPanel::Iterator::Iterator(BPanel& panel, int index) : panel(panel), index(index < 0 ? 0 : index) {
+    while (this->index < (int)panel._children.Length() && !panel._children[this->index]) {
+        ++this->index;
+    }
+}
 
 bool BPanel::Iterator::operator!=(const Iterator& other) const {
     return index != other.index;
@@ -290,7 +294,13 @@ BPanel::Iterator& BPanel::Iterator::operator++() {
     return *this;
 }
 
-BPanel::ReverseIterator::ReverseIterator(BPanel& panel, unsigned index) : panel(panel), index(index) {}
+BPanel::ReverseIterator::ReverseIterator(BPanel& panel, int index) : panel(panel) {
+    int last = (int)panel._children.Length() - 1;
+    this->index = index > last ? last : (index < -1 ? -1 : index);
+    while (this->index >= 0 && !panel._children[this->index]) {
+        --this->index;
+    }
+}
 
 bool BPanel::ReverseIterator::operator!=(const ReverseIterator& other) const {
     return index != other.index;
@@ -308,13 +318,7 @@ BPanel::ReverseIterator& BPanel::ReverseIterator::operator++() {
 }
 
 BPanel::Iterator BPanel::begin() {
-    if (!_children.Length()) {
-      return end();
-    }
-
-    auto i = Iterator(*this, -1);
-    ++i;
-    return i;
+    return Iterator(*this, 0);
 }
 
 BPanel::Iterator BPanel::end() {
@@ -322,39 +326,53 @@ BPanel::Iterator BPanel::end() {
 }
 
 BPanel::ReverseIterator BPanel::rbegin() {
-    if (!_children.Length()) {
-      return rend();
-    }
-    
-    auto i = ReverseIterator(*this, _children.Length() - 1);
-    ++i;
-    return i;
+    return ReverseIterator(*this, (int)_children.Length() - 1);
 }
 
 BPanel::ReverseIterator BPanel::rend() {
     return ReverseIterator(*this, -1);
 }
 
-void BPanel::add(BView& view) {
-  _children.Add(&view);
-}
-
-void BPanel::insert(uint16_t pos, BView& view) {
-  if (pos < _children.Length()) {
-    if (!_children[pos]) {
-      _children[pos] = &view;
-    } else {
-      _children.Insert(pos, &view);
+bool BPanel::add(BView& view) {
+  bool added = false;
+  for (unsigned i = 0; i < _children.Length() && !added; ++i) {
+    if (!_children[i]) {
+      _children[i] = &view;
+      added = true;
     }
   }
+  if (!added) {
+    added = _children.Add(&view);
+  }
+  if (added && _focusManager) {
+    dirtyLayout();
+  }
+  return added;
+}
+
+bool BPanel::insert(uint16_t pos, BView& view) {
+  bool added;
+  if (pos < _children.Length() && !_children[pos]) {
+    _children[pos] = &view;
+    added = true;
+  } else {
+    added = _children.Insert(pos, &view);
+  }
+  if (added && _focusManager) {
+    dirtyLayout();
+  }
+  return added;
 }
 
 void BPanel::remove(BView& view) {
-  for(unsigned i = 0; i < _children.Length(); ++i) {
-    if (_children[i] == &view) {
-      _children[i] = nullptr;
-      break;
-    }
+  int16_t i = indexOf(view);
+  if (i < 0) {
+    return;
+  }
+  _children[i] = nullptr;
+  if (_focusManager) {
+    _focusManager->viewRemoved(view);
+    dirtyLayout();
   }
 }
 
@@ -432,7 +450,7 @@ int16_t BPanel::clientWidth() {
 };
 
 int16_t BPanel::clientHeight() {
-  return actualHeight - paddingWidth();
+  return actualHeight - paddingHeight();
 }
 
 void BStackPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {
@@ -527,7 +545,7 @@ void BStackPanel::layoutVertical() {
   }
 
   int16_t totalSize = clientHeight() - (spacing * (len - 1));
-  int16_t unitSize = (totalSize - fixedSize) / totalFactor;
+  int16_t unitSize = totalFactor ? (totalSize - fixedSize) / totalFactor : 0;
   for(int i = 0; i < 10 * _children.Length(); ++i) {
     bool converged = true;
     for(BView& view: *this) {
@@ -538,7 +556,7 @@ void BStackPanel::layoutVertical() {
           view.actualHeight = minmaxSize;
           fixedSize += minmaxSize + marginHeight(view);
           totalFactor -= abs(view.height);
-          unitSize = (totalSize - fixedSize) / totalFactor;
+          unitSize = totalFactor ? (totalSize - fixedSize) / totalFactor : 0;
           converged = false;
         }
       }
@@ -611,7 +629,7 @@ void BStackPanel::layoutHorizontal() {
 
   int16_t totalSize = clientWidth() - (spacing * (len - 1));
   // unit of proportion
-  int16_t unitSize = (totalSize - fixedSize) / totalFactor;
+  int16_t unitSize = totalFactor ? (totalSize - fixedSize) / totalFactor : 0;
   // autosize controls, apply minmax, repeat until all minmax conditions are met, limit number of attempts
   for(int i = 0; i < 10 * _children.Length(); ++i) {
     bool converged = true;
@@ -624,7 +642,7 @@ void BStackPanel::layoutHorizontal() {
           fixedSize += minmaxSize + marginWidth(view);
           totalFactor -= abs(view.width);
           // recompute unit size based on available space
-          unitSize = (totalSize - fixedSize) / totalFactor;
+          unitSize = totalFactor ? (totalSize - fixedSize) / totalFactor : 0;
           converged = false; // reposition auto-sized controls
         }
       }

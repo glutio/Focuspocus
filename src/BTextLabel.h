@@ -11,6 +11,9 @@ public:
   const char* text;
 public:
   BTextLabel();
+  // Changes the text at runtime and re-measures. The string is not copied:
+  // keep it alive (a literal, a global or a static buffer).
+  void setText(const char* value);
   virtual void measure(uint16_t availableWidth, uint16_t availableHeight);
   virtual void draw(BGraphics& g);
 };

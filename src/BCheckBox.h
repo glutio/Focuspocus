@@ -1,6 +1,7 @@
 #ifndef __BCHECKBOX_H__
 #define __BCHECKBOX_H__
 
+#include <string.h>
 #include "BView.h"
 #include "BTextLabel.h"
 #include "BFocusManager.h"
@@ -61,13 +62,9 @@ public:
     _content[1] = &_label;
   };
 
-  ~BCheckBoxBase() {
-    _box.onClick -= BButton::ClickEvent(this, &BCheckBoxBase::handleClick);
-    _label.onMouse -= BView::MouseEvent(this, &BCheckBoxBase::handleMouse);
-  };
 
   void handleFocus(BControl*, BFocusInputEvent& event) {
-    _label.fontColor = !_box.isFocused() ? viewColor(*this) : focusManager().theme().focusColor;
+    _label.fontColor = !_box.isFocused() ? viewFontColor(*this) : focusManager().theme().focusColor;
     _label.dirty();
   }
 
@@ -212,7 +209,8 @@ protected:
     if (event.isCommand() && event.asCommand().command == BCommandInputEvent::cmRadioGroup) {
       if (state) {        
         BRadioGroupInputEvent& cmd = (BRadioGroupInputEvent&)event;
-        if (!strcmp(group, cmd.group)) {
+        // nullptr is a group of its own: radios without a group work together.
+        if (group == cmd.group || (group && cmd.group && !strcmp(group, cmd.group))) {
           state = !state;
           dirty();
           raiseOnChange(state);

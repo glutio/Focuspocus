@@ -1,5 +1,8 @@
 #ifndef __BTHEME_H__
 #define __BTHEME_H__
+
+#include <stdint.h>
+
 // https://embeddednotepad.com/page/rgb565-color-picker
 struct BTheme {
   int16_t border = 1;
@@ -29,6 +32,14 @@ struct BBWTheme: BTheme {
     focusBackground = 1;
     boundingBoxColor = 1;
     fontColor = 1;
+    popupScreenColor = 0;
+    scrollbarMinThumb = 8;
+    scrollbarSize = 6;
+    buttonRadius = 3;
+    buttonWidth = 30;
+    buttonHeight = 14;
+    buttonPadding = 2;
+    checkboxSize = 9;
   }
 };
 

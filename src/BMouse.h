@@ -1,6 +1,8 @@
 #ifndef __BMOUSE_H__
 #define __BMOUSE_H__
 
+#include <stdint.h>
+
 class BFocusManager;
 
 class BMouse {

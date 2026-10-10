@@ -5,8 +5,8 @@
 
 class BBitmapButton: public BButton {
 public:
-  uint16_t* bitmap;
-  uint8_t* mask;
+  const uint16_t* bitmap;  // RGB565, width x height (PROGMEM on AVR)
+  const uint8_t* mask;     // optional 1-bit transparency mask
 public:  
   BBitmapButton();
   virtual void draw(BGraphics& g);

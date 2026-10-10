@@ -1,6 +1,9 @@
 #ifndef __BVIEW_H__
 #define __BVIEW_H__
 
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include "BList.h"
 #include "BEvent.h"
 #include "BNullable.h"
@@ -111,6 +114,9 @@ public:
   virtual void draw(BGraphics& g) = 0;
   virtual bool hitTest(int16_t ptX, int16_t ptY);
   virtual void handleEvent(BInputEvent& event);
+  // Animation hook, called about every 16 ms while the view's screen is
+  // visible (not covered by another screen). Call dirty() to redraw.
+  virtual void tick(unsigned long ms) {}
 
   BPanel* parent();
   BFocusManager& focusManager();
@@ -194,7 +200,7 @@ protected:
 
 public:
   BButton();
-  virtual void measure(uint16_t availableHeight, uint16_t availableWidth);
+  virtual void measure(uint16_t availableWidth, uint16_t availableHeight);
   virtual void handleEvent(BInputEvent& event);
   virtual void draw(BGraphics& g);
 };
@@ -206,7 +212,7 @@ public:
         BPanel& panel;
         int index;
     public:
-        Iterator(BPanel& panel, unsigned index);
+        Iterator(BPanel& panel, int index);
         bool operator!=(const Iterator& other) const;
         BView& operator*();
         Iterator& operator++();
@@ -217,7 +223,7 @@ public:
         BPanel& panel;
         int index;
     public:
-        ReverseIterator(BPanel& panel, unsigned index);
+        ReverseIterator(BPanel& panel, int index);
         bool operator!=(const ReverseIterator& other) const;
         BView& operator*();
         ReverseIterator& operator++();
@@ -267,14 +273,24 @@ protected:
   int16_t indexOf(BView& view);
 
 public:
+  // Fixed storage: the panel never allocates. nullptr slots are free;
+  // add/insert fail once every slot is used.
   template<size_t N>
   BPanel(BView* (&children)[N]) 
-    : _children(children, N, N), border(false) {
+    : _focusManager(nullptr), _children(children, N, N), border(false) {
     focusable = false;
   }
 
-  void add(BView& view);
-  void insert(uint16_t pos, BView& view);
+  // Heap storage: the child list grows as needed.
+  explicit BPanel(unsigned capacity = 0)
+    : _focusManager(nullptr), _children(capacity), border(false) {
+    focusable = false;
+  }
+
+  // add() takes the first free slot, else appends (heap storage only).
+  // Both return false when there is no room.
+  bool add(BView& view);
+  bool insert(uint16_t pos, BView& view);
   void remove(BView& view);
 
   virtual void draw(BGraphics& graphics);
@@ -300,7 +316,10 @@ public:
 public:
   template<size_t N>
   BStackPanel(BView* (&children)[N]) 
-    : BPanel(children), orientation(B::horizontal), horizontalAlignment(B::left), verticalAlignment(B::top) {}
+    : BPanel(children), spacing(0), orientation(B::horizontal), horizontalAlignment(B::left), verticalAlignment(B::top) {}
+
+  explicit BStackPanel(unsigned capacity = 0)
+    : BPanel(capacity), spacing(0), orientation(B::horizontal), horizontalAlignment(B::left), verticalAlignment(B::top) {}
   
   virtual void layout();
   virtual void measure(uint16_t availableWidth, uint16_t availableHeight);

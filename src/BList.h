@@ -63,24 +63,27 @@ public:
     --_count;
   }
 
-  void Insert(unsigned index, T item) {
+  bool Insert(unsigned index, T item) {
     if (index == _count) {
-      Add(item);
-    } else if (index < _count) {
-      if (_count == _capacity) {
-        if (!_owner) {
-          return;
-        }
-        if (_capacity > UINT_MAX / 2 || !Resize(_capacity * 2)) {
-          return;
-        }
-      }
-      for(unsigned i = _count; i > index; --i) {
-        _array[i] = _array[i - 1];
-      }
-      _array[index] = item;
-      ++_count;
+      return Add(item);
     }
+    if (index > _count) {
+      return false;
+    }
+    if (_count == _capacity) {
+      if (!_owner) {
+        return false;
+      }
+      if (_capacity > UINT_MAX / 2 || !Resize(_capacity * 2)) {
+        return false;
+      }
+    }
+    for(unsigned i = _count; i > index; --i) {
+      _array[i] = _array[i - 1];
+    }
+    _array[index] = item;
+    ++_count;
+    return true;
   }
 
   unsigned Length() {

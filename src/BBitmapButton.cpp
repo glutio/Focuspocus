@@ -1,9 +1,8 @@
-#include <Arduino.h>
 #include "BGraphics.h"
 #include "BFocusManager.h"
 #include "BBitmapButton.h"
 
-BBitmapButton::BBitmapButton() : bitmap(0) {
+BBitmapButton::BBitmapButton() : bitmap(0), mask(0) {
   _animate = false;
 }
 

@@ -107,14 +107,13 @@ struct BRootView {
 
 class BFocusManager {
 public:
-  BEVENT(TimerTick, BFocusManager, bool)
-  BEVENT(BeforeRender, BFocusManager, bool)
-  BEVENT(AfterRender, BFocusManager, bool)
+  BEVENT_N(TimerTick, BFocusManager, unsigned long, 2)
+  BEVENT_N(BeforeRender, BFocusManager, bool, 2)
+  BEVENT_N(AfterRender, BFocusManager, bool, 2)
 
 protected:
   BList<BRootView*> _stack;
   BGraphics _g;
-  BView* _focused;
   BView* _capture;
   bool _isDirty;
   bool _needsLayout;
@@ -150,6 +149,9 @@ protected:
   void drawPass(BView& view, BGraphics& g);
 
   void broadcastCommandHelper(BView& view, BCommandInputEvent& event);
+  void tickPass(BView& view, unsigned long ms);
+  bool isOnScreen(BView& view);
+  void viewRemoved(BView& view);
 
   BPanel* root();
   BRootView* top();
@@ -157,7 +159,8 @@ protected:
 public:
   template<size_t N>
   BFocusManager(BGraphicsApi& g, BRootView* (&stack)[N], BTheme& theme) 
-    : _g(g), _stack(stack, N, N), _theme(&theme), _msTimer(0) {
+    : _stack(stack, N, N), _g(g), _capture(nullptr),
+      _isDirty(false), _needsLayout(false), _theme(&theme), _msTimer(0) {
     for(int i = _stack.Length() - 1; i >= 0; --i) {
       if (!_stack[i]) {
         _stack.Remove(i);
@@ -193,14 +196,32 @@ public:
   void dirty();
   void dirtyLayout();
   
-  void push(BRootView& panel);
+  // Returns false if the screen stack is full.
+  bool push(BRootView& panel);
   void pop();
 
-  void loop();
+  // Call from the sketch's loop() with millis(). Runs, in order: timer
+  // (onTimerTick, then tick() on every view of the visible screen, about
+  // every 16 ms), layout, drawing.
+  void loop(unsigned long ms);
 
-  friend void focuspocus();
+  friend class BPanel;
 };
 
-void focuspocus();
+// Fires at most once per interval; use it in BView::tick() or onTimerTick.
+//   BInterval blink(500);
+//   void tick(unsigned long ms) { if (blink.elapsed(ms)) { ... } }
+struct BInterval {
+  unsigned long interval;
+  unsigned long last;
+  explicit BInterval(unsigned long interval) : interval(interval), last(0) {}
+  bool elapsed(unsigned long ms) {
+    if (ms - last < interval) {
+      return false;
+    }
+    last = ms;
+    return true;
+  }
+};
 
 #endif

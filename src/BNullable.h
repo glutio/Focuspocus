@@ -8,7 +8,7 @@ private:
     bool _hasValue;
 
 public:
-    BNullable() : _hasValue(false) {}
+    BNullable() : _value(), _hasValue(false) {}
 
     BNullable(const T& value) : _value(value), _hasValue(true) {}
 

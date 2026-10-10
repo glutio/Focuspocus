@@ -12,14 +12,12 @@ public:
 protected:
   BRect clientRect();
   BRect progressRect();
-  virtual void parentChanged(BPanel*);
-  void onTimerTick(BFocusManager* fm, bool);
-  void setValue(int16_t val);
 public:
   BProgressBar();
+  // Clamps to [minimum, maximum] and redraws only the part that changed.
+  void setValue(int16_t val);
   virtual void draw(BGraphics& g);
   virtual void measure(uint16_t availableWidth, uint16_t availableHeight);
-
 };
 
 #endif

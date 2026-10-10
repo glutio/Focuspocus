@@ -30,6 +30,7 @@ void BAdafruitGraphics::fillRoundRect(int16_t x, int16_t y, uint16_t width, uint
 }
 
 void BAdafruitGraphics::drawText(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color) {
+  g.setTextWrap(false);
   g.setCursor(x, y);
   g.setTextColor(color);
   g.setTextSize(size);
@@ -38,8 +39,12 @@ void BAdafruitGraphics::drawText(const char* str, int16_t x, int16_t y, uint8_t 
 
 BRect BAdafruitGraphics::getTextBounds(const char* str, uint8_t size) {
   BRect rt;
+  g.setTextWrap(false);
   g.setTextSize(size);
-  g.getTextBounds(str, 0, 0, &rt.x, &rt.y, &rt.width, &rt.height);
+  uint16_t w, h;
+  g.getTextBounds(str, 0, 0, &rt.x, &rt.y, &w, &h);
+  rt.width = w;
+  rt.height = h;
   return rt;
 }
 
@@ -51,27 +56,7 @@ void BAdafruitGraphics::drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[]
   g.drawRGBBitmap(x, y, bitmap, mask, w, h);
 }
 
-void BAdafruitGraphics::drawArc(int16_t centerX, int16_t centerY, uint16_t radius, int16_t startAngle, int16_t endAngle, uint16_t color) {
-    // Convert the start and end angles to radians
-    double startRad = startAngle * PI / 180.0;
-    double endRad = endAngle * PI / 180.0;
-    
-    int lastX = -1;
-    int lastY = -1;
-
-    for (double theta = startRad; theta <= endRad; theta += 0.01) {  // increment by small value for smooth curve
-        int x = centerX + radius * cos(theta);
-        int y = centerY + radius * sin(theta);
-
-        if (x != lastX || y != lastY) {
-            g.writePixel(x, y, color);
-            lastX = x;
-            lastY = y;
-        }
-    }
-}
-
-void BAdafruitGraphics::drawContour(int16_t x, int16_t y, uint8_t mask[], uint16_t width, uint16_t height, uint16_t color) {
+void BAdafruitGraphics::drawContour(int16_t x, int16_t y, const uint8_t mask[], uint16_t width, uint16_t height, uint16_t color) {
   g.startWrite();
   int16_t bw = (width + 7) / 8;
   for (int16_t i = 0; i < height; i++) {

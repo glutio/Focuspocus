@@ -1,9 +1,16 @@
-#include <Arduino.h>
 #include "BTextLabel.h"
 #include "BFocusManager.h"
 
 BTextLabel::BTextLabel() : horizontalAlignment(B::left), verticalAlignment(B::top), text(0) {
   focusable = false;
+}
+
+void BTextLabel::setText(const char* value) {
+  text = value;
+  if (parent()) {
+    dirty();
+    dirtyLayout();
+  }
 }
 
 void BTextLabel::measure(uint16_t availableWidth, uint16_t availableHeight) {
@@ -21,7 +28,6 @@ void BTextLabel::measure(uint16_t availableWidth, uint16_t availableHeight) {
 }
 
 void BTextLabel::draw(BGraphics& g) {
-  BView::draw(g);
   BRect rt = g.getTextBounds(text, viewFontSize(*this));
   int16_t x = 0;
   int16_t y = 0;
@@ -35,6 +41,7 @@ void BTextLabel::draw(BGraphics& g) {
   } else if (verticalAlignment == B::center) {
     y = (g.height - rt.height) / 2;
   }
-  g.fillRect(1, 1, g.width - 2, g.height - 2, viewBackground(*this));
+  g.fillRect(0, 0, g.width, g.height, viewBackground(*this));
+  BView::draw(g);
   g.drawText(text, x, y, viewFontSize(*this), viewFontColor(*this));
 }

@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include "BFocusManager.h"
 #include "BView.h"
 
@@ -47,8 +46,9 @@ bool BFocusManager::findViewHelper(BView& view, int16_t x, int16_t y, BView*& ta
       applyOffset(*panel, x, y, -1);
       applyMargins(*panel, x, y, -1);
       applyPadding(*panel, x, y, -1);
-      for (BView& v : *panel) {
-        if (findViewHelper(v, x, y, target)) {
+      // Later children are drawn on top, so they are hit first.
+      for (auto i = panel->rbegin(); i != panel->rend(); ++i) {
+        if (findViewHelper(*i, x, y, target)) {
           return true;
         }
       }
@@ -385,11 +385,15 @@ BGraphics BFocusManager::getGraphics() {
   return _g;
 }
 
+// For drawing outside the draw pass. Views that are not on the top screen
+// (covered or removed) get a graphics that ignores drawing; they are redrawn
+// when shown again.
 BGraphics BFocusManager::getGraphics(BView& view) {
   BGraphics g(_g);
   g.width = view.actualWidth;
   g.height = view.actualHeight;
   mapViewToScreenHelper(view, g.x, g.y);
+  g.visible = g.visible && isOnScreen(view);
   return g;
 }
 
@@ -461,7 +465,7 @@ void BFocusManager::setupPass(BPanel& panel) {
   }
 }
 
-void BFocusManager::loop() {
+void BFocusManager::loop(unsigned long ms) {
   auto r = root();
   if (r) {
     BPanel& panel = *r;
@@ -473,7 +477,15 @@ void BFocusManager::loop() {
       panel.dirtyLayout();
       _needsRootLayout = false;
     }
-    
+
+    if (ms - _msTimer >= 16) {
+      _msTimer = ms;
+      onTimerTick(this, ms);
+      if (root() == &panel) {  // a handler may have pushed/popped a screen
+        tickPass(panel, ms);
+      }
+    }
+
     for(auto i = 0; i < 20 && _needsLayout; ++i) {
       _needsLayout = false;
       setupPass(panel);
@@ -492,12 +504,6 @@ void BFocusManager::loop() {
       _isDirty = false;
       endDraw();
     }
-
-    auto ms = millis();
-    if (ms - _msTimer >= 16) {
-      _msTimer = ms;
-      onTimerTick(this, true);
-    }
   }
 }
 
@@ -508,6 +514,49 @@ void BFocusManager::endDraw() {
   raiseOnAfterRender(true);
 }
 
+
+static bool isWithin(BView* view, BView& ancestor) {
+  for (; view; view = view->parent()) {
+    if (view == &ancestor) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// A removed view (or anything inside it) must not keep focus or mouse capture,
+// on any screen.
+void BFocusManager::viewRemoved(BView& view) {
+  for (unsigned i = 0; i < _stack.Length(); ++i) {
+    if (isWithin(_stack[i]->focused, view)) {
+      _stack[i]->focused = nullptr;
+    }
+  }
+  if (isWithin(_capture, view)) {
+    _capture = nullptr;
+  }
+}
+
+bool BFocusManager::isOnScreen(BView& view) {
+  BView* v = &view;
+  while (BPanel* p = v->parent()) {
+    if (p->indexOf(*v) < 0) {
+      return false;  // removed
+    }
+    v = p;
+  }
+  return v == root();
+}
+
+void BFocusManager::tickPass(BView& view, unsigned long ms) {
+  view.tick(ms);
+  BPanel* panel = view.asPanel();
+  if (panel) {
+    for (BView& child : *panel) {
+      tickPass(child, ms);
+    }
+  }
+}
 
 void BFocusManager::captureMouse(BView& view) {
   _capture = &view;
@@ -531,9 +580,12 @@ void BFocusManager::dirtyLayout() {
   _needsLayout = true;
 }
 
-void BFocusManager::push(BRootView& root) {
-  _stack.Add(&root);
+bool BFocusManager::push(BRootView& root) {
+  if (!_stack.Add(&root)) {
+    return false;
+  }
   _needsRootLayout = true;
+  return true;
 }
 
 void BFocusManager::pop() {
