@@ -43,7 +43,6 @@ void setup() {
   nextButton.onChange += onNext;
 
   MainScreen::begin(tft.width(), tft.height(), theme);
-  PopupScreen::begin();
 }
 
 void loop() {

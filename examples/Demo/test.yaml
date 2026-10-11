@@ -4,9 +4,19 @@ version: 1
 steps:
   - delay: 4000ms
   - take-screenshot: { part-id: lcd, compare-with: screenshots/1-start.png }
-  # tap "popup"
+  # tap "hello": the hello popup
   - touch-press: { part-id: lcd, x: 205, y: 298 }
   - delay: 200ms
   - touch-release: { part-id: lcd }
   - delay: 1000ms
   - take-screenshot: { part-id: lcd, compare-with: screenshots/2-popup.png }
+  # tap "OK" (closes the popup), then "Orange": the color list
+  - touch-press: { part-id: lcd, x: 120, y: 152 }
+  - delay: 200ms
+  - touch-release: { part-id: lcd }
+  - delay: 2500ms  # the main screen repaints first
+  - touch-press: { part-id: lcd, x: 116, y: 289 }
+  - delay: 200ms
+  - touch-release: { part-id: lcd }
+  - delay: 1000ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/3-list.png }

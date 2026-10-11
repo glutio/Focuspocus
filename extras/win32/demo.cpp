@@ -15,7 +15,6 @@ BKeyboard keyboard(fm);
 
 int main() {
   MainScreen::begin(gfx.displayWidth(), gfx.displayHeight(), theme);
-  PopupScreen::begin();
 
   BWin32Window window(gfx, fm, mouse, keyboard, L"Focuspocus", 2);
   while (window.pump()) {

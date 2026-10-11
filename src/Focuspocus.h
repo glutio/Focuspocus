@@ -11,6 +11,7 @@
 #include "BCheckBox.h"
 #include "BPopup.h"
 #include "BProgressBar.h"
+#include "BGauge.h"
 
 #ifdef ARDUINO
 #include "BAdafruitGraphics.h" // draws on any Adafruit_GFX display

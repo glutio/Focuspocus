@@ -406,7 +406,7 @@ TEST_CASE("layout: too tall for the screen - a vertical stack overflows at the b
 
 // --- scrolling: move a tall stack inside a fixed-size BPanel ---
 
-TEST_CASE("scroll: only views entirely inside the BPanel are drawn; taps stay outside") {
+TEST_CASE("scroll: views are clipped to the BPanel; taps stay outside") {
   const uint16_t RED = 0xF800, GREEN = 0x07E0, BLUE = 0x001F;
   Box header(240, 50, RED), footer(240, 50, BLUE);
   Box i1(100, 40, GREEN), i2(100, 40, GREEN), i3(100, 40, GREEN), i4(100, 40, GREEN);
@@ -429,14 +429,38 @@ TEST_CASE("scroll: only views entirely inside the BPanel are drawn; taps stay ou
 
   CHECK(host.gfx.countPixels(0, 0, 240, 50, RED) == 240 * 50);
   CHECK(host.gfx.countPixels(0, 150, 240, 50, BLUE) == 240 * 50);
-  // i3 is entirely inside the viewport; i2 and i4 are partly outside, so not drawn.
+  // i2 and i4 are partly outside the viewport: only their inside part is drawn.
   CHECK(host.gfx.countPixels(0, 80, 100, 40, GREEN) == 100 * 40);
-  CHECK(host.gfx.countPixels(0, 50, 240, 100, GREEN) == 100 * 40);
+  CHECK(host.gfx.countPixels(0, 50, 100, 30, GREEN) == 100 * 30);
+  CHECK(host.gfx.countPixels(0, 120, 100, 30, GREEN) == 100 * 30);
+  CHECK(host.gfx.countPixels(0, 0, 240, 320, GREEN) == 100 * 100);  // nothing leaks out
   at(host, i2, 0, 40 - 50 + 50, 100, 40);  // list starts 50 px above the viewport
 
   host.tap(50, 160);  // i4 is scrolled under the footer here
   CHECK(i4.mouseEvents.empty());
   CHECK_FALSE(footer.mouseEvents.empty());
+}
+
+TEST_CASE("scroll: text cut by the BPanel edge draws its visible part") {
+  const uint16_t RED = 0xF800, CYAN = 0x07FF;
+  Box header(240, 50, RED);
+  BTextLabel label;
+  label.text = "HHHH";
+  label.fontSize = 2;  // 16 px tall
+  label.fontColor = CYAN;
+  label.y = -8;        // top half above the viewport
+  BView* viewportItems[] = { &label };
+  BPanel viewport(viewportItems);
+  viewport.width = -1;
+  viewport.height = 100;
+  BView* items[] = { &header, &viewport };
+  BStackPanel column(items);
+  fill(column, B::vertical);
+  BRootView root(column);
+  TestHost host(root);
+
+  CHECK(host.gfx.countPixels(0, 50, 240, 8, CYAN) > 0);
+  CHECK(host.gfx.countPixels(0, 0, 240, 50, CYAN) == 0);
 }
 
 TEST_CASE("layout: margins are 8-bit but their sums are not") {
@@ -458,4 +482,30 @@ TEST_CASE("layout: margins are 8-bit but their sums are not") {
   CHECK(inner.actualWidth == 50 + 200 + 254);
   CHECK(inner.actualHeight == 10 + 120 + 254);
   CHECK(host.screenPos(a).x == host.screenPos(inner).x + 127 + 100);
+}
+
+TEST_CASE("layout: auto-sized vertical list of stretched buttons fits them all") {
+  BButton a, b, c;
+  a.text = "A";
+  b.text = "A longer item";
+  c.text = "C";
+  BView* items[] = { &a, &b, &c };
+  BStackPanel list(items);
+  for (BView* v : items) v->width = -1;
+  list.orientation = B::vertical;
+  list.spacing = 4;
+  list.padding(6);
+  BView* outer[] = { &list };
+  BStackPanel page(outer);
+  fill(page, B::vertical);
+  BRootView root(page);
+  TestHost host(root);
+
+  int16_t h = a.actualHeight;
+  CHECK(list.actualHeight == 3 * h + 2 * 4 + 12);
+  BRect text = host.fm.getTextBounds(b.text, 1);
+  CHECK(list.actualWidth >= text.width + 12);
+  for (BView* v : items) CHECK(v->actualWidth == list.actualWidth - 12);
+  BPoint pl = host.screenPos(list), pc = host.screenPos(c);
+  CHECK(pc.y + c.actualHeight == pl.y + list.actualHeight - 6);
 }

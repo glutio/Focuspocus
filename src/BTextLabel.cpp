@@ -15,12 +15,12 @@ void BTextLabel::setText(const char* value) {
 
 void BTextLabel::measure(uint16_t availableWidth, uint16_t availableHeight) {
   BView::measure(availableWidth, availableHeight);
-  if (!width || !height) {
+  if (width <= 0 || height <= 0) {
     BRect rt = focusManager().getTextBounds(text, viewFontSize(*this));
-    if (!width) {
+    if (width <= 0) {
       actualWidth = min((uint16_t)rt.width, availableWidth);
     }
-    if (!height) {
+    if (height <= 0) {
       actualHeight = min((uint16_t)rt.height, availableHeight);
     }
   }

@@ -29,7 +29,11 @@ namespace AskScreen {
     no.text = "No";
     yes.onClick += close;
     no.onClick += close;
-    answers.spacing = 10;
+    // An auto-sized list: full-width buttons, as wide as the widest one.
+    yes.width = -1;
+    no.width = -1;
+    answers.orientation = B::vertical;
+    answers.spacing = 6;
     box.orientation = B::vertical;
     box.horizontalAlignment = B::center;
     box.spacing = 10;

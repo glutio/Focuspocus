@@ -16,16 +16,7 @@ void BBitmapButton::draw(BGraphics& g) {
     else { // draw without mask
       g.drawBitmap(0, 0, bitmap, g.width, g.height);
     }
-     
-    if (isFocused()) {
-      if (mask) {
-        g.drawContour(0, 0, mask, g.width, g.height, focusManager().theme().focusBackground);
-      }
-      else {
-        g.drawRect(0, 0, g.width, g.height, focusManager().theme().focusBackground);
-      }
-    }
 
-    drawContent(g); // draw text, inherited from BButton
+    drawContent(g); // text in the focus color when focused, inherited from BButton
   } 
 }

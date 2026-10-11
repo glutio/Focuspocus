@@ -45,8 +45,11 @@ if(WIN32)
   target_link_libraries(focuspocus_layoutfocus PRIVATE focuspocus_win32)
 
   add_executable(focuspocus_sensorgauge extras/win32/sensorgauge.cpp)
-  target_include_directories(focuspocus_sensorgauge PRIVATE examples/SensorGauge)
   target_link_libraries(focuspocus_sensorgauge PRIVATE focuspocus_win32)
+
+  add_executable(focuspocus_screenshots extras/win32/screenshots.cpp)
+  target_include_directories(focuspocus_screenshots PRIVATE examples/Demo examples/LayoutFocus)
+  target_link_libraries(focuspocus_screenshots PRIVATE focuspocus_win32 gdiplus)
 
   enable_testing()
   file(GLOB FOCUSPOCUS_TESTS CONFIGURE_DEPENDS test/*.cpp)

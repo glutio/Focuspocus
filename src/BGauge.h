@@ -1,22 +1,24 @@
-// Gauge: a custom control built only on the public Focuspocus API.
+// BGauge: a dial with a needle. Built only on the public API, so it doubles as
+// a template for custom widgets.
 // A semicircle dial with ticks and a needle; minimum is on the left.
 // How a custom view works:
 //   measure() picks a default size, draw() paints the whole view,
 //   setValue() repaints just the needle via focusManager().getGraphics().
 // No floats: the needle angle uses an integer sine approximation.
-#ifndef __GAUGE_H__
-#define __GAUGE_H__
+#ifndef __BGAUGE_H__
+#define __BGAUGE_H__
 
-#include <Focuspocus.h>
+#include "BView.h"
+#include "BFocusManager.h"
 
-class Gauge: public BView, public BColorAware {
+class BGauge: public BView, public BColorAware {
 public:
   int16_t minimum;
   int16_t maximum;
   int16_t value;
   BNullable<uint16_t> needleColor;  // default: theme focusColor
 
-  Gauge() : minimum(0), maximum(100), value(0) {
+  BGauge() : minimum(0), maximum(100), value(0) {
     focusable = false;
   }
 
@@ -41,9 +43,11 @@ public:
   virtual void measure(uint16_t, uint16_t) {
     if (!width) {
       actualWidth = 120;
+    } else if (width > 0) {
+      actualWidth = width;
     }
     if (!height) {
-      actualHeight = actualWidth / 2 + 4;
+      actualHeight = actualWidth / 2 + 4;  // a stretched width is known after layout
     }
   }
 

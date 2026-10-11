@@ -554,19 +554,18 @@ TEST_CASE("checkbox: press, drag off and release does not toggle") {
   CHECK_FALSE(cb.state);
 }
 
-// --- Custom control: examples/SensorGauge/Gauge.h ---------------------------
+// --- BGauge -------------------------------------------------------------------
 
-#include "../examples/SensorGauge/Gauge.h"
 
 TEST_CASE("gauge: integer sine is close to the real one") {
-  CHECK(Gauge::sin1024(0) == 0);
-  CHECK(Gauge::sin1024(90) == 1024);
-  CHECK(Gauge::sin1024(-90) == -1024);
-  CHECK(abs(Gauge::sin1024(30) - 512) <= 2);
+  CHECK(BGauge::sin1024(0) == 0);
+  CHECK(BGauge::sin1024(90) == 1024);
+  CHECK(BGauge::sin1024(-90) == -1024);
+  CHECK(abs(BGauge::sin1024(30) - 512) <= 2);
 }
 
 TEST_CASE("gauge: setValue clamps and moves the needle") {
-  Gauge gauge;
+  BGauge gauge;
   gauge.needleColor = 0x001F;
   BView* items[] = { &gauge };
   BStackPanel panel(items);

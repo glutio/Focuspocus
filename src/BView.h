@@ -252,10 +252,10 @@ protected:
     return view.margin.top + view.margin.bottom;
   }
   int16_t viewWidth(BView& view) {
-    return (view.width) ? view.width : view.actualWidth;
+    return view.width > 0 ? view.width : view.actualWidth;
   }
   int16_t viewHeight(BView& view) {
-    return (view.height) ? view.height : view.actualHeight;
+    return view.height > 0 ? view.height : view.actualHeight;
   }
   int16_t paddingWidth() {
     return padding.left + padding.right + border * 2;

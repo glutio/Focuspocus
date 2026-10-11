@@ -15,6 +15,14 @@ It is meant to be small and predictable:
 
 ![Demo](examples/Demo/demo.gif)
 
+**Contents:** [Quick start](#quick-start) · [Examples](#examples) ·
+[Concepts](#concepts) ([Screens](#screens), [Layout](#layout),
+[Input and focus](#input-and-focus), [Events](#events),
+[Loop, timers and drawing](#loop-timers-and-drawing)) ·
+[Widgets](#widgets) ([Themes](#themes), [Custom widgets](#custom-widgets),
+[Other displays](#other-displays)) · [Testing on Windows](#testing-on-windows) ·
+[Testing in Wokwi](#testing-in-wokwi)
+
 ## Quick start
 
 ```cpp
@@ -72,17 +80,17 @@ void loop() {
 |---|---|---|
 | [HelloButton](examples/HelloButton/HelloButton.ino) | label, button, `setText` | ILI9341 + FT6206 touch |
 | [Dialog](examples/Dialog/Dialog.ino) | a second screen, `BPopup`, `push`/`pop` | ILI9341 + FT6206 touch |
-| [SensorGauge](examples/SensorGauge/SensorGauge.ino) | progress bar, live values, a custom dial (`Gauge.h`), a blinking custom widget (`tick`) | ILI9341, analog sensor |
+| [SensorGauge](examples/SensorGauge/SensorGauge.ino) | progress bar, live values, `BGauge`, a blinking custom widget (`tick`) | ILI9341, analog sensor |
 | [OledMenu](examples/OledMenu/OledMenu.ino) | checkbox, radio buttons, 3 push buttons, `BBWTheme`, `onTimerTick` | SSD1306 128x64 OLED |
 | [LayoutFocus](examples/LayoutFocus/LayoutFocus.ino) | stretch, min/max, margins, alignment; focus order through nested panels, per-screen focus | ILI9341 + FT6206 touch |
-| [Demo](examples/Demo/Demo.ino) | everything, incl. scrollbars, bitmap button, custom drawing | ILI9341 + FT6206 ([Wokwi](examples/Demo/wokwi-project.txt)) |
+| [Demo](examples/Demo/Demo.ino) | everything: a scrollbar turning a gauge, a scrolled viewport, a list popup, a bitmap button | ILI9341 + FT6206 ([Wokwi](examples/Demo/wokwi-project.txt)) |
 
 Every example has a Wokwi `diagram.json`, so it runs in the [Wokwi](https://wokwi.com)
 simulator (VS Code extension or `wokwi-cli`) after an `arduino-cli` build;
 see [Testing in Wokwi](#testing-in-wokwi).
 
 **Board size.** The library adds about 12-16 KB of flash. The simple TFT
-examples fit an Uno (HelloButton uses 98%), but a Mega, Nano Every, or any
+examples fit an Uno (HelloButton uses 93%), but a Mega, Nano Every, or any
 32-bit board (SAMD, ESP32, RP2040) leaves room for your own code. OledMenu
 needs more than an Uno: the SSD1306 driver alone needs 1 KB of RAM.
 
@@ -115,6 +123,9 @@ Each view has `width` and `height`, which tell the parent panel how to size it:
 
 `minWidth`, `maxWidth`, `minHeight`, `maxHeight` limit shared sizes.
 After layout, the real size is in `actualWidth` / `actualHeight`.
+A panel sized to content counts shared children at their content size, so a
+column of `width = -1` buttons is as wide as its widest button and every
+button gets that width.
 
 - `BStackPanel` places children in a row (`B::horizontal`) or a column
   (`B::vertical`), with `spacing`, `horizontalAlignment` and
@@ -124,12 +135,14 @@ After layout, the real size is in `actualWidth` / `actualHeight`.
   `margin.left = n` sets one side (-128..127 px). `border = true` draws a panel border.
 
 **Too little room.** Shared (`< 0`) sizes shrink to 0 first; fixed and
-content sizes are kept and overflow the panel. A view that is not entirely
-inside its parent's client area is not drawn (its children that fit still are).
+content sizes are kept and overflow the panel. Drawing is clipped to the
+parent's client area: a view partly outside it shows only its inside part
+(bitmaps are cut by whole rows, and skipped when cut on the left or right).
 
 **Scrolling.** Put a tall `BStackPanel` inside a fixed-size `BPanel` with a
 background, move it with `content.y = -offset;` and call `viewport.dirty();`.
-Only rows fully inside the viewport are drawn; taps outside it are ignored.
+Rows cut by the viewport's edge are drawn clipped; taps outside it are ignored.
+The Demo scrolls its main page this way with a `BScrollbar`.
 
 Children live in a fixed array. Empty (`nullptr`) slots can be filled later
 with `panel.add(view)`; `remove(view)` frees a slot. `BStackPanel panel(8)`
@@ -170,12 +183,19 @@ Call `fm.loop(millis())` from `loop()`. It runs timers about every 16 ms,
 then layout, then draws the views that changed.
 
 - `fm.onTimerTick` runs every timer tick, whatever screen is shown.
-- `BView::tick(ms)` is called on each view of the visible screen; override it
-  for animations. `BInterval` helps run something every N ms:
+- `BView::tick(ms)` is called on each view of the visible screen, every
+  timer tick, with the time passed to `fm.loop()`. Override it to animate a
+  widget without code in `loop()`; views on hidden screens get no ticks, so
+  they pause while covered. `BInterval` runs something every N ms:
 
   ```cpp
-  BInterval every(500);
-  void tick(unsigned long ms) { if (every.elapsed(ms)) { ...; dirty(); } }
+  class PulsingBar: public BProgressBar {   // like the Demo's
+    BInterval step = BInterval(50);
+  public:
+    void tick(unsigned long ms) {
+      if (step.elapsed(ms)) setValue(value >= maximum ? minimum : value + 1);
+    }
+  };
   ```
 - `fm.onBeforeRender` / `fm.onAfterRender` run around each redraw. Buffered
   displays (SSD1306) send the frame in `onAfterRender`.
@@ -188,6 +208,13 @@ the view is not on the visible screen.
 
 ## Widgets
 
+| | | | |
+|:-:|:-:|:-:|:-:|
+| ![BButton](docs/images/button.png) | ![focused BButton](docs/images/button-focused.png) | ![BCheckBox](docs/images/checkbox.png) | ![BRadioButton](docs/images/radio.png) |
+| `BButton` | focused | `BCheckBox` | `BRadioButton` |
+| ![BTextLabel](docs/images/label.png) | ![BProgressBar](docs/images/progressbar.png) | ![BScrollbar](docs/images/scrollbar.png) | ![BGauge](docs/images/gauge.png) |
+| `BTextLabel` | `BProgressBar` | `BScrollbar` | `BGauge` |
+
 | Widget | Fields | Events / methods |
 |---|---|---|
 | `BTextLabel` | `text`, `fontSize`, `fontColor`, `horizontalAlignment`, `verticalAlignment` | `setText(text)` |
@@ -197,10 +224,16 @@ the view is not on the visible screen.
 | `BRadioButton` | as `BCheckBox`, plus `group` (radios with the same group exclude each other) | `onChange(sender, state)` |
 | `BProgressBar` | `minimum`, `maximum`, `value`, `orientation` | `setValue(v)` (clamped) |
 | `BScrollbar` | `minimum`, `maximum`, `value`, `step`, `orientation` | `setValue(v)`, `onChange(sender, value)` |
+| `BGauge` | `minimum`, `maximum`, `value`, `needleColor` | `setValue(v)` (clamped, redraws only the needle) |
 | `BStackPanel`, `BPanel` | see Layout | `add`, `insert`, `remove` |
 | `BPopup` | a centered `BStackPanel` that shades the screen below | |
 
 `color`, `background`, `fontSize` and `fontColor` default to the theme.
+
+| | | |
+|:-:|:-:|:-:|
+| ![Demo](docs/images/demo-main.png) | ![list popup](docs/images/demo-list.png) | ![scrolled](docs/images/demo-scrolled.png) |
+| Demo | a list in a `BPopup` | scrolled to the end |
 
 ### Themes
 
@@ -216,7 +249,8 @@ Derive from `BView` (display only) or `BControl` (focusable), and override:
 
 - `draw(BGraphics& g)`: draw in local coordinates, `g.width` x `g.height`.
 - `measure(availableWidth, availableHeight)`: set `actualWidth` /
-  `actualHeight` when `width` or `height` is 0.
+  `actualHeight` to the content size when `width` or `height` is 0 or
+  shared (`< 0`).
 - `handleEvent(BInputEvent& e)`: react to mouse/keyboard/focus events.
 - `tick(ms)`: animate.
 
@@ -225,17 +259,20 @@ To make a widget that clicks like a button but draws differently, derive from
 this). Define `FOCUSPOCUS_SHOW_BOUNDS` when building to outline every view and
 its margin in red.
 Declare events with `BEVENT(Name, SenderType, ArgumentType)`. See
-`AlarmLabel` in SensorGauge and `BPlane` in Demo.
+`AlarmLabel` in SensorGauge and `PulsingBar` in Demo.
 
-[Gauge.h](examples/SensorGauge/Gauge.h) is a complete example: a dial that
-repaints only its needle on `setValue()` (via `focusManager().getGraphics(*this)`),
-with no floats. It lives in the sketch folder, so it is a template to copy.
+[BGauge.h](src/BGauge.h) is a complete example built only on the public API:
+a dial that repaints only its needle on `setValue()` (via
+`focusManager().getGraphics(*this)`), with no floats. Copy it as a template.
 
 ### Other displays
 
 `BAdafruitGraphics` wraps any `Adafruit_GFX`. For another graphics library,
 implement `BGraphicsApi` (rectangles, round rectangles, circles, lines, text,
-bitmaps).
+bitmaps). Before each call the library passes the visible area to `setClip`,
+and the driver must not draw outside it. `BAdafruitGraphics` draws shapes that
+fit straight to the display, and the rest through a small `Adafruit_GFX` wrapper
+that drops pixels outside the clip. It assumes the built-in 6x8 font.
 
 ## Testing on Windows
 
@@ -251,6 +288,8 @@ cmake --build build --config Debug
 build\Debug\focuspocus_tests.exe     # unit tests
 build\Debug\focuspocus_demo.exe      # the Demo screens in a window
 build\Debug\focuspocus_layoutfocus.exe  # the LayoutFocus screens
+build\Debug\focuspocus_screenshots.exe  # docs/images/*.png (run from the repository root)
+build\Debug\focuspocus_screenshots.exe gif && python extras\win32\demogif.py  # examples/Demo/demo.gif
 ```
 
 ## Testing in Wokwi

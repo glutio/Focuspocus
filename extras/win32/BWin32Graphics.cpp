@@ -22,6 +22,7 @@ uint16_t BWin32Graphics::to565(uint32_t rgb) {
 BWin32Graphics::BWin32Graphics(int16_t width, int16_t height)
   : _width(width), _height(height), _dc(0), _bitmap(0), _oldBitmap(0), _bits(0), _version(0) {
   memset(_fonts, 0, sizeof(_fonts));
+  _clip = { 0, 0, width, height };
   memset(&_info, 0, sizeof(_info));
   _info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
   _info.bmiHeader.biWidth = width;
@@ -62,7 +63,7 @@ HFONT BWin32Graphics::font(uint8_t size) {
 }
 
 void BWin32Graphics::setPixel(int16_t x, int16_t y, uint16_t color) {
-  if (x < 0 || y < 0 || x >= _width || y >= _height) return;
+  if (x < _clip.left || y < _clip.top || x >= _clip.right || y >= _clip.bottom) return;
   _bits[y * _width + x] = toRGB(color);
 }
 
@@ -112,6 +113,12 @@ int16_t BWin32Graphics::displayWidth() {
 
 int16_t BWin32Graphics::displayHeight() {
   return _height;
+}
+
+void BWin32Graphics::setClip(int16_t left, int16_t top, int16_t right, int16_t bottom) {
+  _clip = { left < 0 ? 0 : left, top < 0 ? 0 : top, right > _width ? _width : right, bottom > _height ? _height : bottom };
+  SelectClipRgn(_dc, NULL);
+  IntersectClipRect(_dc, _clip.left, _clip.top, _clip.right, _clip.bottom);
 }
 
 // Sizes arrive as uint16_t but callers compute them as int16_t; like the
@@ -214,21 +221,6 @@ void BWin32Graphics::drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[], c
         setPixel(x + i, y + j, bitmap[j * w + i]);
 }
 
-void BWin32Graphics::drawContour(int16_t x, int16_t y, const uint8_t mask[], uint16_t width, uint16_t height, uint16_t color) {
-  ++_version;
-  int16_t w = (int16_t)width, h = (int16_t)height;
-  int16_t bw = (w + 7) / 8;
-  auto bit = [&](int16_t col, int16_t row) { return mask[row * bw + col / 8] & (0x80 >> (col % 8)); };
-  for (int16_t row = 0; row < h; ++row) {
-    for (int16_t col = 0; col < w; ++col) if (bit(col, row)) { setPixel(x + col, y + row, color); break; }
-    for (int16_t col = w - 1; col >= 0; --col) if (bit(col, row)) { setPixel(x + col, y + row, color); break; }
-  }
-  for (int16_t col = 0; col < w; ++col) {
-    for (int16_t row = 0; row < h; ++row) if (bit(col, row)) { setPixel(x + col, y + row, color); break; }
-    for (int16_t row = h - 1; row >= 0; --row) if (bit(col, row)) { setPixel(x + col, y + row, color); break; }
-  }
-}
-
 void BWin32Graphics::drawCircle(int16_t cx, int16_t cy, uint16_t radius, uint16_t color) {
   ++_version;
   circleQuadrants(cx, cy, (int16_t)radius, 0x0f, color);
@@ -252,8 +244,7 @@ void BWin32Graphics::drawShade(int16_t x, int16_t y, int16_t width, int16_t heig
 
 void BWin32Graphics::fillScreen(uint16_t color) {
   ++_version;
-  uint32_t rgb = toRGB(color);
-  for (int32_t i = 0; i < (int32_t)_width * _height; ++i) _bits[i] = rgb;
+  for (int16_t j = (int16_t)_clip.top; j < _clip.bottom; ++j) hline((int16_t)_clip.left, j, (int16_t)(_clip.right - _clip.left), color);
 }
 
 void BWin32Graphics::drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color) {

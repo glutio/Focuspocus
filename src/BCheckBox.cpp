@@ -25,10 +25,10 @@ void BCheckBoxBase::clicked() {
 void BCheckBoxBase::measure(uint16_t, uint16_t) {
   BRect rt = textBounds();
   int16_t box = boxPixels();
-  if (!width) {
+  if (width <= 0) {
     actualWidth = box + spacing + rt.width;
   }
-  if (!height) {
+  if (height <= 0) {
     actualHeight = max(box, rt.height);
   }
 }

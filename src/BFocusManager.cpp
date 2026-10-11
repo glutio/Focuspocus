@@ -349,7 +349,7 @@ BGraphics BFocusManager::getGraphics(BView& view) {
     pos.x -= client.x;  // now p's own position
     pos.y -= client.y;
   }
-  g.visible = g.visible && isOnScreen(view) && g.inside();
+  g.visible = g.visible && isOnScreen(view) && g.overlaps();
   return g;
 }
 
@@ -368,7 +368,7 @@ void BFocusManager::drawPass(BView& view, BGraphics& g) {
   gv.y += view.y + view.margin.top;
   gv.width = view.actualWidth;
   gv.height = view.actualHeight;
-  if (view.isDirty() && gv.inside()) {  // partly outside its panel (e.g. scrolled): not drawn
+  if (view.isDirty() && gv.overlaps()) {  // entirely outside its panel (e.g. scrolled): not drawn
     view.draw(gv);
   }
 

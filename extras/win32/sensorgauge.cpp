@@ -4,14 +4,14 @@
 // The "sensor" sweeps 0..1023..0 every 8 seconds. Esc = quit.
 #include <stdlib.h>
 #include "BWin32Window.h"
-#include "Gauge.h"
+#include "Focuspocus.h"
 
 BTextLabel title;
 BTextLabel reading;
-Gauge big;
-Gauge medium;
-Gauge small;
-Gauge tiny;
+BGauge big;
+BGauge medium;
+BGauge small;
+BGauge tiny;
 BProgressBar bar;
 BView* rowItems[] = { &medium, &small, &tiny };
 BStackPanel row(rowItems);
@@ -39,8 +39,8 @@ int main() {
   medium.needleColor = 0xF800;  // red
   small.needleColor = 0x07E0;   // green
   tiny.needleColor = 0xFFE0;    // yellow
-  Gauge* gauges[] = { &big, &medium, &small, &tiny };
-  for (Gauge* g : gauges) {
+  BGauge* gauges[] = { &big, &medium, &small, &tiny };
+  for (BGauge* g : gauges) {
     g->maximum = 1023;
   }
   bar.maximum = 1023;
@@ -64,7 +64,7 @@ int main() {
       int value = (int)((t < 4000 ? t : 8000 - t) * 1023 / 4000);
       _itoa_s(value, readingText, 10);
       reading.setText(readingText);
-      for (Gauge* g : gauges) {
+      for (BGauge* g : gauges) {
         g->setValue(g == &big || g == &small ? value : 1023 - value);
       }
       bar.setValue(value);

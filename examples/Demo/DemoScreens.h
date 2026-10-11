@@ -4,7 +4,6 @@
 #define __DEMOSCREENS_H__
 
 #include "Focuspocus.h"
-#include "BPlane.h"
 #ifndef PROGMEM
 #define PROGMEM  // Windows build
 #endif
@@ -51,10 +50,10 @@ namespace PopupScreen {
 }
 
 namespace MainScreen {
-  BBitmapButton bitmapButton;
-  BButton taller;
+  BBitmapButton helloButton;
+  BButton colorButton;
   BButton margin;
-  BView* buttonsContent[] = { &bitmapButton, &taller, &margin };
+  BView* buttonsContent[] = { &helloButton, &colorButton, &margin };
   BStackPanel buttons(buttonsContent);
 
   BCheckBox checkbox1;
@@ -74,44 +73,94 @@ namespace MainScreen {
   BStackPanel labels(labelsContent);
 
   PulsingBar progress;
-  BPlane plane;
+  BGauge gauge;
+  BTextLabel more;
+  BButton toTop;
 
-  BView* mainContent[] = { &buttons, &checkboxes, &labels, &progress, &plane };
+  BView* mainContent[] = { &buttons, &checkboxes, &labels, &progress, &gauge, &toTop, &more };
   BStackPanel main(mainContent);
+  BView* viewportContent[] = { &main };
+  BPanel viewport(viewportContent);  // clips main; main.y scrolls it
   BScrollbar hscrollbar;
   BScrollbar vscrollbar;
 
-  BView* rootContent[] = { &main, &hscrollbar, &vscrollbar };
+  BView* rootContent[] = { &viewport, &hscrollbar, &vscrollbar };
   BPanel root(rootContent);
   BRootView screen(root);
+}
 
+// A popup used as a list box: picking a color updates the main screen.
+namespace ListScreen {
+  struct Choice { const char* name; uint16_t color; };
+  const Choice choices[] = { { "Orange", 0xe361 }, { "Green", 0x0560 }, { "Blue", 0x001F } };
+  BButton items[3];
+  BView* listContent[] = { &items[0], &items[1], &items[2] };
+  BStackPanel list(listContent);
+  BView* popupContent[] = { &list };
+  BPopup popup(popupContent);
+  BRootView screen(popup);
+
+  void pick(BButton* sender, bool) {
+    const Choice& c = choices[sender - items];
+    MainScreen::colorButton.text = c.name;
+    MainScreen::colorButton.dirtyLayout();
+    MainScreen::label2.fontColor = c.color;
+    sender->focusManager().pop();
+  }
+
+  void begin() {
+    for (int i = 0; i < 3; ++i) {
+      items[i].text = choices[i].name;
+      items[i].width = -1;
+      items[i].onClick += pick;
+    }
+    list.orientation = B::vertical;
+    list.spacing = 4;
+    list.padding(6);
+    list.border = true;
+    popup.width = -1;
+    popup.height = -1;
+    screen.focused = &items[0];
+  }
+}
+
+namespace MainScreen {
   void showPopup(BButton* sender, bool) {
     sender->focusManager().push(PopupScreen::screen);
   }
 
-  void growTaller(BButton* sender, bool) {
-    sender->height *= 2;
-    sender->dirtyLayout();
+  void showList(BButton* sender, bool) {
+    sender->focusManager().push(ListScreen::screen);
   }
 
-  void tilt(BScrollbar*, int16_t) {
-    plane.hidePlane();
-    plane.transverseAngle = hscrollbar.value;
-    plane.coronalAngle = vscrollbar.value;
-    plane.dirtyLayout();
+  void turnGauge(BScrollbar*, int16_t value) {
+    gauge.setValue(value);
+  }
+
+  void scroll(BScrollbar*, int16_t value) {
+    main.y = -value;
+    viewport.dirtyLayout();
+  }
+
+  void scrollToTop(BButton*, bool) {
+    vscrollbar.setValue(0);
+    scroll(&vscrollbar, 0);
   }
 
   void begin(int16_t screenWidth, int16_t screenHeight, BTheme& theme) {
-    bitmapButton.bitmap = buttonPixMap;
-    bitmapButton.mask = buttonAlphaMask;
-    bitmapButton.width = BUTTON_W;
-    bitmapButton.height = BUTTON_H;
-    bitmapButton.text = "popup";
-    bitmapButton.onClick += showPopup;
+    PopupScreen::begin();
+    ListScreen::begin();
 
-    taller.height = -1;
-    taller.text = "taller";
-    taller.onClick += growTaller;
+    helloButton.bitmap = buttonPixMap;
+    helloButton.mask = buttonAlphaMask;
+    helloButton.width = BUTTON_W;
+    helloButton.height = BUTTON_H;
+    helloButton.text = "hello";
+    helloButton.onClick += showPopup;
+
+    colorButton.height = -1;
+    colorButton.text = ListScreen::choices[0].name;
+    colorButton.onClick += showList;
     margin.height = -1;
     margin.text = "margin";
     margin.margin(10);
@@ -119,6 +168,7 @@ namespace MainScreen {
     buttons.spacing = 4;
     buttons.width = -1;
     buttons.horizontalAlignment = B::center;
+    buttons.verticalAlignment = B::center;  // hello (fixed 40px) in the 50px row
     buttons.border = true;
     buttons.padding(3);
 
@@ -147,7 +197,7 @@ namespace MainScreen {
     label1.fontSize = 2;
     label1.background = 0xa69d;
     label2.text = "and font";
-    label2.fontColor = 0xe361;
+    label2.fontColor = ListScreen::choices[0].color;
     label2.fontSize = 3;
     label2.background = 0xa69d;
     labels.orientation = B::vertical;
@@ -162,32 +212,36 @@ namespace MainScreen {
     progress.height = 20;
     progress.color = 0x0999;
 
-    plane.margin(20);
-    plane.width = 50;
-    plane.height = 50;
+    gauge.width = 160;
+    gauge.needleColor = 0x0999;
+    more.text = "You scrolled to the end!";
+    toTop.text = "back to top";
+    toTop.onClick += scrollToTop;
 
     main.spacing = 10;
     main.orientation = B::vertical;
-    main.x = 2;  // 2px gap on every side, scrollbars included
-    main.y = 2;
-    main.width = screenWidth - theme.scrollbarSize - 5;
-    main.height = screenHeight - theme.scrollbarSize - 5;
+    main.height = 380;  // taller than the viewport: scroll to see the rest
     main.horizontalAlignment = B::center;
+    viewport.x = 2;  // 2px gap on every side, scrollbars included
+    viewport.y = 2;
+    viewport.width = screenWidth - theme.scrollbarSize - 5;
+    viewport.height = screenHeight - theme.scrollbarSize - 5;
+    main.width = viewport.width;
 
-    hscrollbar.x = main.x;
-    hscrollbar.width = main.width;
+    hscrollbar.x = viewport.x;
+    hscrollbar.width = viewport.width;
     hscrollbar.y = screenHeight - theme.scrollbarSize - 1;
-    hscrollbar.minimum = -90;
-    hscrollbar.maximum = 90;
-    hscrollbar.step = 20;
-    hscrollbar.onChange += tilt;
+    hscrollbar.minimum = 0;
+    hscrollbar.maximum = 100;
+    hscrollbar.step = 10;
+    hscrollbar.onChange += turnGauge;
     vscrollbar.height = screenHeight;
     vscrollbar.x = screenWidth - theme.scrollbarSize - 1;
     vscrollbar.orientation = B::vertical;
-    vscrollbar.minimum = -90;
-    vscrollbar.maximum = 90;
+    vscrollbar.minimum = 0;
+    vscrollbar.maximum = main.height - viewport.height;
     vscrollbar.step = 20;
-    vscrollbar.onChange += tilt;
+    vscrollbar.onChange += scroll;
 
     root.width = -1;
     root.height = -1;

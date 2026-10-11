@@ -217,31 +217,21 @@ void BButton::handleMouse(BMouseInputEvent& event) {
   }
 }
 
+// Natural size (text plus padding, at least the theme's button size), also
+// for stretched buttons so an auto-sized panel around them fits the text.
 void BButton::measure(uint16_t, uint16_t) {
-  if (!width || !height) {
-    int16_t themeWidth = focusManager().theme().buttonWidth;
-    auto themeHeight = focusManager().theme().buttonHeight;
-    if (text) {
-      BRect rt = focusManager().getTextBounds(text, viewFontSize(*this));
-      if (!width) {
-        actualWidth = rt.width + focusManager().theme().buttonPadding * 2;
-      }
-      if (!height) {
-        actualHeight = rt.height + focusManager().theme().buttonPadding * 2;
-      }
-    }
-    if (!width && actualWidth < themeWidth) {
-      actualWidth = themeWidth;
-    }
-    if (!height && actualHeight < themeHeight) {
-      actualHeight = themeHeight;
-    }
-    if (!width) {
-      actualWidth = max(minWidth, min(maxWidth, (uint16_t)actualWidth));
-    }
-    if (!height) {
-      actualHeight = max(minHeight, min(maxHeight, (uint16_t)actualHeight)); 
-    }
+  const BTheme& theme = focusManager().theme();
+  BRect rt;
+  if (text) {
+    rt = focusManager().getTextBounds(text, viewFontSize(*this));
+  }
+  if (width <= 0) {
+    int16_t w = max((int16_t)(rt.width + theme.buttonPadding * 2), (int16_t)theme.buttonWidth);
+    actualWidth = max(minWidth, min(maxWidth, (uint16_t)w));
+  }
+  if (height <= 0) {
+    int16_t h = max((int16_t)(rt.height + theme.buttonPadding * 2), (int16_t)theme.buttonHeight);
+    actualHeight = max(minHeight, min(maxHeight, (uint16_t)h));
   }
 }
 
@@ -463,10 +453,10 @@ void BPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {
     maxY = first ? bottom : max(bottom, maxY);
     first = false;
   }
-  if (width == 0) {
+  if (width <= 0) {
     actualWidth = max(minWidth, min(maxWidth, (uint16_t)(maxX - minX + paddingWidth())));
   }
-  if (height == 0) {
+  if (height <= 0) {
     actualHeight = max(minHeight, min(maxHeight, (uint16_t)(maxY - minY + paddingHeight())));
   }
 }
@@ -479,37 +469,27 @@ int16_t BPanel::clientHeight() {
 }
 
 void BStackPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {
-  int16_t len = 0;
+  int16_t len = 0;  // children that take space (and spacing)
   int16_t w = 0, h = 0;
-  // uint16_t hmax = 0, wmax = 0;
   for(BView& view : *this) {
     view.measure(availableWidth - paddingWidth() - marginWidth(view), availableHeight - paddingHeight() - marginHeight(view));
-    if (!width || !height) {
-      if (viewWidth(view) > 0 && viewHeight(view) > 0) {
-        ++len;
-      }
-      if (!width && viewWidth(view) > 0) {
-        if (orientation == B::horizontal) {
-          w += viewWidth(view) + marginWidth(view);
-          //hmax = max(hmax, view.actualHeight + marginHeight(view));
-        } else {
-          w = max(w, viewWidth(view) + marginWidth(view));
-          //hmax += view.actualHeight + marginHeight(view);
-        }
-      }
-      if (!height && viewHeight(view) > 0) {
-        if (orientation == B::horizontal) {
-          h = max(h, viewHeight(view) + marginHeight(view));
-          //wmax += view.actualWidth + marginWidth(view);
-        } else {
-          h += viewHeight(view) + marginHeight(view);
-        // wmax = max(wmax, view.actualWidth + marginWidth(view));
-        }
-      }
+    // Stretched children count with their natural size (see viewWidth()).
+    int16_t vw = viewWidth(view), vh = viewHeight(view);
+    if (vw > 0 && vh > 0) {
+      ++len;  // like layout(): 0x0 views take no spacing
+    }
+    vw = vw > 0 ? vw + marginWidth(view) : 0;
+    vh = vh > 0 ? vh + marginHeight(view) : 0;
+    if (orientation == B::horizontal) {
+      w += vw;
+      h = max(h, vh);
+    } else {
+      w = max(w, vw);
+      h += vh;
     }
   }
 
-  if (!width) {
+  if (width <= 0) {
     if (orientation == B::horizontal) {
       actualWidth = w + spacing * (len ? len - 1 : 0) + paddingWidth();
     } else {
@@ -517,7 +497,7 @@ void BStackPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {
     }
     actualWidth = max(minWidth, min(maxWidth, (uint16_t)actualWidth));
   }
-  if (!height) {
+  if (height <= 0) {
     if (orientation == B::horizontal) {
       actualHeight = h + paddingHeight();
     } else {
