@@ -120,3 +120,38 @@ void BAdafruitGraphics::fillScreen(uint16_t color) {
 void BAdafruitGraphics::drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color) {
   to(x1 < x2 ? x1 : x2, y1 < y2 ? y1 : y2, abs(x2 - x1) + 1, abs(y2 - y1) + 1).drawLine(x1, y1, x2, y2, color);
 }
+
+
+BAdafruitFontGraphics::BAdafruitFontGraphics(Adafruit_GFX& g, const GFXfont* font) : BAdafruitGraphics(g) {
+  clipped.setFont(font);
+}
+
+// Text boxes get the height of "Ay" so labels line up whatever their letters.
+void BAdafruitFontGraphics::measure(const char* str, uint8_t size, int16_t& left, int16_t& top, uint16_t& width, uint16_t& height) {
+  int16_t y1;
+  uint16_t w;
+  clipped.setTextWrap(false);
+  clipped.setTextSize(size);
+  clipped.getTextBounds("Ay", 0, 0, &left, &top, &w, &height);
+  clipped.getTextBounds(str, 0, 0, &left, &y1, &width, &w);
+}
+
+// GFX fonts draw from the baseline; x, y here is the top left of the text box.
+void BAdafruitFontGraphics::drawText(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color) {
+  int16_t left, top;
+  uint16_t w, h;
+  measure(str, size, left, top, w, h);
+  BAdafruitGraphics::drawText(str, x - left, y - top, size, color);
+}
+
+BRect BAdafruitFontGraphics::getTextBounds(const char* str, uint8_t size) {
+  BRect rt;
+  int16_t left, top;
+  uint16_t w, h;
+  measure(str, size, left, top, w, h);
+  if (*str) {
+    rt.width = w;
+    rt.height = h;
+  }
+  return rt;
+}

@@ -50,4 +50,16 @@ public:
   virtual void drawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
 };
 
+// Draws and measures all text with an Adafruit GFX font (e.g. FreeSans9pt7b from
+// <Fonts/FreeSans9pt7b.h>) instead of the built-in 6x8 one; fontSize scales it.
+// A separate class so sketches without a font don't pay for it.
+class BAdafruitFontGraphics: public BAdafruitGraphics {
+public:
+  BAdafruitFontGraphics(Adafruit_GFX& g, const GFXfont* font);
+  virtual void drawText(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color);
+  virtual BRect getTextBounds(const char* str, uint8_t size);
+private:
+  void measure(const char* str, uint8_t size, int16_t& left, int16_t& top, uint16_t& width, uint16_t& height);
+};
+
 #endif

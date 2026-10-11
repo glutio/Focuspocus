@@ -20,7 +20,7 @@ It is meant to be small and predictable:
 [Input and focus](#input-and-focus), [Events](#events),
 [Loop, timers and drawing](#loop-timers-and-drawing)) ·
 [Widgets](#widgets) ([Themes](#themes), [Custom widgets](#custom-widgets),
-[Other displays](#other-displays)) · [Testing on Windows](#testing-on-windows) ·
+[Other displays](#other-displays), [Fonts](#fonts)) · [Testing on Windows](#testing-on-windows) ·
 [Testing in Wokwi](#testing-in-wokwi)
 
 ## Quick start
@@ -274,6 +274,21 @@ and the driver must not draw outside it. `BAdafruitGraphics` draws shapes that
 fit straight to the display, and the rest through a small `Adafruit_GFX` wrapper
 that drops pixels outside the clip. It assumes the built-in 6x8 font.
 
+### Fonts
+
+Text uses the Adafruit built-in 6x8 font, scaled by `fontSize`. For an
+[Adafruit GFX font](https://learn.adafruit.com/adafruit-gfx-graphics-library/using-fonts),
+use `BAdafruitFontGraphics`; it draws and measures all text with that font
+(`fontSize` still scales it):
+
+```cpp
+#include <Fonts/FreeSans9pt7b.h>
+BAdafruitFontGraphics graphics(tft, &FreeSans9pt7b);
+```
+
+A font costs flash (FreeSans9pt7b is about 2 KB); with
+`BAdafruitGraphics` none of this code is linked in.
+
 ## Testing on Windows
 
 `extras/win32` contains a `BGraphicsApi` that draws into a window, and `test/`
@@ -306,6 +321,11 @@ Buratino checkouts as above):
 .\extras\wokwi\run.ps1 Dialog          # one example
 .\extras\wokwi\run.ps1 -Update         # re-record the reference images
 ```
+
+`extras/wokwi/bundle.ps1` makes a flat copy of each example in
+`build/wokwi/<Name>` (sketch, `diagram.json`, `libraries.txt` and the
+Focuspocus, Buratino and Eventfun sources) that can be uploaded to a
+[wokwi.com](https://wokwi.com) project as is.
 
 ## License
 

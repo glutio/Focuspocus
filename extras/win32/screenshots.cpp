@@ -99,6 +99,8 @@ static void recordGif() {
   tap(MainScreen::colorButton, 1200);
   tap(ListScreen::items[1], 1000);
   tap(MainScreen::checkbox1, 400);
+  tap(MainScreen::checkbox2, 400);
+  tap(MainScreen::radio1, 400);
   tap(MainScreen::radio2, 600);
   int16_t x, y;
   center(MainScreen::hscrollbar, x, y);
