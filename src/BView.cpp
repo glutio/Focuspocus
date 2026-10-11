@@ -52,14 +52,11 @@ void BView::dirtyLayout() {
   dirty();  // own content changed; parents redraw only if a child moves
   focusManager().dirtyLayout();
 
-  if (!width || !height) {
-    BPanel* p = parent();
-    while(p) {
-      p->_needsLayout = true;
-      if (p->width && p->height) {
-        break;
-      }
-      p = p->parent();
+  // The parent re-places its children; panels sized by their content pass it on.
+  for (BPanel* p = parent(); p; p = p->parent()) {
+    p->_needsLayout = true;
+    if (p->width && p->height) {
+      break;
     }
   }
 }
@@ -599,12 +596,16 @@ void BStackPanel::layoutVertical() {
 
   for(BView& view : *this) {
     view.y = startPos;
-    startPos += view.actualHeight + marginHeight(view) + spacing;    
+    if (view.actualWidth && view.actualHeight) {  // 0x0 views take no spacing
+      startPos += view.actualHeight + marginHeight(view) + spacing;
+    }
 
     if (horizontalAlignment == B::right) {
       view.x = clientWidth() - view.actualWidth - marginWidth(view);
     } else if (horizontalAlignment == B::center) {
       view.x = (clientWidth() - view.actualWidth - marginWidth(view)) / 2;
+    } else {
+      view.x = 0;
     }
 
     view.layout();
@@ -688,13 +689,17 @@ void BStackPanel::layoutHorizontal() {
   // position controls starting from origin
   for(BView& view : *this) {
     view.x = startPos;
-    startPos += view.actualWidth + marginWidth(view) + spacing;    
+    if (view.actualWidth && view.actualHeight) {  // 0x0 views take no spacing
+      startPos += view.actualWidth + marginWidth(view) + spacing;
+    }
 
-    // position controls in the other dimension    
+    // position controls in the other dimension
     if (verticalAlignment == B::bottom) {
       view.y = clientHeight() - view.actualHeight - marginHeight(view);
     } else if (verticalAlignment == B::center) {
       view.y = (clientHeight() - view.actualHeight - marginHeight(view)) /2;
+    } else {
+      view.y = 0;
     }
 
     view.layout();

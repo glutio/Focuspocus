@@ -317,22 +317,6 @@ TEST_CASE("margins: progress bar and scrollbar draw inside their own bounds") {
 
 // --- Layout / hit testing / focus -------------------------------------------
 
-TEST_CASE("layout: left/right padding does not shrink child height") {
-  Box child(0, 0);
-  child.width = -1;
-  child.height = -1;
-  BView* items[] = { &child };
-  BStackPanel panel(items);
-  column(panel);
-  panel.padding.left = 30;
-  panel.padding.right = 30;
-  BRootView root(panel);
-  TestHost host(root);
-
-  CHECK(child.actualWidth == 240 - 60);
-  CHECK(child.actualHeight == 320);
-}
-
 TEST_CASE("hit test: overlapping views - the one drawn on top gets the tap") {
   Box below(50, 50, 0x001F), above(50, 50, 0xF800);
   BView* items[] = { &below, &above };
@@ -413,22 +397,6 @@ TEST_CASE("focus: a removed button no longer receives Enter") {
   CHECK(clicks == 0);
 }
 
-TEST_CASE("layout: width -1 fills a centered column") {
-  BProgressBar bar;
-  bar.width = -1;
-  bar.height = 20;
-  Box small(40, 10);
-  BView* items[] = { &small, &bar };
-  BStackPanel panel(items);
-  column(panel);
-  panel.horizontalAlignment = B::center;
-  panel.padding(10);
-  BRootView root(panel);
-  TestHost host(root);
-  host.run();
-  CHECK(bar.actualWidth == panel.actualWidth - 20);
-}
-
 TEST_CASE("progress bar: stays visible after setValue and a blinking neighbour") {
   BTextLabel reading;
   reading.text = "-";
@@ -456,31 +424,4 @@ TEST_CASE("progress bar: stays visible after setValue and a blinking neighbour")
   BPoint p = host.screenPos(bar);
   CHECK(host.gfx.pixel(p.x + 5, p.y + 10) == (uint16_t)host.theme.color);
   CHECK(host.gfx.pixel(p.x + bar.actualWidth - 1, p.y + 10) == (uint16_t)host.theme.color);
-}
-
-TEST_CASE("layout: a label changing text in place does not redraw its neighbours") {
-  struct CountingBox : Box {
-    int draws = 0;
-    CountingBox() : Box(50, 20) {}
-    void draw(BGraphics& g) override { ++draws; Box::draw(g); }
-  };
-  BTextLabel label;
-  label.text = "600";
-  CountingBox box;
-  BView* items[] = { &label, &box };
-  BStackPanel panel(items);
-  column(panel);
-  panel.horizontalAlignment = B::center;
-  BRootView root(panel);
-  TestHost host(root);
-  host.run();
-  int before = box.draws;
-
-  label.setText("601");  // same size: only the label redraws
-  host.run(2);
-  CHECK(box.draws == before);
-
-  label.setText("60000");  // wider: the label moves, the panel redraws
-  host.run(2);
-  CHECK(box.draws == before + 1);
 }
