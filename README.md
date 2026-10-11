@@ -253,3 +253,7 @@ compares the display with the reference images in `screenshots/`.
 .\extras\wokwi\run.ps1 Dialog          # one example
 .\extras\wokwi\run.ps1 -Update         # re-record the reference images
 ```
+
+## License
+
+MIT, see [LICENSE](LICENSE).
