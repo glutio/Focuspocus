@@ -59,9 +59,9 @@ void BAdafruitGraphics::drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[]
 void BAdafruitGraphics::drawContour(int16_t x, int16_t y, const uint8_t mask[], uint16_t width, uint16_t height, uint16_t color) {
   g.startWrite();
   int16_t bw = (width + 7) / 8;
-  for (int16_t i = 0; i < height; i++) {
+  for (int16_t i = 0; i < (int16_t)height; i++) {
     int16_t leftMost = -1, rightMost = -1;
-    for (int16_t j = 0; j < width; j++) {      
+    for (int16_t j = 0; j < (int16_t)width; j++) {      
       auto b = pgm_read_byte(&mask[i * bw + j / 8]);
       auto bit = b & (0x80 >> (j % 8));
       if (bit) {
@@ -87,9 +87,9 @@ void BAdafruitGraphics::drawContour(int16_t x, int16_t y, const uint8_t mask[], 
     }
   }
 
-  for (int16_t i = 0; i < width; i++) {
+  for (int16_t i = 0; i < (int16_t)width; i++) {
     int16_t topMost = -1, bottomMost = -1;
-    for (int16_t j = 0; j < height; j++) {
+    for (int16_t j = 0; j < (int16_t)height; j++) {
       auto b = pgm_read_byte(&mask[j * bw + i / 8]);
       auto bit = b & (0x80 >> (i % 8));
       if (topMost < 0 && bit) {

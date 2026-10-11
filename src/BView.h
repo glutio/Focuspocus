@@ -116,7 +116,7 @@ public:
   virtual void handleEvent(BInputEvent& event);
   // Animation hook, called about every 16 ms while the view's screen is
   // visible (not covered by another screen). Call dirty() to redraw.
-  virtual void tick(unsigned long ms) {}
+  virtual void tick(unsigned long) {}
 
   BPanel* parent();
   BFocusManager& focusManager();

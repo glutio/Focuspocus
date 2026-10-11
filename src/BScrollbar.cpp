@@ -91,6 +91,8 @@ void BScrollbar::handleMouse(BMouseInputEvent& event) {
       }
       break;
     }
+    default:
+      break;
   }
 }
 
@@ -199,7 +201,7 @@ void BScrollbar::updateThumb() {
   }
 }
 
-void BScrollbar::measure(uint16_t availableWidth, uint16_t availableHeight) {
+void BScrollbar::measure(uint16_t, uint16_t) {
   if (orientation == B::horizontal && !height) {
     actualHeight = focusManager().theme().scrollbarSize;
   } else if (orientation == B::vertical && !width) {

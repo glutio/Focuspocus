@@ -72,7 +72,7 @@ void BProgressBar::draw(BGraphics& g) {
   g.fillRect(rt.x, rt.y, rt.width, rt.height, c);
 }
 
-void BProgressBar::measure(uint16_t availableWidth, uint16_t availableHeight) {
+void BProgressBar::measure(uint16_t, uint16_t) {
   if (orientation == B::horizontal && !height) {
     actualHeight = focusManager().theme().scrollbarSize;
   } else if (orientation == B::vertical && !width) {

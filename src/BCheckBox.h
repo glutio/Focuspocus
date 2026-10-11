@@ -44,7 +44,7 @@ public:
   BNullable<int16_t> boxSize;
   const char* text;
 public:
-  BCheckBoxBase() : BStackPanel(_content), alignment(B::left), state(false), text(0), _box(*this)
+  BCheckBoxBase() : BStackPanel(_content), _box(*this), alignment(B::left), state(false), text(0)
   {
     width = 0;
     height = 0;
@@ -63,7 +63,7 @@ public:
   };
 
 
-  void handleFocus(BControl*, BFocusInputEvent& event) {
+  void handleFocus(BControl*, BFocusInputEvent&) {
     applyFocus();
     _label.dirty();
   }
@@ -128,7 +128,7 @@ public:
     }
   }
 
-  virtual void handleClick(BButton* sender, bool isClick) {
+  virtual void handleClick(BButton*, bool isClick) {
     if (isClick) {
       state = !state;
       raiseOnChange(state);
@@ -159,6 +159,8 @@ public:
         }
         break;
       }
+      default:
+        break;
     }
   }
 };
@@ -199,7 +201,7 @@ protected:
     g.fillCircle(org, org, (g.height - pad * 2) / 2, b);
   }
 
-  virtual void handleClick(BButton* sender, bool isClick) {
+  virtual void handleClick(BButton*, bool isClick) {
     if (isClick) {
       if (!state) {
         BRadioGroupInputEvent event;

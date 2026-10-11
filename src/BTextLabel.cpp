@@ -18,10 +18,10 @@ void BTextLabel::measure(uint16_t availableWidth, uint16_t availableHeight) {
   if (!width || !height) {
     BRect rt = focusManager().getTextBounds(text, viewFontSize(*this));
     if (!width) {
-      actualWidth = min(rt.width, availableWidth);
+      actualWidth = min((uint16_t)rt.width, availableWidth);
     }
     if (!height) {
-      actualHeight = min(rt.height, availableHeight);
+      actualHeight = min((uint16_t)rt.height, availableHeight);
     }
   }
 }
