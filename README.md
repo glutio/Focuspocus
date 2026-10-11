@@ -160,8 +160,9 @@ button.onClick -= onClick;
 button.onClick += BButton::ClickEvent(&myObject, &MyClass::onClick);
 ```
 
-Each widget event holds **one** handler (`+=` returns `false` when it is
-taken); the focus manager's events hold two.
+Events are [Eventfun](https://github.com/glutio/Eventfun) `EventSource`s with
+room for a fixed number of handlers: each widget event holds **one** (`+=`
+returns `false` when it is taken); the focus manager's events hold two.
 
 ### Loop, timers and drawing
 
@@ -232,7 +233,9 @@ bitmaps).
 
 `extras/win32` contains a `BGraphicsApi` that draws into a window, and `test/`
 holds unit tests ([doctest](https://github.com/doctest/doctest)) that
-drive the GUI with simulated taps and keys and check what was drawn.
+drive the GUI with simulated taps and keys and check what was drawn. CMake
+expects Eventfun and Buratino checked out next to this repository (or pass
+`-DEVENTFUN_DIR=...` and `-DBURATINO_DIR=...`).
 
 ```
 cmake -S . -B build -A x64
@@ -248,7 +251,8 @@ Each example has a `test.yaml` [scenario](https://docs.wokwi.com/wokwi-ci/automa
 that taps the touch screen, presses buttons or turns the potentiometer, and
 compares the display with the reference images in `screenshots/`.
 `extras/wokwi/run.ps1` builds the examples for a Mega and runs them
-(needs `arduino-cli`, `wokwi-cli` and a `WOKWI_CLI_TOKEN`):
+(needs `arduino-cli`, `wokwi-cli`, a `WOKWI_CLI_TOKEN`, and the Eventfun and
+Buratino checkouts as above):
 
 ```
 .\extras\wokwi\run.ps1                # all examples

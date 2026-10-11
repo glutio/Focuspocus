@@ -1,7 +1,7 @@
 #ifndef __BFOCUSMANAGER_H__
 #define __BFOCUSMANAGER_H__
 
-#include "BList.h"
+#include <Buratino.h>
 #include "BGraphics.h"
 #include "BMouse.h"
 #include "BTheme.h"
@@ -20,7 +20,6 @@ class BPoint;
 class BView;
 class BPanel;
 
-using namespace Buratino;
 
 class BMouseInputEvent;
 class BKeyboardInputEvent;
@@ -112,7 +111,7 @@ public:
   BEVENT_N(AfterRender, BFocusManager, bool, 2)
 
 protected:
-  BList<BRootView*> _stack;
+  Buratino::BList<BRootView*> _stack;
   BGraphics _g;
   BView* _capture;
   bool _isDirty;

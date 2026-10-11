@@ -8,6 +8,13 @@
 param([switch]$Update, [Parameter(ValueFromRemainingArguments)][string[]]$Examples)
 
 $root = Resolve-Path "$PSScriptRoot\..\.."
+# Eventfun and Buratino: <NAME>_DIR, a checkout next to this repository, or
+# the Arduino libraries folder (where the Library Manager puts them).
+$libraries = foreach ($name in 'Eventfun', 'Buratino') {
+  $dir = @([Environment]::GetEnvironmentVariable("$($name.ToUpper())_DIR"), "$root\..\$name") |
+    Where-Object { $_ -and (Test-Path "$_\src") } | Select-Object -First 1
+  if ($dir) { '--library'; (Resolve-Path $dir).Path }
+}
 if (-not $Examples) {
   $Examples = Get-ChildItem "$root\examples" -Directory |
     Where-Object { Test-Path "$($_.FullName)\test.yaml" } | ForEach-Object Name
@@ -17,7 +24,7 @@ $failed = @()
 foreach ($name in $Examples) {
   $dir = "$root\examples\$name"
   Write-Host "== $name" -ForegroundColor Cyan
-  arduino-cli compile -b arduino:avr:mega --library $root --output-dir "$dir\build" $dir | Out-Null
+  arduino-cli compile -b arduino:avr:mega --library $root @libraries --output-dir "$dir\build" $dir | Out-Null
   if ($LASTEXITCODE) { $failed += "$name (build)"; continue }
 
   $scenario = 'test.yaml'

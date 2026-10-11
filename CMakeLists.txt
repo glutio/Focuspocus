@@ -16,7 +16,15 @@ add_library(focuspocus STATIC
   src/BTextLabel.cpp
   src/BView.cpp
 )
-target_include_directories(focuspocus PUBLIC src)
+# Library dependencies: checkouts next to this repository by default.
+set(BURATINO_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Buratino" CACHE PATH "Buratino library (github.com/glutio/Buratino)")
+set(EVENTFUN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Eventfun" CACHE PATH "Eventfun library (github.com/glutio/Eventfun)")
+foreach(dep BURATINO_DIR EVENTFUN_DIR)
+  if(NOT EXISTS "${${dep}}/src")
+    message(FATAL_ERROR "${dep} (${${dep}}) not found; pass -D${dep}=<path>")
+  endif()
+endforeach()
+target_include_directories(focuspocus PUBLIC src ${BURATINO_DIR}/src ${EVENTFUN_DIR}/src)
 
 if(WIN32)
   add_library(focuspocus_win32 STATIC

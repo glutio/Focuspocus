@@ -4,11 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "BList.h"
+#include <Buratino.h>
 #include "BEvent.h"
 #include "BNullable.h"
 
-using namespace Buratino;
 
 class BInputEvent;
 class BMouseInputEvent;
@@ -263,7 +262,7 @@ protected:
 
 protected:
   BFocusManager* _focusManager;
-  BList<BView*> _children;
+  Buratino::BList<BView*> _children;
   uint32_t _layoutHash;  // children's rectangles at the last layout
 
 public:
