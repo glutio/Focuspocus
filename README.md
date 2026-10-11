@@ -83,7 +83,7 @@ void loop() {
 | [SensorGauge](examples/SensorGauge/SensorGauge.ino) | progress bar, live values, `BGauge`, a blinking custom widget (`tick`) | ILI9341, analog sensor |
 | [OledMenu](examples/OledMenu/OledMenu.ino) | checkbox, radio buttons, 3 push buttons, `BBWTheme`, `onTimerTick` | SSD1306 128x64 OLED |
 | [LayoutFocus](examples/LayoutFocus/LayoutFocus.ino) | stretch, min/max, margins, alignment; focus order through nested panels, per-screen focus | ILI9341 + FT6206 touch |
-| [Demo](examples/Demo/Demo.ino) | everything: a scrollbar turning a gauge, a scrolled viewport, a list popup, a bitmap button | ILI9341 + FT6206 ([Wokwi](examples/Demo/wokwi-project.txt)) |
+| [Demo](examples/Demo/Demo.ino) | everything: a scrollbar turning a gauge, a scrolled viewport, a list popup, a bitmap button | ILI9341 + FT6206 ([Wokwi](https://wokwi.com/projects/477626374678837249)) |
 
 Every example has a Wokwi `diagram.json`, so it runs in the [Wokwi](https://wokwi.com)
 simulator (VS Code extension or `wokwi-cli`) after an `arduino-cli` build;
