@@ -121,7 +121,7 @@ After layout, the real size is in `actualWidth` / `actualHeight`.
   `verticalAlignment` (`B::left/top`, `B::center`, `B::right/bottom`).
 - `BPanel` places children at their `x`, `y`.
 - `margin(n)` (all views) and `padding(n)` (panels) add space;
-  `margin.left = n` sets one side. `border = true` draws a panel border.
+  `margin.left = n` sets one side (-128..127 px). `border = true` draws a panel border.
 
 **Too little room.** Shared (`< 0`) sizes shrink to 0 first; fixed and
 content sizes are kept and overflow the panel. A view that is not entirely

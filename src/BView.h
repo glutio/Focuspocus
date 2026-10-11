@@ -39,15 +39,16 @@ struct BPoint {
   BPoint() : x(0), y(0) {}
 };
 
+// Margins and padding are -128..127 pixels.
 struct BMargin {
-  int16_t top;
-  int16_t left;
-  int16_t bottom;
-  int16_t right;
+  int8_t top;
+  int8_t left;
+  int8_t bottom;
+  int8_t right;
   
   BMargin() : top(0), left(0), bottom(0), right(0) {}
 
-  void operator ()(int16_t val) {
+  void operator ()(int8_t val) {
     top = val;
     left = val;
     bottom = val;
@@ -78,10 +79,12 @@ private:
   BPanel* _parent;
 
 protected:
-  bool _isDirty;
-  bool _needsLayout;
-
+  // One byte for all three flags.
+  bool _isDirty : 1;
+  bool _needsLayout : 1;
 public:
+  bool focusable : 1;
+
   int16_t x;
   int16_t y;
   int16_t width;
@@ -94,7 +97,6 @@ public:
   int16_t actualWidth;
   int16_t actualHeight;
   const char* tag;
-  bool focusable;
 
 protected:
   virtual BPanel* asPanel() {
@@ -183,8 +185,8 @@ public:
 
 class BButton: public BControl, public BFontAware, public BColorAware {
 protected:
-  bool _isDown;
-  bool _animate;
+  bool _isDown : 1;
+  bool _animate : 1;
 public:
   BEVENT(Click, BButton, bool)
 

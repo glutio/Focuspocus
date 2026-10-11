@@ -10,11 +10,10 @@ void BView::handleEvent(BInputEvent& event) {
 }
 
 BView::BView() 
-: _parent(nullptr), _isDirty(true), _needsLayout(false),
+: _parent(nullptr), _isDirty(true), _needsLayout(false), focusable(true),
   x(0), y(0), width(0), height(0), 
   minWidth(0), minHeight(0), maxWidth(-1), maxHeight(-1), 
-  actualWidth(0), actualHeight(0), tag(nullptr),
-  focusable(true) {}
+  actualWidth(0), actualHeight(0), tag(nullptr) {}
 
 bool BView::hitTest(int16_t ptX, int16_t ptY) {
   return BRect(0, 0, actualWidth, actualHeight).contains(ptX, ptY);

@@ -438,3 +438,24 @@ TEST_CASE("scroll: only views entirely inside the BPanel are drawn; taps stay ou
   CHECK(i4.mouseEvents.empty());
   CHECK_FALSE(footer.mouseEvents.empty());
 }
+
+TEST_CASE("layout: margins are 8-bit but their sums are not") {
+  Box a(50, 10);
+  a.margin.left = 100;
+  a.margin.right = 100;  // 200 in total, past int8_t
+  a.margin.top = 120;
+  BView* innerItems[] = { &a };
+  BStackPanel inner(innerItems);  // sized by its content
+  inner.padding(127);
+  BView* items[] = { &inner };
+  BStackPanel panel(items);
+  panel.width = -1;
+  panel.height = -1;
+  panel.orientation = B::vertical;
+  BRootView root(panel);
+  TestHost host(root);
+
+  CHECK(inner.actualWidth == 50 + 200 + 254);
+  CHECK(inner.actualHeight == 10 + 120 + 254);
+  CHECK(host.screenPos(a).x == host.screenPos(inner).x + 127 + 100);
+}
