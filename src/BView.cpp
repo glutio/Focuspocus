@@ -426,12 +426,15 @@ void BPanel::layout() {
   finishLayout();
 }
 
+// Repaint the panel only when a child moved or resized, so the area a child
+// left is cleared. Children's old rectangles are already overwritten by
+// measure() and layout(), so a 4-byte fingerprint of them is kept instead of
+// 8 bytes per child. add/insert/remove always repaint (see dirtyLayout()), and
+// a fingerprint collision (about 1 in 4 billion) only skips that repaint.
 void BPanel::finishLayout() {
-  uint32_t hash = 2166136261UL;  // FNV-1a over each child's rectangle
-  for (unsigned i = 0; i < _children.Length(); ++i) {
-    BView* v = _children[i];
-    int16_t r[4] = { 0, 0, -1, -1 };
-    if (v) { r[0] = v->x; r[1] = v->y; r[2] = v->actualWidth; r[3] = v->actualHeight; }
+  uint32_t hash = 2166136261UL;  // FNV-1a style, one 16-bit value per step
+  for (BView& v : *this) {
+    const int16_t r[4] = { v.x, v.y, v.actualWidth, v.actualHeight };
     for (uint8_t k = 0; k < 4; ++k) {
       hash = (hash ^ (uint16_t)r[k]) * 16777619UL;
     }
