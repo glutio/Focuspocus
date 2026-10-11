@@ -520,16 +520,6 @@ void BStackPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {
   }
 }
 
-void BStackPanel::layout() {
-  if (orientation == B::horizontal) {
-    layoutHorizontal();
-  }
-  else {
-    layoutVertical();
-  }
-  finishLayout();
-}
-
 // Stretched children share what fixed children leave; with no room left they get 0.
 static int16_t unitShare(int16_t space, int16_t totalFactor) {
   return (totalFactor && space > 0) ? space / totalFactor : 0;
@@ -540,25 +530,46 @@ static int16_t share(int16_t factor, int16_t unitSize, int16_t margin) {
   return size > 0 ? size : 0;
 }
 
-void BStackPanel::layoutVertical() {
+// One layout for both orientations: "main" is the stacking axis, "cross" the other.
+void BStackPanel::layout() {
+  const bool h = orientation == B::horizontal;
+  int16_t BView::* const size = h ? &BView::width : &BView::height;
+  int16_t BView::* const crossSize = h ? &BView::height : &BView::width;
+  int16_t BView::* const actual = h ? &BView::actualWidth : &BView::actualHeight;
+  int16_t BView::* const crossActual = h ? &BView::actualHeight : &BView::actualWidth;
+  uint16_t BView::* const minSize = h ? &BView::minWidth : &BView::minHeight;
+  uint16_t BView::* const maxSize = h ? &BView::maxWidth : &BView::maxHeight;
+  uint16_t BView::* const crossMin = h ? &BView::minHeight : &BView::minWidth;
+  uint16_t BView::* const crossMax = h ? &BView::maxHeight : &BView::maxWidth;
+  int16_t BView::* const pos = h ? &BView::x : &BView::y;
+  int16_t BView::* const crossPos = h ? &BView::y : &BView::x;
+  const int16_t client = h ? clientWidth() : clientHeight();
+  const int16_t crossClient = h ? clientHeight() : clientWidth();
+  const B::Alignment align = h ? horizontalAlignment : verticalAlignment;
+  const B::Alignment crossAlign = h ? verticalAlignment : horizontalAlignment;
+  const B::Alignment end = h ? B::right : B::bottom;
+  const B::Alignment crossEnd = h ? B::bottom : B::right;
+
   int16_t len = 0;
-  int16_t totalFactor = 0;
-  int16_t fixedSize = 0;
+  int16_t totalFactor = 0;  // sum of stretch factors
+  int16_t fixedSize = 0;    // sum of fixed sizes, margins included
 
   for(BView& view : *this) {
-    if (view.height < 0) {
-      totalFactor += abs(view.height);
-      view.actualHeight = -1;
+    int16_t margin = h ? marginWidth(view) : marginHeight(view);
+    if (view.*size < 0) {
+      totalFactor += abs(view.*size);
+      view.*actual = -1;  // stretched, sized below
     } else {
-      fixedSize += viewHeight(view) + marginHeight(view);
-      view.actualHeight = viewHeight(view);
+      view.*actual = view.*size ? view.*size : view.*actual;
+      fixedSize += view.*actual + margin;
     }
 
-    if (view.width < 0) {
-      view.actualWidth = applyMinMax(clientWidth() - marginWidth(view), view.minWidth, view.maxWidth);
+    if (view.*crossSize < 0) {
+      int16_t crossMargin = h ? marginHeight(view) : marginWidth(view);
+      view.*crossActual = applyMinMax(crossClient - crossMargin, view.*crossMin, view.*crossMax);
     }
-    else if (view.width > 0) {
-      view.actualWidth = view.width;
+    else if (view.*crossSize > 0) {
+      view.*crossActual = view.*crossSize;
     }
 
     if (view.actualHeight && view.actualWidth) {
@@ -567,21 +578,24 @@ void BStackPanel::layoutVertical() {
   }
 
   if (!len) {
+    finishLayout();
     return;
   }
 
-  int16_t totalSize = clientHeight() - (spacing * (len - 1));
+  int16_t totalSize = client - (spacing * (len - 1));
   int16_t unitSize = unitShare(totalSize - fixedSize, totalFactor);
+  // a child hitting its min/max becomes fixed; repeat until every share fits
   for(unsigned i = 0; i < 10 * _children.Length(); ++i) {
     bool converged = true;
-    for(BView& view: *this) {
-      if (view.height < 0 && view.actualHeight == -1) {
-        uint16_t proposedSize = share(view.height, unitSize, marginHeight(view));
-        uint16_t minmaxSize = applyMinMax(proposedSize, view.minHeight, view.maxHeight);
+    for(BView& view : *this) {
+      if (view.*size < 0 && view.*actual == -1) {
+        int16_t margin = h ? marginWidth(view) : marginHeight(view);
+        uint16_t proposedSize = share(view.*size, unitSize, margin);
+        uint16_t minmaxSize = applyMinMax(proposedSize, view.*minSize, view.*maxSize);
         if (proposedSize != minmaxSize) {
-          view.actualHeight = minmaxSize;
-          fixedSize += minmaxSize + marginHeight(view);
-          totalFactor -= abs(view.height);
+          view.*actual = minmaxSize;
+          fixedSize += minmaxSize + margin;
+          totalFactor -= abs(view.*size);
           unitSize = unitShare(totalSize - fixedSize, totalFactor);
           converged = false;
         }
@@ -594,127 +608,37 @@ void BStackPanel::layoutVertical() {
 
   totalSize = 0;
   for(BView& view : *this) {
-    if (view.height < 0 && view.actualHeight == -1) {
-      view.actualHeight = share(view.height, unitSize, marginHeight(view));
+    int16_t margin = h ? marginWidth(view) : marginHeight(view);
+    if (view.*size < 0 && view.*actual == -1) {
+      view.*actual = share(view.*size, unitSize, margin);
     }
-    totalSize += view.actualHeight + marginHeight(view);
+    totalSize += view.*actual + margin;
   }
 
   int16_t startPos = 0;
-  if (verticalAlignment == B::bottom) {
-    startPos = clientHeight() - totalSize - ((len - 1) * spacing);
-  } else if (verticalAlignment == B::center) {
-    startPos = (clientHeight() - totalSize - ((len -1) * spacing)) /2;
+  if (align == end) {
+    startPos = client - totalSize - ((len - 1) * spacing);
+  } else if (align == B::center) {
+    startPos = (client - totalSize - ((len - 1) * spacing)) / 2;
   }
 
   for(BView& view : *this) {
-    view.y = startPos;
+    int16_t margin = h ? marginWidth(view) : marginHeight(view);
+    int16_t crossMargin = h ? marginHeight(view) : marginWidth(view);
+    view.*pos = startPos;
     if (view.actualWidth && view.actualHeight) {  // 0x0 views take no spacing
-      startPos += view.actualHeight + marginHeight(view) + spacing;
+      startPos += view.*actual + margin + spacing;
     }
 
-    if (horizontalAlignment == B::right) {
-      view.x = clientWidth() - view.actualWidth - marginWidth(view);
-    } else if (horizontalAlignment == B::center) {
-      view.x = (clientWidth() - view.actualWidth - marginWidth(view)) / 2;
+    if (crossAlign == crossEnd) {
+      view.*crossPos = crossClient - view.*crossActual - crossMargin;
+    } else if (crossAlign == B::center) {
+      view.*crossPos = (crossClient - view.*crossActual - crossMargin) / 2;
     } else {
-      view.x = 0;
+      view.*crossPos = 0;
     }
 
     view.layout();
   }
-}
-
-void BStackPanel::layoutHorizontal() {
-  // compute size available for controls
-  int16_t len = 0;
-  int16_t totalFactor = 0; // sum of proportion factors
-  int16_t fixedSize = 0; // sum of sizes of fixed-size controls
-
-  for(BView& view : *this) {
-    if (view.width < 0) {
-      totalFactor += abs(view.width);
-      view.actualWidth = -1; // mark for auto layout     
-    } else {
-      fixedSize += viewWidth(view) + marginWidth(view);
-      view.actualWidth = viewWidth(view); // fixed size
-    }
-
-    if (view.height < 0) {
-      // occupy entire area in this dimension
-      view.actualHeight = applyMinMax(clientHeight() - marginHeight(view), view.minHeight, view.maxHeight);
-    }
-    else if (view.height > 0) {
-      view.actualHeight = view.height;
-    }
-
-    if (view.actualHeight && view.actualWidth) {
-      ++len;
-    }
-  }
-  
-  if (!len) {
-    return;
-  }
-
-  int16_t totalSize = clientWidth() - (spacing * (len - 1));
-  // unit of proportion
-  int16_t unitSize = unitShare(totalSize - fixedSize, totalFactor);
-  // autosize controls, apply minmax, repeat until all minmax conditions are met, limit number of attempts
-  for(unsigned i = 0; i < 10 * _children.Length(); ++i) {
-    bool converged = true;
-    for(BView& view : *this) {
-      if (view.width < 0 && view.actualWidth == -1) { // if marked for auto sizing
-        uint16_t proposedSize = share(view.width, unitSize, marginWidth(view));
-        uint16_t minmaxSize = applyMinMax(proposedSize, view.minWidth, view.maxWidth);
-        if (proposedSize != minmaxSize) { // if constrained and has a fixed size now
-          view.actualWidth = minmaxSize;
-          fixedSize += minmaxSize + marginWidth(view);
-          totalFactor -= abs(view.width);
-          // recompute unit size based on available space
-          unitSize = unitShare(totalSize - fixedSize, totalFactor);
-          converged = false; // reposition auto-sized controls
-        }
-      }
-    }
-    if (converged) {
-      break;
-    }
-  }
-
-  totalSize = 0;
-  for(BView& view : *this) {
-    if (view.width < 0 && view.actualWidth == -1) {
-      // position unconstrained controls
-      view.actualWidth = share(view.width, unitSize, marginWidth(view));
-    }
-    totalSize += view.actualWidth + marginWidth(view);
-  }
-
-  // compute render origin based on alignment
-  int16_t startPos = 0;
-  if (horizontalAlignment == B::right) {
-    startPos = clientWidth() - totalSize - ((len - 1) * spacing);
-  } else if (horizontalAlignment == B::center) {
-    startPos = (clientWidth() - totalSize - ((len - 1) * spacing)) / 2;
-  }
-
-  // position controls starting from origin
-  for(BView& view : *this) {
-    view.x = startPos;
-    if (view.actualWidth && view.actualHeight) {  // 0x0 views take no spacing
-      startPos += view.actualWidth + marginWidth(view) + spacing;
-    }
-
-    // position controls in the other dimension
-    if (verticalAlignment == B::bottom) {
-      view.y = clientHeight() - view.actualHeight - marginHeight(view);
-    } else if (verticalAlignment == B::center) {
-      view.y = (clientHeight() - view.actualHeight - marginHeight(view)) /2;
-    } else {
-      view.y = 0;
-    }
-
-    view.layout();
-  }
+  finishLayout();
 }

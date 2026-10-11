@@ -327,8 +327,6 @@ public:
   
   virtual void layout();
   virtual void measure(uint16_t availableWidth, uint16_t availableHeight);
-  void layoutHorizontal();
-  void layoutVertical();
 };
 
 #endif

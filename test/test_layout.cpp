@@ -97,6 +97,73 @@ TEST_CASE("layout: negative sizes share the space left by fixed children") {
   at(host, two, 100, 0, 140, 10);
 }
 
+// The same stack in main/cross terms, so horizontal and vertical can be compared.
+struct AxisScene {
+  Box a, b, c, d;
+  BView* items[4];
+  BStackPanel stack;
+  BRootView root;
+  TestHost host;
+
+  static void size(BView& v, B::Orientation o, int16_t main, int16_t cross) {
+    (o == B::horizontal ? v.width : v.height) = main;
+    (o == B::horizontal ? v.height : v.width) = cross;
+  }
+
+  AxisScene(B::Orientation o, B::Alignment mainAlign)
+    : items{ &a, &b, &c, &d }, stack(items), root(stack), host(root, 200, 200) {
+    bool h = o == B::horizontal;
+    fill(stack, o);
+    stack.spacing = 4;
+    (h ? stack.horizontalAlignment : stack.verticalAlignment) = mainAlign;
+    (h ? stack.verticalAlignment : stack.horizontalAlignment) = h ? B::bottom : B::right;
+
+    size(a, o, 30, 12);  // fixed, with margins on all sides
+    (h ? a.margin.left : a.margin.top) = 3;
+    (h ? a.margin.right : a.margin.bottom) = 1;
+    (h ? a.margin.top : a.margin.left) = 2;
+    size(b, o, -1, 15);  // stretched, capped
+    (h ? b.maxWidth : b.maxHeight) = 40;
+    size(c, o, -2, -1);  // stretched twice as much, fills across
+    (h ? c.maxHeight : c.maxWidth) = 50;
+    size(d, o, 8, 6);    // fixed
+    stack.dirtyLayout();
+    host.run();
+  }
+
+  // main position, cross position, main size, cross size
+  void check(BView& v, int16_t mp, int16_t cp, int16_t ms, int16_t cs) {
+    bool h = stack.orientation == B::horizontal;
+    at(host, v, h ? mp : cp, h ? cp : mp, h ? ms : cs, h ? cs : ms);
+  }
+};
+
+TEST_CASE("layout: horizontal and vertical stacks lay out the same along their axis") {
+  for (B::Orientation o : { B::horizontal, B::vertical }) {
+    CAPTURE(o);
+    {
+      // main: 200 - 3 spacings - 34 (a) - 8 (d) = 146; b capped at 40, c gets 106
+      AxisScene s(o, B::left);
+      s.check(s.a, 3, 188, 30, 12);
+      s.check(s.b, 38, 185, 40, 15);
+      s.check(s.c, 82, 150, 106, 50);
+      s.check(s.d, 192, 194, 8, 6);
+    }
+    {
+      // b and c both capped leave room, so the group centers
+      AxisScene s(o, B::center);
+      (o == B::horizontal ? s.c.maxWidth : s.c.maxHeight) = 60;
+      s.stack.dirtyLayout();
+      s.host.run();
+      // 34 + 40 + 60 + 8 + 12 spacing = 154; (200 - 154) / 2 = 23
+      s.check(s.a, 26, 188, 30, 12);
+      s.check(s.b, 61, 185, 40, 15);
+      s.check(s.c, 105, 150, 60, 50);
+      s.check(s.d, 169, 194, 8, 6);
+    }
+  }
+}
+
 TEST_CASE("layout: maxWidth caps a stretched child; the rest goes to the others") {
   Box capped(0, 10), rest(0, 10);
   capped.width = -1;
