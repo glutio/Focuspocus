@@ -168,10 +168,13 @@ namespace MainScreen {
 
     main.spacing = 10;
     main.orientation = B::vertical;
+    main.x = 2;  // 2px gap on every side, scrollbars included
+    main.y = 2;
     main.width = screenWidth - theme.scrollbarSize - 5;
     main.height = screenHeight - theme.scrollbarSize - 5;
     main.horizontalAlignment = B::center;
 
+    hscrollbar.x = main.x;
     hscrollbar.width = main.width;
     hscrollbar.y = screenHeight - theme.scrollbarSize - 1;
     hscrollbar.minimum = -90;
