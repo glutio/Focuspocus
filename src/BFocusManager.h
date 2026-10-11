@@ -125,22 +125,12 @@ protected:
   bool findViewHelper(BView& view, int16_t x, int16_t y, BView*& target);
   BView* findView(BMouseInputEvent& event);
   
-  void mapScreenToViewHelper(BView& view, int16_t& x, int16_t& y);
-  void mapViewToScreenHelper(BView& view, int16_t& x, int16_t& y);
-
   BView* focusNextHelper(BPanel& panel, int16_t tabIndex);
   BView* focusNextHelper(BView& view);
   BView* focusPrevHelper(BPanel& panel, int16_t tabIndex);
   BView* focusPrevHelper(BView& view);
   BView* focusFirstHelper(BView& view);
   void focusLastHelper(BView& view, BView*& control);
-
-  void applyOffset(BView& view, int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyOffset(BView& view, BGraphics& g);
-  void applyMargins(BView& view, int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyMargins(BView& view, BGraphics& g);
-  void applyPadding(BPanel& panel, int16_t& x, int16_t& y, int8_t sign = 1);
-  void applyPadding(BPanel& panel, BGraphics& g);
 
   void setupPass(BPanel& panel);
   void measurePass(BView& view, uint16_t availableWidth, uint16_t availableHeight);

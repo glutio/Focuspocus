@@ -1,89 +1,25 @@
 #include "BFocusManager.h"
 #include "BView.h"
 
-void BFocusManager::applyOffset(BView& view, int16_t& x, int16_t& y, int8_t sign) {
-  x += sign * view.x;
-  y += sign * view.y;
-}
-
-void BFocusManager::applyOffset(BView& view, BGraphics& g) {
-  g.x += view.x;
-  g.y += view.y;
-
-  g.width = view.actualWidth + view.margin.left + view.margin.right;
-  g.height = view.actualHeight + view.margin.top + view.margin.bottom;
-}
-
-void BFocusManager::applyMargins(BView& view, int16_t& x, int16_t& y, int8_t sign) {
-  x += sign * view.margin.left;
-  y += sign * view.margin.top;
-}
-
-void BFocusManager::applyMargins(BView& view, BGraphics& g) {
-  g.x += view.margin.left;
-  g.y += view.margin.top;
-  g.width -= view.margin.left + view.margin.right;
-  g.height -= view.margin.top + view.margin.bottom;
-}
-
-void BFocusManager::applyPadding(BPanel& panel, int16_t& x, int16_t& y, int8_t sign) {
-  x += sign * (panel.padding.left + panel.border);
-  y += sign * (panel.padding.top + panel.border);
-}
-
-void BFocusManager::applyPadding(BPanel& panel, BGraphics& g) {
-  g.x += panel.padding.left + panel.border;
-  g.y += panel.padding.top + panel.border;
-  g.width -= panel.padding.left + panel.padding.right + panel.border * 2;
-  g.height -= panel.padding.top + panel.padding.bottom + panel.border * 2;
-}
-
-bool BFocusManager::findViewHelper(BView& view, int16_t x, int16_t y, BView*& target) {  
-  if (view.hitTest(x - view.x - view.margin.left, y - view.y - view.margin.top)) {
-    target = &view;
-    BPanel* panel = view.asPanel();
-    if (panel) {
-      applyOffset(*panel, x, y, -1);
-      applyMargins(*panel, x, y, -1);
-      applyPadding(*panel, x, y, -1);
-      // Later children are drawn on top, so they are hit first.
-      for (auto i = panel->rbegin(); i != panel->rend(); ++i) {
-        if (findViewHelper(*i, x, y, target)) {
-          return true;
-        }
+bool BFocusManager::findViewHelper(BView& view, int16_t x, int16_t y, BView*& target) {
+  x -= view.x + view.margin.left;
+  y -= view.y + view.margin.top;
+  if (!view.hitTest(x, y)) {
+    return false;
+  }
+  target = &view;
+  BPanel* panel = view.asPanel();
+  if (panel) {
+    BPoint client = panel->clientOrigin();
+    // Later children are drawn on top, so they are hit first.
+    for (auto i = panel->rbegin(); i != panel->rend(); ++i) {
+      if (findViewHelper(*i, x - client.x, y - client.y, target)) {
+        return true;
       }
     }
-    return true;
   }
-  return false;
+  return true;
 }
-
-void BFocusManager::mapScreenToViewHelper(BView& view, int16_t& x, int16_t& y) {
-  applyMargins(view, x, y, -1);
-  applyOffset(view, x, y, -1);
-  BPanel* parent = view.parent();
-  while(parent) {
-    BPanel& panel = *parent;
-    applyOffset(panel, x, y, -1);
-    applyMargins(panel, x, y, -1);
-    applyPadding(panel, x, y, -1);
-    parent = panel.parent();
-  }
-}
-
-void BFocusManager::mapViewToScreenHelper(BView& view, int16_t& x, int16_t& y) {
-  applyMargins(view, x, y);
-  applyOffset(view, x, y);
-  BPanel* parent = view.parent();
-  while(parent) {
-    BPanel& panel = *parent;
-    applyOffset(panel, x, y);
-    applyMargins(panel, x, y);
-    applyPadding(panel, x, y);
-    parent = panel.parent();
-  }
-}
-
 BRootView* BFocusManager::top() {
   if (_stack.Length()) {
     return _stack[_stack.Length() - 1];
@@ -366,21 +302,30 @@ BView* BFocusManager::focusPrev() {
 }
 
 BPoint BFocusManager::mapScreenToView(BView& view, int16_t x, int16_t y) {
+  BPoint origin = mapViewToScreen(view, 0, 0);
   BPoint pt;
-  pt.x = x;
-  pt.y = y;
-  mapScreenToViewHelper(view, pt.x, pt.y);
+  pt.x = x - origin.x;
+  pt.y = y - origin.y;
   return pt;
 }
 
+// A view's x/y plus its top/left margin is where it sits in its parent's
+// client area, which starts at the parent's padding and border.
 BPoint BFocusManager::mapViewToScreen(BView& view, int16_t x, int16_t y) {
   BPoint pt;
   pt.x = x;
   pt.y = y;
-  mapViewToScreenHelper(view, pt.x, pt.y);
+  for (BView* v = &view; v; v = v->parent()) {
+    pt.x += v->x + v->margin.left;
+    pt.y += v->y + v->margin.top;
+    if (v->parent()) {
+      BPoint client = v->parent()->clientOrigin();
+      pt.x += client.x;
+      pt.y += client.y;
+    }
+  }
   return pt;
 }
-
 BGraphics BFocusManager::getGraphics() {
   return _g;
 }
@@ -394,12 +339,20 @@ BRect BFocusManager::getTextBounds(const char* text, uint8_t size) {
 // when shown again.
 BGraphics BFocusManager::getGraphics(BView& view) {
   BGraphics g(_g);
+  BPoint pos = mapViewToScreen(view, 0, 0);
+  g.x += pos.x;
+  g.y += pos.y;
   g.width = view.actualWidth;
   g.height = view.actualHeight;
-  mapViewToScreenHelper(view, g.x, g.y);
-  for (BPanel* p = view.parent(); p; p = p->parent()) {
-    BPoint client = mapViewToScreen(*p, p->padding.left + p->border, p->padding.top + p->border);
-    g.clip(client.x - g.x, client.y - g.y, p->clientWidth(), p->clientHeight());
+  // clip to every ancestor's client area, walking up from the view
+  for (BView* v = &view; v->parent(); v = v->parent()) {
+    BPanel& p = *v->parent();
+    pos.x -= v->x + v->margin.left;  // now p's client origin on screen
+    pos.y -= v->y + v->margin.top;
+    g.clip(pos.x - g.x, pos.y - g.y, p.clientWidth(), p.clientHeight());
+    BPoint client = p.clientOrigin();
+    pos.x -= client.x;  // now p's own position
+    pos.y -= client.y;
   }
   g.visible = g.visible && isOnScreen(view) && g.inside();
   return g;
@@ -416,15 +369,21 @@ BView* BFocusManager::findView(BMouseInputEvent& event) {
 
 void BFocusManager::drawPass(BView& view, BGraphics& g) {
   BGraphics gv(g);
-  applyOffset(view, gv);
-  applyMargins(view, gv);
+  gv.x += view.x + view.margin.left;
+  gv.y += view.y + view.margin.top;
+  gv.width = view.actualWidth;
+  gv.height = view.actualHeight;
   if (view.isDirty() && gv.inside()) {  // partly outside its panel (e.g. scrolled): not drawn
     view.draw(gv);
   }
 
   BPanel* panel = view.asPanel();
   if (panel) {
-    applyPadding(*panel, gv);
+    BPoint client = panel->clientOrigin();
+    gv.x += client.x;
+    gv.y += client.y;
+    gv.width = panel->clientWidth();
+    gv.height = panel->clientHeight();
     gv.clip(0, 0, gv.width, gv.height);  // children draw inside the client area only
     for(BView& v : *panel) {
       if (panel->isDirty()) {

@@ -302,8 +302,15 @@ public:
   virtual void layout();
   virtual void measure(uint16_t availableWidth, uint16_t availableHeight);
   
-  virtual int16_t clientWidth();
-  virtual int16_t clientHeight();
+  // The area children are laid out in: inside the padding and border.
+  BPoint clientOrigin() {
+    BPoint pt;
+    pt.x = padding.left + border;
+    pt.y = padding.top + border;
+    return pt;
+  }
+  int16_t clientWidth();
+  int16_t clientHeight();
 
   BFocusManager& focusManager();
 
