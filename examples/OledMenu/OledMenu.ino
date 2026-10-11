@@ -69,8 +69,9 @@ void setup() {
 }
 
 void loop() {
-  prevButton.update();
-  okButton.update();
-  nextButton.update();
-  fm.loop(millis());
+  unsigned long ms = millis();
+  prevButton.update(ms);
+  okButton.update(ms);
+  nextButton.update(ms);
+  fm.loop(ms);
 }

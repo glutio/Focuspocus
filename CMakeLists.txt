@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(focuspocus STATIC
   src/BBitmapButton.cpp
+  src/BCheckBox.cpp
   src/BFocusManager.cpp
   src/BGraphics.cpp
   src/BMouse.cpp

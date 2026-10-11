@@ -1,5 +1,6 @@
 #include "BTextLabel.h"
 #include "BFocusManager.h"
+#include "BMinMax.h"
 
 BTextLabel::BTextLabel() : horizontalAlignment(B::left), verticalAlignment(B::top), text(0) {
   focusable = false;
@@ -8,8 +9,7 @@ BTextLabel::BTextLabel() : horizontalAlignment(B::left), verticalAlignment(B::to
 void BTextLabel::setText(const char* value) {
   text = value;
   if (parent()) {
-    dirty();
-    dirtyLayout();
+    dirtyLayout();  // also redraws
   }
 }
 

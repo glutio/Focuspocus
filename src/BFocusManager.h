@@ -7,14 +7,6 @@
 #include "BTheme.h"
 #include "BEvent.h"
 
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
-#endif
-
-#ifndef max
-#define max(a,b) ((a)>(b)?(a):(b))
-#endif
-
 class BView;
 class BPoint;
 class BView;
@@ -163,7 +155,8 @@ public:
   void handleEvent(BInputEvent& event);
   void broadcastCommand(BCommandInputEvent& event);
   
-  BView* focus(BView& view);
+  // Moves the focus to view. False (and nothing changes) if it is not focusable.
+  bool focus(BView& view);
   BView* focusedView();
   BView* focusFirst();
   BView* focusLast();

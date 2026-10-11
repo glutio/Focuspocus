@@ -480,3 +480,76 @@ TEST_CASE("progress bar: stays visible after setValue and a blinking neighbour")
   CHECK(host.gfx.pixel(p.x + 5, p.y + 10) == (uint16_t)host.theme.color);
   CHECK(host.gfx.pixel(p.x + bar.actualWidth - 1, p.y + 10) == (uint16_t)host.theme.color);
 }
+
+// --- fixes from the code review ---------------------------------------------
+
+TEST_CASE("hit test: neighbouring buttons do not share their edge pixel") {
+  BButton a, b;
+  a.text = "A";
+  b.text = "B";
+  static int aClicks, bClicks;
+  aClicks = bClicks = 0;
+  a.onClick += [](BButton*, bool) { ++aClicks; };
+  b.onClick += [](BButton*, bool) { ++bClicks; };
+  BView* items[] = { &a, &b };
+  BStackPanel panel(items);  // horizontal, no spacing: b starts right after a
+  BRootView root(panel);
+  TestHost host(root);
+
+  BPoint pa = host.screenPos(a);
+  host.tap(pa.x + a.actualWidth - 1, pa.y + 5);  // a's last column
+  host.tap(pa.x + a.actualWidth, pa.y + 5);      // b's first column
+  CHECK(aClicks == 1);
+  CHECK(bClicks == 1);
+}
+
+TEST_CASE("layout: an empty auto-sized stack panel is just its padding") {
+  BStackPanel empty;
+  empty.width = 0;
+  empty.height = 0;
+  empty.spacing = 4;
+  empty.padding(3);
+  BView* items[] = { &empty };
+  BStackPanel panel(items);
+  column(panel);
+  BRootView root(panel);
+  TestHost host(root);
+
+  CHECK(empty.actualWidth == 6);
+  CHECK(empty.actualHeight == 6);
+}
+
+TEST_CASE("focus: a view that is not focusable cannot take the focus") {
+  BButton button;
+  button.text = "OK";
+  BTextLabel label;
+  label.text = "text";
+  BView* items[] = { &button, &label };
+  BStackPanel panel(items);
+  column(panel);
+  BRootView root(panel);
+  TestHost host(root);
+
+  CHECK(host.fm.focus(button));
+  CHECK_FALSE(host.fm.focus(label));
+  CHECK(host.fm.focusedView() == &button);
+}
+
+TEST_CASE("checkbox: press, drag off and release does not toggle") {
+  BCheckBox cb;
+  cb.text = "Check me";
+  BView* items[] = { &cb };
+  BStackPanel panel(items);
+  column(panel);
+  BRootView root(panel);
+  TestHost host(root);
+
+  BPoint p = host.screenPos(cb);
+  host.mouse.move(p.x + cb.actualWidth - 3, p.y + 2, true);  // on the text
+  host.run();
+  host.mouse.move(p.x + cb.actualWidth + 20, p.y + 2, true);
+  host.run();
+  host.mouse.move(p.x + cb.actualWidth + 20, p.y + 2, false);
+  host.run();
+  CHECK_FALSE(cb.state);
+}

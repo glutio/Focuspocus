@@ -23,10 +23,11 @@ protected:
   void updateThumb();
   void stepBy(int16_t delta);
   void moveThumb(BMouseInputEvent& pos);
-  bool thumbHitTest(BMouseInputEvent& event);
   BRect clientRect();
-  void hideThumb(BGraphics& g);
-  void showThumb(BGraphics& g);
+  BRect thumbRect();
+  void fillThumb(BGraphics& g, uint16_t color);
+  uint16_t thumbColor();
+  uint16_t trackColor();
   void handleMouse(BMouseInputEvent& event);
   void handleKeyboard(BKeyboardInputEvent& event);
 public:

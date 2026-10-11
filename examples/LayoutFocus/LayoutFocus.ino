@@ -60,8 +60,9 @@ void loop() {
   } else {
     mouse.button(false);
   }
-  prevButton.update();
-  okButton.update();
-  nextButton.update();
-  fm.loop(millis());
+  unsigned long ms = millis();
+  prevButton.update(ms);
+  okButton.update(ms);
+  nextButton.update(ms);
+  fm.loop(ms);
 }

@@ -1,5 +1,6 @@
 #include "BProgressBar.h"
 #include "BFocusManager.h"
+#include "BMinMax.h"
 
 BProgressBar::BProgressBar() : minimum(0), maximum(0), value(0) {
   focusable = false;
@@ -32,34 +33,21 @@ void BProgressBar::setValue(int16_t val) {
   focusManager().endDraw();
 }
 
+// The bar is inset by a 1 px border and 1 px padding.
 BRect BProgressBar::clientRect() {
-  BRect rt;
-  auto border = 1;
-  auto padding = 1;
-  // Graphics and mapped points already exclude the margin.
-  rt.x = padding + border;
-  rt.y = padding + border;
-  rt.width = actualWidth - (padding + border) * 2; 
-  rt.height = actualHeight - (padding + border) * 2;
-  return rt;
+  return BRect(2, 2, actualWidth - 4, actualHeight - 4);
 }
 
 BRect BProgressBar::progressRect() {
-  BRect rtProgress;
   BRect rt = clientRect();
-  rtProgress.x = rt.x;
-  rtProgress.y = rt.y;
-  if (maximum - minimum != 0) {
-    auto range = abs(maximum - minimum);
-    if (orientation == B::horizontal) {    
-      rtProgress.width = labs((long)value - minimum) * rt.width / range;
-      rtProgress.height = rt.height;
-    } else {
-      rtProgress.height = labs((long)value - minimum) * rt.height / range;
-      rtProgress.width = rt.width;
-    }
+  long range = (long)maximum - minimum;
+  long done = range > 0 ? (long)value - minimum : 0;
+  if (orientation == B::horizontal) {
+    rt.width = range > 0 ? done * rt.width / range : 0;
+  } else {
+    rt.height = range > 0 ? done * rt.height / range : 0;
   }
-  return rtProgress;
+  return rt;
 }
 
 void BProgressBar::draw(BGraphics& g) {

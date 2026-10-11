@@ -100,32 +100,27 @@ BTheme& BFocusManager::theme() {
   return *_theme;
 }
   
-BView* BFocusManager::focus(BView& view) {  
-  if (top() && focusedView() != &view)
-  {
-    auto blurred = focusedView();  
-    auto focused = &view;
-    
-    top()->focused = focused;
-
-    BFocusInputEvent focusEvent;
-    focusEvent.blurred = blurred;
-    focusEvent.focused = focused;
-
-    if (blurred) {
-      focusEvent.command = BCommandInputEvent::cmBlur;
-      blurred->handleEvent(focusEvent);
-    }
-
-    focusEvent.command = BCommandInputEvent::cmFocus; 
-    focused->handleEvent(focusEvent);
-    
-    return blurred;
+bool BFocusManager::focus(BView& view) {
+  if (!top() || !view.focusable) {
+    return false;
   }
+  BView* blurred = focusedView();
+  if (blurred == &view) {
+    return true;
+  }
+  top()->focused = &view;
 
-  return &view;
+  BFocusInputEvent focusEvent;
+  focusEvent.blurred = blurred;
+  focusEvent.focused = &view;
+  if (blurred) {
+    focusEvent.command = BCommandInputEvent::cmBlur;
+    blurred->handleEvent(focusEvent);
+  }
+  focusEvent.command = BCommandInputEvent::cmFocus;
+  view.handleEvent(focusEvent);
+  return true;
 }
-
 BView* BFocusManager::focusedView() {
   auto t = top();  
   if (t) {
@@ -387,7 +382,7 @@ void BFocusManager::drawPass(BView& view, BGraphics& g) {
     gv.clip(0, 0, gv.width, gv.height);  // children draw inside the client area only
     for(BView& v : *panel) {
       if (panel->isDirty()) {
-        v.dirty();
+        v._isDirty = true;  // the panel's background covered it
       }
       drawPass(v, gv);
     }

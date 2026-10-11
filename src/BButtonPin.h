@@ -7,7 +7,7 @@
 //   BButtonPin next(5);
 //   void onNext(BButtonPin*, bool pressed) { if (pressed) fm.focusNext(); }
 //   setup(): next.begin(); next.onChange += onNext;
-//   loop():  next.update();
+//   loop():  next.update(millis());
 #include <Arduino.h>
 #include "BEvent.h"
 
@@ -38,20 +38,19 @@ public:
     _pressed = readPressed();
   }
 
-  // Call every loop(). Raises onChange(pressed) once the new state has been
+  // Call every loop() with millis(). Raises onChange(pressed) once the new state has been
   // stable for debounceMs.
-  void update() {
+  void update(unsigned long ms) {
     bool pressed = readPressed();
     if (pressed == _pressed) {
       _pending = false;
       return;
     }
-    unsigned long now = millis();
     if (!_pending) {
       _pending = true;
-      _changedAt = now;
+      _changedAt = ms;
     }
-    if (now - _changedAt >= _debounceMs) {
+    if (ms - _changedAt >= _debounceMs) {
       _pending = false;
       _pressed = pressed;
       raiseOnChange(pressed);

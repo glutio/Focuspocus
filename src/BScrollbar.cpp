@@ -1,5 +1,6 @@
 #include "BFocusManager.h"
 #include "BScrollbar.h"
+#include "BMinMax.h"
 
 BScrollbar::BScrollbar() 
   : _grabOffset(0), _thumbPos(0), _thumbSize(0), minimum(0), maximum(0), value(0), step(1), orientation(B::horizontal) {    
@@ -14,28 +15,31 @@ void BScrollbar::handleEvent(BInputEvent& event) {
   }
 }
 
-bool BScrollbar::thumbHitTest(BMouseInputEvent& event) {
-  BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
+// Thumb and track are inset by a 1 px border and 1 px padding.
+BRect BScrollbar::clientRect() {
+  return BRect(2, 2, actualWidth - 4, actualHeight - 4);
+}
+
+BRect BScrollbar::thumbRect() {
   BRect rt = clientRect();
   if (orientation == B::horizontal) {
-    return pt.x >= _thumbPos && pt.x <= _thumbPos + _thumbSize && pt.y >= rt.y && pt.y <= rt.y + rt.height;
-  } else {
-    return pt.y >= _thumbPos && pt.y <= _thumbPos + _thumbSize && pt.x >= rt.x && pt.x <= rt.x + rt.width;
+    return BRect(_thumbPos, rt.y, _thumbSize, rt.height);
   }
+  return BRect(rt.x, _thumbPos, rt.width, _thumbSize);
 }
 
-BRect BScrollbar::clientRect() {
-  BRect rt;
-  auto border = 1;
-  auto padding = 1;
-  // Graphics and mapped points already exclude the margin.
-  rt.x = padding + border;
-  rt.y = padding + border;
-  rt.width = actualWidth - (padding + border) * 2; 
-  rt.height = actualHeight - (padding + border) * 2;
-  return rt;
+void BScrollbar::fillThumb(BGraphics& g, uint16_t color) {
+  BRect rt = thumbRect();
+  g.fillRoundRect(rt.x, rt.y, rt.width, rt.height, focusManager().theme().buttonRadius, color);
 }
 
+uint16_t BScrollbar::thumbColor() {
+  return isFocused() ? focusManager().theme().focusColor : viewColor(*this);
+}
+
+uint16_t BScrollbar::trackColor() {
+  return isFocused() ? focusManager().theme().focusBackground : viewBackground(*this);
+}
 // Thumb follows the pointer, keeping the point where it was grabbed.
 void BScrollbar::moveThumb(BMouseInputEvent& event) {
   BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
@@ -54,9 +58,9 @@ void BScrollbar::moveThumb(BMouseInputEvent& event) {
 
   BGraphics g = focusManager().getGraphics(*this);
   focusManager().beginDraw();
-  hideThumb(g);
+  fillThumb(g, trackColor());
   _thumbPos = pos;
-  showThumb(g);
+  fillThumb(g, thumbColor());
   focusManager().endDraw();
 
   if (value != val) {
@@ -71,7 +75,7 @@ void BScrollbar::handleMouse(BMouseInputEvent& event) {
       focus();
       BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
       int16_t p = (orientation == B::horizontal) ? pt.x : pt.y;
-      if (thumbHitTest(event)) {
+      if (thumbRect().contains(pt.x, pt.y)) {
         focusManager().captureMouse(*this);
         _grabOffset = p - _thumbPos;
       } else if (p < _thumbPos) {
@@ -128,50 +132,19 @@ void BScrollbar::setValue(int16_t val) {
   }
   BGraphics g = focusManager().getGraphics(*this);
   focusManager().beginDraw();
-  hideThumb(g);
+  fillThumb(g, trackColor());
   updateThumb();
-  showThumb(g);
+  fillThumb(g, thumbColor());
   focusManager().endDraw();
 }
 
-void BScrollbar::hideThumb(BGraphics& g) {
-  BRect rt = clientRect();
-  auto b = (isFocused()) ? focusManager().theme().focusBackground : viewBackground(*this);  
-  auto radius = focusManager().theme().buttonRadius;
-  if (orientation == B::horizontal) {
-    g.fillRoundRect(_thumbPos, rt.y, _thumbSize, rt.height, radius, b);
-  } else {
-    g.fillRoundRect(rt.x, _thumbPos, rt.width, _thumbSize, radius, b);
-  }
-}
-
-void BScrollbar::showThumb(BGraphics& g) {
-  BRect rt = clientRect();
-  auto c = (isFocused()) ? focusManager().theme().focusColor : viewColor(*this);
-  auto radius = focusManager().theme().buttonRadius;
-  if (orientation == B::horizontal) {
-    g.fillRoundRect(_thumbPos, rt.y, _thumbSize, rt.height, radius, c);
-  } else {
-    g.fillRoundRect(rt.x, _thumbPos, rt.width, _thumbSize, radius, c);
-  }
-}
-
-
 void BScrollbar::draw(BGraphics& g) {
   BView::draw(g);
-  auto c = (isFocused()) ? focusManager().theme().focusColor : viewColor(*this);
-  auto b = (isFocused()) ? focusManager().theme().focusBackground : viewBackground(*this);
   auto radius = focusManager().theme().buttonRadius;
-  g.fillRoundRect(0, 0, actualWidth, actualHeight, radius, b);
-  g.drawRoundRect(0, 0, actualWidth, actualHeight, radius, c);
-  BRect rt = clientRect();
-  if (orientation == B::horizontal) {
-    g.fillRoundRect(_thumbPos, rt.y, _thumbSize, rt.height, radius, c);
-  } else {    
-    g.fillRoundRect(rt.x, _thumbPos, rt.width, _thumbSize, radius, c);
-  }
+  g.fillRoundRect(0, 0, actualWidth, actualHeight, radius, trackColor());
+  g.drawRoundRect(0, 0, actualWidth, actualHeight, radius, thumbColor());
+  fillThumb(g, thumbColor());
 }
-
 void BScrollbar::layout() {
   updateThumb();
   clearDirtyLayout();
@@ -179,28 +152,19 @@ void BScrollbar::layout() {
 }
 
 void BScrollbar::updateThumb() {
-  if (maximum - minimum != 0) {
-    auto range = abs(maximum - minimum);
-    auto rt = clientRect();
-    auto minThumb = focusManager().theme().scrollbarMinThumb;
-    int16_t scrollArea;
-    if (orientation == B::horizontal) {    
-      _thumbSize = min(rt.width, max(minThumb, step * 1.0 / range * rt.width));
-      scrollArea = rt.width - _thumbSize;
-      _thumbPos = rt.x;     
-    } else {
-      _thumbSize = min(rt.height, max(minThumb, step * 1.0 / range * rt.height));
-      scrollArea = rt.height - _thumbSize;
-      _thumbPos = rt.y;
-    }
-    
-    _thumbPos += labs((long)value - minimum) * scrollArea / range;
-  } else {
+  long range = (long)maximum - minimum;
+  if (range <= 0) {
     _thumbPos = 0;
     _thumbSize = 0;
+    return;
   }
+  BRect rt = clientRect();
+  bool horizontal = orientation == B::horizontal;
+  int16_t length = horizontal ? rt.width : rt.height;
+  long size = max((long)focusManager().theme().scrollbarMinThumb, (long)step * length / range);
+  _thumbSize = (int16_t)min((long)length, size);
+  _thumbPos = (horizontal ? rt.x : rt.y) + ((long)value - minimum) * (length - _thumbSize) / range;
 }
-
 void BScrollbar::measure(uint16_t, uint16_t) {
   if (orientation == B::horizontal && !height) {
     actualHeight = focusManager().theme().scrollbarSize;

@@ -1,7 +1,7 @@
 #include "BView.h"
 #include "BFocusManager.h"
+#include "BMinMax.h"
 
-bool BView::showBoundingBox = false;
 
 void BView::handleEvent(BInputEvent& event) {
   if (event.type & BInputEvent::evMouse) {
@@ -17,9 +17,7 @@ BView::BView()
   focusable(true) {}
 
 bool BView::hitTest(int16_t ptX, int16_t ptY) {
-  auto hit = ptX >= 0 && ptX <= actualWidth &&
-             ptY >= 0 && ptY <= actualHeight;
-  return hit;
+  return BRect(0, 0, actualWidth, actualHeight).contains(ptX, ptY);
 }
 
 void BView::setParent(BPanel& parent) {
@@ -99,9 +97,11 @@ void BView::layout() {
 }
 
 void BView::draw(BGraphics& g) {
-  if (BView::showBoundingBox) {
-    g.drawRect(-margin.left, -margin.top, g.width + margin.left + margin.right, g.height + margin.top + margin.bottom, focusManager().theme().boundingBoxColor);
-  }
+#ifdef FOCUSPOCUS_SHOW_BOUNDS  // debug: outline each view and its margin in red
+  g.drawRect(-margin.left, -margin.top, g.width + margin.left + margin.right, g.height + margin.top + margin.bottom, 0xF800);
+#else
+  (void)g;
+#endif
 }
 
 /* 
@@ -127,6 +127,10 @@ void BControl::handleEvent(BInputEvent& event) {
  BButton
 */
 BButton::BButton() : _isDown(false), _animate(true), text(nullptr) {
+}
+
+void BButton::clicked() {
+  onClick(this, true);
 }
 
 void BButton::handleEvent(BInputEvent& event) {
@@ -159,7 +163,7 @@ void BButton::handleKeyboard(BKeyboardInputEvent& event) {
           if (_animate) {
             dirty();
           }
-          onClick(this, true);
+          clicked();
         }
       }
       break;
@@ -191,7 +195,7 @@ void BButton::handleMouse(BMouseInputEvent& event) {
       BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
       bool hit = hitTest(pt.x, pt.y);
       if (hit) {
-        onClick(this, hit);
+        clicked();
       }     
       break;
     }
@@ -446,26 +450,27 @@ void BPanel::finishLayout() {
   clearDirtyLayout();
 }
 
-void BPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {  
-  int16_t minX = INT16_MAX, minY = INT16_MAX;
-  int16_t maxX = 0, maxY = 0;
-  for(BView& view : *this) {    
+void BPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {
+  // Sized by content: the children's bounding box (empty panel: just padding).
+  int16_t minX = 0, minY = 0, maxX = 0, maxY = 0;
+  bool first = true;
+  for(BView& view : *this) {
     view.measure(availableWidth - paddingWidth() - marginWidth(view), availableHeight - paddingHeight() - marginHeight(view));
-    if (width == 0 || height == 0) {
-      minX = min(view.x, minX);
-      minY = min(view.y, minY);
-      maxX = max(view.x + view.actualWidth + marginWidth(view), maxX);
-      maxY = max(view.y + view.actualHeight + marginHeight(view), maxY);
-      if (width == 0) {
-        actualWidth = max(minWidth, min(maxWidth, (uint16_t)(maxX - minX + paddingWidth())));      
-      }
-      if (height == 0) {
-        actualHeight = max(minHeight, min(maxHeight, (uint16_t)(maxY - minY + paddingHeight())));
-      }
-    }
+    int16_t right = view.x + view.actualWidth + marginWidth(view);
+    int16_t bottom = view.y + view.actualHeight + marginHeight(view);
+    minX = first ? view.x : min(view.x, minX);
+    minY = first ? view.y : min(view.y, minY);
+    maxX = first ? right : max(right, maxX);
+    maxY = first ? bottom : max(bottom, maxY);
+    first = false;
+  }
+  if (width == 0) {
+    actualWidth = max(minWidth, min(maxWidth, (uint16_t)(maxX - minX + paddingWidth())));
+  }
+  if (height == 0) {
+    actualHeight = max(minHeight, min(maxHeight, (uint16_t)(maxY - minY + paddingHeight())));
   }
 }
-
 int16_t BPanel::clientWidth() {
   return actualWidth - paddingWidth();
 };
@@ -507,7 +512,7 @@ void BStackPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {
 
   if (!width) {
     if (orientation == B::horizontal) {
-      actualWidth = w + spacing * (len - 1) + paddingWidth();
+      actualWidth = w + spacing * (len ? len - 1 : 0) + paddingWidth();
     } else {
       actualWidth = w + paddingWidth();
     }
@@ -517,7 +522,7 @@ void BStackPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {
     if (orientation == B::horizontal) {
       actualHeight = h + paddingHeight();
     } else {
-      actualHeight = h + spacing * (len - 1) + paddingHeight();
+      actualHeight = h + spacing * (len ? len - 1 : 0) + paddingHeight();
     }
     actualHeight = max(minHeight, min(maxHeight, (uint16_t)actualHeight));
   }

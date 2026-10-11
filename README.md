@@ -143,10 +143,10 @@ The sketch reads the hardware and forwards it:
 - **Keys**: `keyboard.sendKey(BKeyboard::kbEnter, pressed)` clicks the focused
   widget. Arrow keys move sliders.
 - **Focus**: `fm.focusNext()`, `fm.focusPrev()`, `fm.focusFirst()`,
-  `fm.focus(view)`. Set `screen.focused = &button` to choose what is focused
-  when a screen is shown.
+  `fm.focus(view)` (returns `false` for views that are not focusable). Set
+  `screen.focused = &button` to choose what is focused when a screen is shown.
 - **Push buttons**: `BButtonPin` debounces a pin and raises `onChange(pressed)`.
-  Call `update()` in `loop()` (see OledMenu).
+  Call `update(millis())` in `loop()` (see OledMenu).
 
 ### Events
 
@@ -220,6 +220,10 @@ Derive from `BView` (display only) or `BControl` (focusable), and override:
 - `handleEvent(BInputEvent& e)`: react to mouse/keyboard/focus events.
 - `tick(ms)`: animate.
 
+To make a widget that clicks like a button but draws differently, derive from
+`BButton` and override `draw()`, `measure()` and `clicked()` (`BCheckBox` does
+this). Define `FOCUSPOCUS_SHOW_BOUNDS` when building to outline every view and
+its margin in red.
 Declare events with `BEVENT(Name, SenderType, ArgumentType)`. See
 `AlarmLabel` in SensorGauge and `BPlane` in Demo.
 

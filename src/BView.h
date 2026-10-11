@@ -25,11 +25,12 @@ struct BRect {
   int16_t width;
   int16_t height;
 
-  bool pointInRect(int16_t ptX, int16_t ptY) {
-    return ptX >= x && ptX <= x + width && ptY >= y && ptY <= y + height;
+  bool contains(int16_t ptX, int16_t ptY) {
+    return ptX >= x && ptX < x + width && ptY >= y && ptY < y + height;
   }
 
   BRect() : x(0), y(0), width(0), height(0) {}
+  BRect(int16_t x, int16_t y, int16_t width, int16_t height) : x(x), y(y), width(width), height(height) {}
 };
 
 struct BPoint {
@@ -94,7 +95,6 @@ public:
   int16_t actualHeight;
   const char* tag;
   bool focusable;
-  static bool showBoundingBox;
 
 protected:
   virtual BPanel* asPanel() {
@@ -193,6 +193,8 @@ public:
 
 protected:
   virtual void drawContent(BGraphics& g);
+  // Called on a tap released over the button, or Enter. Raises onClick.
+  virtual void clicked();
   void handleMouse(BMouseInputEvent& event);
   void handleKeyboard(BKeyboardInputEvent& event);
   void handleFocus(BFocusInputEvent& event);
