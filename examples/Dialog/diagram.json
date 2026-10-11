@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "author": "Focuspocus",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-mega", "id": "mega", "top": 0, "left": 0, "attrs": {} },
+    { "type": "board-ili9341-cap-touch", "id": "lcd", "top": -320, "left": 120, "attrs": {} }
+  ],
+  "connections": [
+    [ "lcd:VCC", "mega:5V", "red", [] ],
+    [ "lcd:GND", "mega:GND.1", "black", [] ],
+    [ "lcd:CS", "mega:10", "orange", [] ],
+    [ "lcd:D/C", "mega:9", "yellow", [] ],
+    [ "lcd:MOSI", "mega:51", "green", [] ],
+    [ "lcd:SCK", "mega:52", "blue", [] ],
+    [ "lcd:MISO", "mega:50", "cyan", [] ],
+    [ "lcd:LED", "mega:5V", "red", [] ],
+    [ "lcd:SDA", "mega:20", "green", [] ],
+    [ "lcd:SCL", "mega:21", "green", [] ]
+  ],
+  "dependencies": {}
+}

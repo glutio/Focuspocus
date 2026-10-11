@@ -49,6 +49,7 @@ void BView::clearDirty() {
 
 void BView::dirtyLayout() {
   _needsLayout = true;
+  dirty();  // own content changed; parents redraw only if a child moves
   focusManager().dirtyLayout();
 
   if (!width || !height) {
@@ -421,8 +422,24 @@ void BPanel::layout() {
     }
     view.layout();
   }
+  finishLayout();
+}
+
+void BPanel::finishLayout() {
+  uint32_t hash = 2166136261UL;  // FNV-1a over each child's rectangle
+  for (unsigned i = 0; i < _children.Length(); ++i) {
+    BView* v = _children[i];
+    int16_t r[4] = { 0, 0, -1, -1 };
+    if (v) { r[0] = v->x; r[1] = v->y; r[2] = v->actualWidth; r[3] = v->actualHeight; }
+    for (uint8_t k = 0; k < 4; ++k) {
+      hash = (hash ^ (uint16_t)r[k]) * 16777619UL;
+    }
+  }
+  if (hash != _layoutHash) {
+    _layoutHash = hash;
+    dirty();
+  }
   clearDirtyLayout();
-  dirty();
 }
 
 void BPanel::measure(uint16_t availableWidth, uint16_t availableHeight) {  
@@ -510,8 +527,7 @@ void BStackPanel::layout() {
   else {
     layoutVertical();
   }
-  clearDirtyLayout();
-  dirty();
+  finishLayout();
 }
 
 void BStackPanel::layoutVertical() {

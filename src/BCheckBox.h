@@ -64,12 +64,12 @@ public:
 
 
   void handleFocus(BControl*, BFocusInputEvent& event) {
-    _label.fontColor = !_box.isFocused() ? viewFontColor(*this) : focusManager().theme().focusColor;
+    applyFocus();
     _label.dirty();
   }
 
   virtual void handleDraw(BGraphics& g) {
-      int16_t c = (!_box.isFocused()) ? viewColor(*this) : focusManager().theme().focusColor;
+      int16_t c = viewColor(*this);
       int16_t b = c;
       g.drawRect(0, 0, g.width, g.height, c);
       g.drawRect(1, 1, g.width - 2, g.height - 2, viewBackground(*this));
@@ -88,9 +88,15 @@ public:
   void applyStyle() {
     _label.text = text;
     _label.fontSize = viewFontSize(*this);
-    _label.fontColor = !_box.isFocused() ? viewFontColor(*this) : focusManager().theme().focusColor;
     _label.color = viewColor(*this);
-    _label.background = viewBackground(*this);
+    applyFocus();
+  }
+
+  // Focus highlights the label like a focused button: focusColor on focusBackground.
+  void applyFocus() {
+    bool f = _box.isFocused();
+    _label.fontColor = f ? focusManager().theme().focusColor : viewFontColor(*this);
+    _label.background = f ? focusManager().theme().focusBackground : viewBackground(*this);
   }
 
   void applyAlignment() {
@@ -174,7 +180,7 @@ public:
 
 protected:
   virtual void handleDraw(BGraphics& g) {
-    int16_t c = (!_box.isFocused()) ? viewColor(*this) : focusManager().theme().focusColor;
+    int16_t c = viewColor(*this);
     int16_t b = c;
 
     auto org = g.height / 2;

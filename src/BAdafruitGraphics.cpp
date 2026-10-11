@@ -125,16 +125,10 @@ void BAdafruitGraphics::fillCircle(int16_t centerX, int16_t centerY, uint16_t ra
 }
 
 void BAdafruitGraphics::drawShade(int16_t x, int16_t y, int16_t width, int16_t height, int16_t color) {
+    // Every other line: a few fast lines instead of a pixel-by-pixel dither.
     g.startWrite();
-    // Draw a dithered pattern to simulate shading    
-    for (int16_t j = y; j < y + height; j++) {
-        for (int16_t i = x; i < x + width; i++) {
-            // Create a checkerboard pattern by drawing a pixel
-            // if the sum of the coordinates is even
-            if ((i + j) % 2 == 0) {
-                g.writePixel(i, j, color);
-            }
-        }
+    for (int16_t j = y + (y & 1); j < y + height; j += 2) {
+        g.writeFastHLine(x, j, width, color);
     }
     g.endWrite();
 }

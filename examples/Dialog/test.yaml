@@ -1,0 +1,18 @@
+# Wokwi scenario, run by extras/wokwi/run.ps1. Touch coordinates are FT6206 (mirrored).
+name: Dialog
+version: 1
+steps:
+  - delay: 4000ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/1-start.png }
+  # tap "Switch"
+  - touch-press: { part-id: lcd, x: 120, y: 142 }
+  - delay: 200ms
+  - touch-release: { part-id: lcd }
+  - delay: 500ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/2-confirm.png }
+  # tap "Yes"
+  - touch-press: { part-id: lcd, x: 151, y: 151 }
+  - delay: 200ms
+  - touch-release: { part-id: lcd }
+  - delay: 1000ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/3-on.png }

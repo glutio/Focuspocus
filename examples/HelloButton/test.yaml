@@ -1,0 +1,17 @@
+# Wokwi scenario, run by extras/wokwi/run.ps1. Touch coordinates are FT6206 (mirrored).
+name: HelloButton
+version: 1
+steps:
+  - delay: 4000ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/1-start.png }
+  # tap "Click me"
+  - touch-press: { part-id: lcd, x: 120, y: 142 }
+  - delay: 200ms
+  - touch-release: { part-id: lcd }
+  - delay: 500ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/2-clicked.png }
+  - touch-press: { part-id: lcd, x: 120, y: 142 }
+  - delay: 200ms
+  - touch-release: { part-id: lcd }
+  - delay: 500ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/3-clicked-twice.png }

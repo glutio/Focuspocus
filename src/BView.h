@@ -264,6 +264,7 @@ protected:
 protected:
   BFocusManager* _focusManager;
   BList<BView*> _children;
+  uint32_t _layoutHash;  // children's rectangles at the last layout
 
 public:
   BMargin padding;
@@ -271,19 +272,22 @@ public:
 protected:
   uint16_t applyMinMax(uint16_t val, uint16_t minimum, uint16_t maximum);
   int16_t indexOf(BView& view);
+  // Call at the end of layout(): redraws the panel only if a child moved or
+  // resized, so a value changing in place redraws just that widget.
+  void finishLayout();
 
 public:
   // Fixed storage: the panel never allocates. nullptr slots are free;
   // add/insert fail once every slot is used.
   template<size_t N>
   BPanel(BView* (&children)[N]) 
-    : _focusManager(nullptr), _children(children, N, N), border(false) {
+    : _focusManager(nullptr), _children(children, N, N), _layoutHash(0), border(false) {
     focusable = false;
   }
 
   // Heap storage: the child list grows as needed.
   explicit BPanel(unsigned capacity = 0)
-    : _focusManager(nullptr), _children(capacity), border(false) {
+    : _focusManager(nullptr), _children(capacity), _layoutHash(0), border(false) {
     focusable = false;
   }
 

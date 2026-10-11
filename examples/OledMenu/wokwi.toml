@@ -1,0 +1,4 @@
+[wokwi]
+version = 1
+firmware = 'build/OledMenu.ino.hex'
+elf = 'build/OledMenu.ino.elf'

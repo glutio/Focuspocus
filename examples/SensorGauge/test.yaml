@@ -1,0 +1,14 @@
+# Wokwi scenario, run by extras/wokwi/run.ps1. Touch coordinates are FT6206 (mirrored).
+name: SensorGauge
+version: 1
+steps:
+  - delay: 4000ms
+  - set-control: { part-id: pot, control: position, value: 0 }
+  - delay: 1000ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/1-zero.png }
+  - set-control: { part-id: pot, control: position, value: 0.5 }
+  - delay: 1000ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/2-half.png }
+  - set-control: { part-id: pot, control: position, value: 1 }
+  - delay: 1000ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/3-full.png }

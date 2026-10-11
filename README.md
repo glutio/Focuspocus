@@ -75,8 +75,12 @@ void loop() {
 | [OledMenu](examples/OledMenu/OledMenu.ino) | checkbox, radio buttons, 3 push buttons, `BBWTheme`, `onTimerTick` | SSD1306 128x64 OLED |
 | [Demo](examples/Demo/Demo.ino) | everything, incl. scrollbars, bitmap button, custom drawing | ILI9341 + FT6206 ([Wokwi](examples/Demo/wokwi-project.txt)) |
 
+Every example has a Wokwi `diagram.json`, so it runs in the [Wokwi](https://wokwi.com)
+simulator (VS Code extension or `wokwi-cli`) after an `arduino-cli` build;
+see [Testing in Wokwi](#testing-in-wokwi).
+
 **Board size.** The library adds about 12-16 KB of flash. The simple TFT
-examples fit an Uno (HelloButton uses 96%), but a Mega, Nano Every, or any
+examples fit an Uno (HelloButton uses 97%), but a Mega, Nano Every, or any
 32-bit board (SAMD, ESP32, RP2040) leaves room for your own code. OledMenu
 needs more than an Uno: the SSD1306 driver alone needs 1 KB of RAM.
 
@@ -225,4 +229,18 @@ cmake -S . -B build -A x64
 cmake --build build --config Debug
 build\Debug\focuspocus_tests.exe     # unit tests
 build\Debug\focuspocus_demo.exe      # the Demo screens in a window
+```
+
+## Testing in Wokwi
+
+Each example has a `test.yaml` [scenario](https://docs.wokwi.com/wokwi-ci/automation-scenarios)
+that taps the touch screen, presses buttons or turns the potentiometer, and
+compares the display with the reference images in `screenshots/`.
+`extras/wokwi/run.ps1` builds the examples for a Mega and runs them
+(needs `arduino-cli`, `wokwi-cli` and a `WOKWI_CLI_TOKEN`):
+
+```
+.\extras\wokwi\run.ps1                # all examples
+.\extras\wokwi\run.ps1 Dialog          # one example
+.\extras\wokwi\run.ps1 -Update         # re-record the reference images
 ```

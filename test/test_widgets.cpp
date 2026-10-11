@@ -412,3 +412,75 @@ TEST_CASE("focus: a removed button no longer receives Enter") {
   host.press(BKeyboard::kbEnter);
   CHECK(clicks == 0);
 }
+
+TEST_CASE("layout: width -1 fills a centered column") {
+  BProgressBar bar;
+  bar.width = -1;
+  bar.height = 20;
+  Box small(40, 10);
+  BView* items[] = { &small, &bar };
+  BStackPanel panel(items);
+  column(panel);
+  panel.horizontalAlignment = B::center;
+  panel.padding(10);
+  BRootView root(panel);
+  TestHost host(root);
+  host.run();
+  CHECK(bar.actualWidth == panel.actualWidth - 20);
+}
+
+TEST_CASE("progress bar: stays visible after setValue and a blinking neighbour") {
+  BTextLabel reading;
+  reading.text = "-";
+  reading.fontSize = 4;
+  BProgressBar bar;
+  bar.maximum = 1023;
+  bar.width = -1;
+  bar.height = 20;
+  BTextLabel alarm;
+  alarm.text = "ALARM";
+  alarm.fontSize = 3;
+  BView* items[] = { &reading, &bar, &alarm };
+  BStackPanel panel(items);
+  column(panel);
+  panel.horizontalAlignment = B::center;
+  panel.spacing = 15;
+  panel.padding(10);
+  BRootView root(panel);
+  TestHost host(root);
+  host.run();
+  bar.setValue(600);
+  alarm.fontColor = 0;
+  alarm.dirty();
+  host.run(3);
+  BPoint p = host.screenPos(bar);
+  CHECK(host.gfx.pixel(p.x + 5, p.y + 10) == (uint16_t)host.theme.color);
+  CHECK(host.gfx.pixel(p.x + bar.actualWidth - 1, p.y + 10) == (uint16_t)host.theme.color);
+}
+
+TEST_CASE("layout: a label changing text in place does not redraw its neighbours") {
+  struct CountingBox : Box {
+    int draws = 0;
+    CountingBox() : Box(50, 20) {}
+    void draw(BGraphics& g) override { ++draws; Box::draw(g); }
+  };
+  BTextLabel label;
+  label.text = "600";
+  CountingBox box;
+  BView* items[] = { &label, &box };
+  BStackPanel panel(items);
+  column(panel);
+  panel.horizontalAlignment = B::center;
+  BRootView root(panel);
+  TestHost host(root);
+  host.run();
+  int before = box.draws;
+
+  label.setText("601");  // same size: only the label redraws
+  host.run(2);
+  CHECK(box.draws == before);
+
+  label.setText("60000");  // wider: the label moves, the panel redraws
+  host.run(2);
+  CHECK(box.draws == before + 1);
+}

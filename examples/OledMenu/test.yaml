@@ -1,0 +1,26 @@
+# Wokwi scenario, run by extras/wokwi/run.ps1. Touch coordinates are FT6206 (mirrored).
+name: OledMenu
+version: 1
+steps:
+  - delay: 4000ms
+  - take-screenshot: { part-id: oled, compare-with: screenshots/1-start.png }
+  # OK toggles "Blink LED"
+  - set-control: { part-id: btnOk, control: pressed, value: 1 }
+  - delay: 200ms
+  - set-control: { part-id: btnOk, control: pressed, value: 0 }
+  - delay: 500ms
+  - take-screenshot: { part-id: oled, compare-with: screenshots/2-blink-on.png }
+  # Next, Next, OK selects "Fast"
+  - set-control: { part-id: btnNext, control: pressed, value: 1 }
+  - delay: 200ms
+  - set-control: { part-id: btnNext, control: pressed, value: 0 }
+  - delay: 500ms
+  - set-control: { part-id: btnNext, control: pressed, value: 1 }
+  - delay: 200ms
+  - set-control: { part-id: btnNext, control: pressed, value: 0 }
+  - delay: 500ms
+  - set-control: { part-id: btnOk, control: pressed, value: 1 }
+  - delay: 200ms
+  - set-control: { part-id: btnOk, control: pressed, value: 0 }
+  - delay: 500ms
+  - take-screenshot: { part-id: oled, compare-with: screenshots/3-fast.png }

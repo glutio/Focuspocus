@@ -245,9 +245,9 @@ void BWin32Graphics::fillCircle(int16_t cx, int16_t cy, uint16_t radius, uint16_
 
 void BWin32Graphics::drawShade(int16_t x, int16_t y, int16_t width, int16_t height, int16_t color) {
   ++_version;
-  for (int16_t j = y; j < y + height; ++j)
+  for (int16_t j = y + (y & 1); j < y + height; j += 2)
     for (int16_t i = x; i < x + width; ++i)
-      if ((i + j) % 2 == 0) setPixel(i, j, (uint16_t)color);
+      setPixel(i, j, (uint16_t)color);
 }
 
 void BWin32Graphics::fillScreen(uint16_t color) {
