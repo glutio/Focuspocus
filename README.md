@@ -13,7 +13,7 @@ It is meant to be small and predictable:
 - **Testable on a PC.** The same code builds on Windows with a simulated
   display, and the library has unit tests.
 
-![Demo](https://github.com/glutio/Focuspocus/assets/22550674/8a114a07-abbc-4933-879d-d3f1f1537d18)
+![Demo](examples/Demo/demo.gif)
 
 ## Quick start
 
