@@ -63,9 +63,11 @@ public:
   };
 
 
-  void handleFocus(BControl*, BFocusInputEvent&) {
+  // The inner box takes the focus; the checkbox reports it as its own.
+  void handleFocus(BControl*, BFocusInputEvent& event) {
     applyFocus();
     _label.dirty();
+    BControl::handleEvent(event);  // raises onFocus
   }
 
   virtual void handleDraw(BGraphics& g) {

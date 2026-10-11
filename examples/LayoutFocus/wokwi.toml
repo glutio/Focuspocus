@@ -1,0 +1,4 @@
+[wokwi]
+version = 1
+firmware = 'build/LayoutFocus.ino.hex'
+elf = 'build/LayoutFocus.ino.elf'

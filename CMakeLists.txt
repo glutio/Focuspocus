@@ -31,6 +31,10 @@ if(WIN32)
   target_include_directories(focuspocus_demo PRIVATE examples/Demo)
   target_link_libraries(focuspocus_demo PRIVATE focuspocus_win32)
 
+  add_executable(focuspocus_layoutfocus extras/win32/layoutfocus.cpp)
+  target_include_directories(focuspocus_layoutfocus PRIVATE examples/LayoutFocus)
+  target_link_libraries(focuspocus_layoutfocus PRIVATE focuspocus_win32)
+
   enable_testing()
   file(GLOB FOCUSPOCUS_TESTS CONFIGURE_DEPENDS test/*.cpp)
   add_executable(focuspocus_tests ${FOCUSPOCUS_TESTS})

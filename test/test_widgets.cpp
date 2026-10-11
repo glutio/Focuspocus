@@ -1,4 +1,5 @@
 #include "TestHost.h"
+#include <string>
 
 static int clicks;
 static int changes;
@@ -360,6 +361,60 @@ TEST_CASE("focus: removing the focused view then focusPrev moves on") {
   host.fm.focus(b);
   panel.remove(b);
   CHECK(host.fm.focusPrev() == &a);
+}
+
+static std::string focusLog;
+static void logFocus(BControl* sender, BFocusInputEvent& event) {
+  if (event.command == BCommandInputEvent::cmFocus) {
+    focusLog += sender->tag;
+  }
+}
+
+TEST_CASE("focus: next and prev go into and out of nested panels, both ways") {
+  // a [ b [ c d ] label e ] [ ] [ label ] checkbox f [ [ g ] ]
+  BButton a, b, c, d, e, g;
+  BCheckBox f;
+  BTextLabel label1, label2;
+  label1.text = label2.text = "-";
+  BButton* buttons[] = { &a, &b, &c, &d, &e, &g };
+  const char* tags[] = { "a", "b", "c", "d", "e", "g" };
+  for (int i = 0; i < 6; ++i) {
+    buttons[i]->text = buttons[i]->tag = tags[i];
+    buttons[i]->onFocus += logFocus;
+  }
+  f.text = f.tag = "f";
+  f.onFocus += logFocus;
+
+  BView* innerItems[] = { &c, &d };
+  BStackPanel inner(innerItems);
+  BView* outerItems[] = { &b, &inner, &label1, &e };
+  BStackPanel outer(outerItems);
+  BView* emptyItems[] = { nullptr };
+  BStackPanel empty(emptyItems);
+  BView* labelsItems[] = { &label2 };
+  BStackPanel labels(labelsItems);
+  BView* deepItems[] = { &g };
+  BStackPanel deep(deepItems);
+  BView* deeperItems[] = { &deep };
+  BStackPanel deeper(deeperItems);
+  BView* items[] = { &a, &outer, &empty, &labels, &f, &deeper };
+  BStackPanel panel(items);
+  column(panel);
+  BRootView root(panel);
+  TestHost host(root);
+
+  focusLog = "";
+  host.fm.focus(a);
+  for (int i = 0; i < 7; ++i) {
+    host.fm.focusNext();
+  }
+  CHECK(focusLog == "abcdefga");  // wraps around at the end
+
+  focusLog = "";
+  for (int i = 0; i < 7; ++i) {
+    host.fm.focusPrev();
+  }
+  CHECK(focusLog == "gfedcba");  // and at the start
 }
 
 TEST_CASE("remove: a removed view is not drawn by later setValue calls") {

@@ -1,0 +1,28 @@
+# Wokwi scenario, run by extras/wokwi/run.ps1. Touch coordinates are FT6206 (mirrored).
+name: LayoutFocus
+version: 1
+steps:
+  - delay: 3000ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/1-layout.png }
+  # tap "Align" twice: end alignment
+  - touch-press: { part-id: lcd, x: 151, y: 20 }
+  - delay: 200ms
+  - touch-release: { part-id: lcd }
+  - delay: 500ms
+  - touch-press: { part-id: lcd, x: 151, y: 20 }
+  - delay: 200ms
+  - touch-release: { part-id: lcd }
+  - delay: 1000ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/2-aligned.png }
+  # tap "Focus": the focus screen, "5" focused
+  - touch-press: { part-id: lcd, x: 35, y: 20 }
+  - delay: 200ms
+  - touch-release: { part-id: lcd }
+  - delay: 1000ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/3-focus.png }
+  # tap "Popup": "No" focused
+  - touch-press: { part-id: lcd, x: 61, y: 20 }
+  - delay: 200ms
+  - touch-release: { part-id: lcd }
+  - delay: 1000ms
+  - take-screenshot: { part-id: lcd, compare-with: screenshots/4-popup.png }

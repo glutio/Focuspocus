@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "author": "Focuspocus",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-mega", "id": "mega", "top": 0, "left": 0, "attrs": {} },
+    { "type": "board-ili9341-cap-touch", "id": "lcd", "top": -320, "left": 120, "attrs": {} },
+    { "type": "wokwi-pushbutton", "id": "btnPrev", "top": 260, "left": 40, "attrs": { "color": "green", "bounce": "0" } },
+    { "type": "wokwi-pushbutton", "id": "btnOk", "top": 260, "left": 140, "attrs": { "color": "yellow", "bounce": "0" } },
+    { "type": "wokwi-pushbutton", "id": "btnNext", "top": 260, "left": 240, "attrs": { "color": "green", "bounce": "0" } }
+  ],
+  "connections": [
+    [ "lcd:VCC", "mega:5V", "red", [] ],
+    [ "lcd:GND", "mega:GND.1", "black", [] ],
+    [ "lcd:CS", "mega:10", "orange", [] ],
+    [ "lcd:D/C", "mega:9", "yellow", [] ],
+    [ "lcd:MOSI", "mega:51", "green", [] ],
+    [ "lcd:SCK", "mega:52", "blue", [] ],
+    [ "lcd:MISO", "mega:50", "cyan", [] ],
+    [ "lcd:LED", "mega:5V", "red", [] ],
+    [ "lcd:SDA", "mega:20", "green", [] ],
+    [ "lcd:SCL", "mega:21", "green", [] ],
+    [ "btnPrev:1.l", "mega:7", "green", [] ],
+    [ "btnPrev:2.l", "mega:GND.2", "black", [] ],
+    [ "btnOk:1.l", "mega:6", "green", [] ],
+    [ "btnOk:2.l", "mega:GND.2", "black", [] ],
+    [ "btnNext:1.l", "mega:5", "green", [] ],
+    [ "btnNext:2.l", "mega:GND.2", "black", [] ]
+  ],
+  "dependencies": {}
+}
