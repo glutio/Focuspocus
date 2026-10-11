@@ -88,8 +88,9 @@ void setup() {
 }
 
 void loop() {
-  if (touch.touched()) {
-    TS_Point p = touch.getPoint();
+  // One read: touched() then getPoint() can see a finger lift in between and return 0,0.
+  TS_Point p = touch.getPoint();
+  if (p.z) {
     mouse.move(tft.width() - p.x, tft.height() - p.y, true);  // FT6206 is mirrored
   } else {
     mouse.button(false);

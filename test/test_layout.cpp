@@ -277,3 +277,97 @@ TEST_CASE("layout: a label changing text in place does not redraw its neighbours
   host.run(2);
   CHECK(box.draws == before + 1);
 }
+
+// --- too little room: fixed sizes and minimums win, stretched children get 0 ---
+
+TEST_CASE("layout: no room left - a stretched child gets 0, fixed children keep their size") {
+  Box a(200, 10), b(100, 10), stretched(0, 10);
+  stretched.width = -1;
+  BView* items[] = { &a, &stretched, &b };
+  BStackPanel row(items);
+  fill(row, B::horizontal);
+  BRootView root(row);
+  TestHost host(root);
+
+  CHECK(stretched.actualWidth == 0);
+  at(host, b, 200, 0, 100, 10);  // overflows the 240 px screen
+}
+
+TEST_CASE("layout: a share smaller than the child's margins gives 0, not a huge size") {
+  Box fixed(220, 10), one(0, 10), two(0, 10);
+  one.width = -1;
+  one.margin.left = 15;
+  two.width = -1;
+  BView* items[] = { &fixed, &one, &two };
+  BStackPanel row(items);
+  fill(row, B::horizontal);
+  BRootView root(row);
+  TestHost host(root);
+
+  CHECK(one.actualWidth == 0);  // share 10, margin 15
+  CHECK(two.actualWidth == 10);
+}
+
+TEST_CASE("layout: minimums that do not fit are kept and overflow") {
+  Box a(0, 10), b(0, 10);
+  a.width = -1;
+  a.minWidth = 150;
+  b.width = -1;
+  b.minWidth = 150;
+  BView* items[] = { &a, &b };
+  BStackPanel row(items);
+  fill(row, B::horizontal);
+  BRootView root(row);
+  TestHost host(root);
+
+  at(host, a, 0, 0, 150, 10);
+  at(host, b, 150, 0, 150, 10);
+}
+
+TEST_CASE("layout: too tall for the screen - a vertical stack overflows at the bottom") {
+  Box a(10, 200), stretched(10, 0), b(10, 200);
+  stretched.height = -1;
+  BView* items[] = { &a, &stretched, &b };
+  BStackPanel column(items);
+  fill(column, B::vertical);
+  BRootView root(column);
+  TestHost host(root);
+
+  CHECK(stretched.actualHeight == 0);
+  at(host, b, 0, 200, 10, 200);
+}
+
+// --- scrolling: move a tall stack inside a fixed-size BPanel ---
+
+TEST_CASE("scroll: only views entirely inside the BPanel are drawn; taps stay outside") {
+  const uint16_t RED = 0xF800, GREEN = 0x07E0, BLUE = 0x001F;
+  Box header(240, 50, RED), footer(240, 50, BLUE);
+  Box i1(100, 40, GREEN), i2(100, 40, GREEN), i3(100, 40, GREEN), i4(100, 40, GREEN);
+  BView* listItems[] = { &i1, &i2, &i3, &i4 };
+  BStackPanel list(listItems);  // 160 px tall, sized by its content
+  list.orientation = B::vertical;
+  BView* viewportItems[] = { &list };
+  BPanel viewport(viewportItems);
+  viewport.width = -1;
+  viewport.height = 100;
+  BView* items[] = { &header, &viewport, &footer };
+  BStackPanel column(items);
+  fill(column, B::vertical);
+  BRootView root(column);
+  TestHost host(root);
+
+  list.y = -50;  // scroll down by 50 px
+  viewport.dirty();
+  host.run();
+
+  CHECK(host.gfx.countPixels(0, 0, 240, 50, RED) == 240 * 50);
+  CHECK(host.gfx.countPixels(0, 150, 240, 50, BLUE) == 240 * 50);
+  // i3 is entirely inside the viewport; i2 and i4 are partly outside, so not drawn.
+  CHECK(host.gfx.countPixels(0, 80, 100, 40, GREEN) == 100 * 40);
+  CHECK(host.gfx.countPixels(0, 50, 240, 100, GREEN) == 100 * 40);
+  at(host, i2, 0, 40 - 50 + 50, 100, 40);  // list starts 50 px above the viewport
+
+  host.tap(50, 160);  // i4 is scrolled under the footer here
+  CHECK(i4.mouseEvents.empty());
+  CHECK_FALSE(footer.mouseEvents.empty());
+}

@@ -35,8 +35,18 @@ public:
   // When false, all drawing calls are ignored (e.g. the view is covered by
   // another screen). Set by BFocusManager::getGraphics(view).
   bool visible;
+  // Screen area of the parent panels' client areas (right and bottom exclusive).
+  // BFocusManager does not draw a view that is not entirely inside it.
+  int16_t clipLeft;
+  int16_t clipTop;
+  int16_t clipRight;
+  int16_t clipBottom;
 public:
   BGraphics(BGraphicsApi& api);
+  // Narrows the clip to a rectangle given relative to this graphics' origin.
+  void clip(int16_t x, int16_t y, int16_t width, int16_t height);
+  // True if the whole x, y, width, height area is inside the clip.
+  bool inside();
   virtual int16_t displayWidth();
   virtual int16_t displayHeight();
   virtual void drawRect(int16_t x, int16_t y, uint16_t width, uint16_t height, uint16_t color);

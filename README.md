@@ -55,8 +55,9 @@ void setup() {
 }
 
 void loop() {
-  if (touch.touched()) {
-    TS_Point p = touch.getPoint();
+  // One read: touched() then getPoint() can see a finger lift in between and return 0,0.
+  TS_Point p = touch.getPoint();
+  if (p.z) {
     mouse.move(tft.width() - p.x, tft.height() - p.y, true);
   } else {
     mouse.button(false);
@@ -80,7 +81,7 @@ simulator (VS Code extension or `wokwi-cli`) after an `arduino-cli` build;
 see [Testing in Wokwi](#testing-in-wokwi).
 
 **Board size.** The library adds about 12-16 KB of flash. The simple TFT
-examples fit an Uno (HelloButton uses 97%), but a Mega, Nano Every, or any
+examples fit an Uno (HelloButton uses 98%), but a Mega, Nano Every, or any
 32-bit board (SAMD, ESP32, RP2040) leaves room for your own code. OledMenu
 needs more than an Uno: the SSD1306 driver alone needs 1 KB of RAM.
 
@@ -120,6 +121,14 @@ After layout, the real size is in `actualWidth` / `actualHeight`.
 - `BPanel` places children at their `x`, `y`.
 - `margin(n)` (all views) and `padding(n)` (panels) add space;
   `margin.left = n` sets one side. `border = true` draws a panel border.
+
+**Too little room.** Shared (`< 0`) sizes shrink to 0 first; fixed and
+content sizes are kept and overflow the panel. A view that is not entirely
+inside its parent's client area is not drawn (its children that fit still are).
+
+**Scrolling.** Put a tall `BStackPanel` inside a fixed-size `BPanel` with a
+background, move it with `content.y = -offset;` and call `viewport.dirty();`.
+Only rows fully inside the viewport are drawn; taps outside it are ignored.
 
 Children live in a fixed array. Empty (`nullptr`) slots can be filled later
 with `panel.add(view)`; `remove(view)` frees a slot. `BStackPanel panel(8)`

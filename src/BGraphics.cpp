@@ -1,8 +1,22 @@
 #include "BGraphics.h"
 #include "BView.h"
 
-BGraphics::BGraphics(BGraphicsApi& api) 
-  : api(api), x(0), y(0), width(api.displayWidth()), height(api.displayHeight()), visible(true) { 
+BGraphics::BGraphics(BGraphicsApi& api)
+  : api(api), x(0), y(0), width(api.displayWidth()), height(api.displayHeight()), visible(true),
+    clipLeft(0), clipTop(0), clipRight(width), clipBottom(height) {
+}
+
+void BGraphics::clip(int16_t x, int16_t y, int16_t width, int16_t height) {
+  x += this->x;
+  y += this->y;
+  if (clipLeft < x) clipLeft = x;
+  if (clipTop < y) clipTop = y;
+  if (clipRight > x + width) clipRight = x + width;
+  if (clipBottom > y + height) clipBottom = y + height;
+}
+
+bool BGraphics::inside() {
+  return x >= clipLeft && y >= clipTop && x + width <= clipRight && y + height <= clipBottom;
 }
 int16_t BGraphics::displayWidth() {
   return api.displayWidth();

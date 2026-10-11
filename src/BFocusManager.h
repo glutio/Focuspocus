@@ -185,6 +185,7 @@ public:
   BPoint mapViewToScreen(BView& view, int16_t x, int16_t y);
   BGraphics getGraphics(BView& view);
   BGraphics getGraphics();
+  BRect getTextBounds(const char* text, uint8_t size) ;
 
   void beginDraw();
   void endDraw();

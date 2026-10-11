@@ -385,6 +385,10 @@ BGraphics BFocusManager::getGraphics() {
   return _g;
 }
 
+BRect BFocusManager::getTextBounds(const char* text, uint8_t size) {
+  return _g.getTextBounds(text, size);
+}
+
 // For drawing outside the draw pass. Views that are not on the top screen
 // (covered or removed) get a graphics that ignores drawing; they are redrawn
 // when shown again.
@@ -393,7 +397,11 @@ BGraphics BFocusManager::getGraphics(BView& view) {
   g.width = view.actualWidth;
   g.height = view.actualHeight;
   mapViewToScreenHelper(view, g.x, g.y);
-  g.visible = g.visible && isOnScreen(view);
+  for (BPanel* p = view.parent(); p; p = p->parent()) {
+    BPoint client = mapViewToScreen(*p, p->padding.left + p->border, p->padding.top + p->border);
+    g.clip(client.x - g.x, client.y - g.y, p->clientWidth(), p->clientHeight());
+  }
+  g.visible = g.visible && isOnScreen(view) && g.inside();
   return g;
 }
 
@@ -410,13 +418,14 @@ void BFocusManager::drawPass(BView& view, BGraphics& g) {
   BGraphics gv(g);
   applyOffset(view, gv);
   applyMargins(view, gv);
-  if (view.isDirty()) {  
+  if (view.isDirty() && gv.inside()) {  // partly outside its panel (e.g. scrolled): not drawn
     view.draw(gv);
   }
 
   BPanel* panel = view.asPanel();
   if (panel) {
     applyPadding(*panel, gv);
+    gv.clip(0, 0, gv.width, gv.height);  // children draw inside the client area only
     for(BView& v : *panel) {
       if (panel->isDirty()) {
         v.dirty();

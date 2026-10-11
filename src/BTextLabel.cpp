@@ -16,8 +16,7 @@ void BTextLabel::setText(const char* value) {
 void BTextLabel::measure(uint16_t availableWidth, uint16_t availableHeight) {
   BView::measure(availableWidth, availableHeight);
   if (!width || !height) {
-    BGraphics g = focusManager().getGraphics();
-    BRect rt = g.getTextBounds(text, viewFontSize(*this));
+    BRect rt = focusManager().getTextBounds(text, viewFontSize(*this));
     if (!width) {
       actualWidth = min(rt.width, availableWidth);
     }

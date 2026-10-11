@@ -215,7 +215,7 @@ void BButton::measure(uint16_t availableWidth, uint16_t availableHeight) {
     int16_t themeWidth = focusManager().theme().buttonWidth;
     auto themeHeight = focusManager().theme().buttonHeight;
     if (text) {
-      BRect rt = focusManager().getGraphics().getTextBounds(text, viewFontSize(*this));
+      BRect rt = focusManager().getTextBounds(text, viewFontSize(*this));
       if (!width) {
         actualWidth = rt.width + focusManager().theme().buttonPadding * 2;
       }
@@ -527,6 +527,16 @@ void BStackPanel::layout() {
   finishLayout();
 }
 
+// Stretched children share what fixed children leave; with no room left they get 0.
+static int16_t unitShare(int16_t space, int16_t totalFactor) {
+  return (totalFactor && space > 0) ? space / totalFactor : 0;
+}
+
+static int16_t share(int16_t factor, int16_t unitSize, int16_t margin) {
+  int16_t size = abs(factor) * unitSize - margin;
+  return size > 0 ? size : 0;
+}
+
 void BStackPanel::layoutVertical() {
   int16_t len = 0;
   int16_t totalFactor = 0;
@@ -558,18 +568,18 @@ void BStackPanel::layoutVertical() {
   }
 
   int16_t totalSize = clientHeight() - (spacing * (len - 1));
-  int16_t unitSize = totalFactor ? (totalSize - fixedSize) / totalFactor : 0;
+  int16_t unitSize = unitShare(totalSize - fixedSize, totalFactor);
   for(int i = 0; i < 10 * _children.Length(); ++i) {
     bool converged = true;
     for(BView& view: *this) {
       if (view.height < 0 && view.actualHeight == -1) {
-        uint16_t proposedSize = abs(view.height) * unitSize - marginHeight(view);
+        uint16_t proposedSize = share(view.height, unitSize, marginHeight(view));
         uint16_t minmaxSize = applyMinMax(proposedSize, view.minHeight, view.maxHeight);
         if (proposedSize != minmaxSize) {
           view.actualHeight = minmaxSize;
           fixedSize += minmaxSize + marginHeight(view);
           totalFactor -= abs(view.height);
-          unitSize = totalFactor ? (totalSize - fixedSize) / totalFactor : 0;
+          unitSize = unitShare(totalSize - fixedSize, totalFactor);
           converged = false;
         }
       }
@@ -582,7 +592,7 @@ void BStackPanel::layoutVertical() {
   totalSize = 0;
   for(BView& view : *this) {
     if (view.height < 0 && view.actualHeight == -1) {
-      view.actualHeight = abs(view.height) * unitSize - marginHeight(view);
+      view.actualHeight = share(view.height, unitSize, marginHeight(view));
     }
     totalSize += view.actualHeight + marginHeight(view);
   }
@@ -646,20 +656,20 @@ void BStackPanel::layoutHorizontal() {
 
   int16_t totalSize = clientWidth() - (spacing * (len - 1));
   // unit of proportion
-  int16_t unitSize = totalFactor ? (totalSize - fixedSize) / totalFactor : 0;
+  int16_t unitSize = unitShare(totalSize - fixedSize, totalFactor);
   // autosize controls, apply minmax, repeat until all minmax conditions are met, limit number of attempts
   for(int i = 0; i < 10 * _children.Length(); ++i) {
     bool converged = true;
     for(BView& view : *this) {
       if (view.width < 0 && view.actualWidth == -1) { // if marked for auto sizing
-        uint16_t proposedSize = abs(view.width) * unitSize - marginWidth(view);
+        uint16_t proposedSize = share(view.width, unitSize, marginWidth(view));
         uint16_t minmaxSize = applyMinMax(proposedSize, view.minWidth, view.maxWidth);
         if (proposedSize != minmaxSize) { // if constrained and has a fixed size now
           view.actualWidth = minmaxSize;
           fixedSize += minmaxSize + marginWidth(view);
           totalFactor -= abs(view.width);
           // recompute unit size based on available space
-          unitSize = totalFactor ? (totalSize - fixedSize) / totalFactor : 0;
+          unitSize = unitShare(totalSize - fixedSize, totalFactor);
           converged = false; // reposition auto-sized controls
         }
       }
@@ -673,7 +683,7 @@ void BStackPanel::layoutHorizontal() {
   for(BView& view : *this) {
     if (view.width < 0 && view.actualWidth == -1) {
       // position unconstrained controls
-      view.actualWidth = abs(view.width) * unitSize - marginWidth(view);
+      view.actualWidth = share(view.width, unitSize, marginWidth(view));
     }
     totalSize += view.actualWidth + marginWidth(view);
   }

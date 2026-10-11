@@ -116,7 +116,7 @@ namespace MainScreen {
     margin.text = "margin";
     margin.margin(10);
 
-    buttons.spacing = 5;
+    buttons.spacing = 4;
     buttons.width = -1;
     buttons.horizontalAlignment = B::center;
     buttons.border = true;

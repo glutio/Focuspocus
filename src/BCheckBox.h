@@ -177,6 +177,7 @@ public:
 class BRadioButton: public BCheckBoxBase {
 public:
   const char* group;
+  BRadioButton() : group(nullptr) {}
 
 protected:
   virtual void handleDraw(BGraphics& g) {
