@@ -72,7 +72,7 @@ void loop() {
 |---|---|---|
 | [HelloButton](examples/HelloButton/HelloButton.ino) | label, button, `setText` | ILI9341 + FT6206 touch |
 | [Dialog](examples/Dialog/Dialog.ino) | a second screen, `BPopup`, `push`/`pop` | ILI9341 + FT6206 touch |
-| [SensorGauge](examples/SensorGauge/SensorGauge.ino) | progress bar, live values, a blinking custom widget (`tick`) | ILI9341, analog sensor |
+| [SensorGauge](examples/SensorGauge/SensorGauge.ino) | progress bar, live values, a custom dial (`Gauge.h`), a blinking custom widget (`tick`) | ILI9341, analog sensor |
 | [OledMenu](examples/OledMenu/OledMenu.ino) | checkbox, radio buttons, 3 push buttons, `BBWTheme`, `onTimerTick` | SSD1306 128x64 OLED |
 | [LayoutFocus](examples/LayoutFocus/LayoutFocus.ino) | stretch, min/max, margins, alignment; focus order through nested panels, per-screen focus | ILI9341 + FT6206 touch |
 | [Demo](examples/Demo/Demo.ino) | everything, incl. scrollbars, bitmap button, custom drawing | ILI9341 + FT6206 ([Wokwi](examples/Demo/wokwi-project.txt)) |
@@ -226,6 +226,10 @@ this). Define `FOCUSPOCUS_SHOW_BOUNDS` when building to outline every view and
 its margin in red.
 Declare events with `BEVENT(Name, SenderType, ArgumentType)`. See
 `AlarmLabel` in SensorGauge and `BPlane` in Demo.
+
+[Gauge.h](examples/SensorGauge/Gauge.h) is a complete example: a dial that
+repaints only its needle on `setValue()` (via `focusManager().getGraphics(*this)`),
+with no floats. It lives in the sketch folder, so it is a template to copy.
 
 ### Other displays
 

@@ -1,10 +1,13 @@
 // SensorGauge: shows an analog reading (e.g. a potentiometer on A0) as a
-// number and a bar, and blinks an alarm above a threshold.
+// number, a bar and a dial, and blinks an alarm above a threshold.
 // Shows: updating widgets from the sketch, and animating a custom view with
 // tick(), which the GUI calls about every 16 ms while the view is on screen.
+// Gauge.h is a complete custom control (dial + needle) written outside the
+// library; copy it as a template for your own widgets.
 // Hardware: Adafruit ILI9341 TFT (no touch needed), any Arduino.
 #include <Adafruit_ILI9341.h>
 #include <Focuspocus.h>
+#include "Gauge.h"  // a custom control, built in this sketch folder
 
 const int SENSOR_PIN = A0;
 const int ALARM_LEVEL = 800;
@@ -35,8 +38,9 @@ public:
 BTextLabel title;
 BTextLabel reading;
 BProgressBar bar;
+Gauge gauge;
 AlarmLabel alarmLabel;
-BView* columnItems[] = { &title, &reading, &bar, &alarmLabel };
+BView* columnItems[] = { &title, &reading, &gauge, &bar, &alarmLabel };
 BStackPanel column(columnItems);
 BRootView mainScreen(column);
 
@@ -58,6 +62,8 @@ void setup() {
   bar.maximum = 1023;
   bar.width = -1;    // full width
   bar.height = 20;
+  gauge.maximum = 1023;
+  gauge.width = 160;
   alarmLabel.text = "ALARM";
   alarmLabel.fontSize = 3;
 
@@ -76,6 +82,7 @@ void loop() {
     itoa(value, readingText, 10);
     reading.setText(readingText);
     bar.setValue(value);
+    gauge.setValue(value);
     alarmLabel.alarm = value > ALARM_LEVEL;
   }
   fm.loop(now);

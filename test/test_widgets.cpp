@@ -553,3 +553,40 @@ TEST_CASE("checkbox: press, drag off and release does not toggle") {
   host.run();
   CHECK_FALSE(cb.state);
 }
+
+// --- Custom control: examples/SensorGauge/Gauge.h ---------------------------
+
+#include "../examples/SensorGauge/Gauge.h"
+
+TEST_CASE("gauge: integer sine is close to the real one") {
+  CHECK(Gauge::sin1024(0) == 0);
+  CHECK(Gauge::sin1024(90) == 1024);
+  CHECK(Gauge::sin1024(-90) == -1024);
+  CHECK(abs(Gauge::sin1024(30) - 512) <= 2);
+}
+
+TEST_CASE("gauge: setValue clamps and moves the needle") {
+  Gauge gauge;
+  gauge.needleColor = 0x001F;
+  BView* items[] = { &gauge };
+  BStackPanel panel(items);
+  column(panel);
+  BRootView root(panel);
+  TestHost host(root);
+  BPoint pos = host.screenPos(gauge);
+  int16_t half = gauge.actualWidth / 2 - 5;  // left/right of the hub
+  int16_t top = gauge.actualHeight - 10;
+  auto left = [&] { return host.gfx.countPixels(pos.x, pos.y, half, top, 0x001F); };
+  auto right = [&] { return host.gfx.countPixels(pos.x + gauge.actualWidth - half, pos.y, half, top, 0x001F); };
+
+  CHECK(gauge.actualWidth == 120);
+  CHECK(left() == 0);  // at minimum the needle lies flat, below `top`
+  gauge.setValue(25);
+  CHECK(left() > 10);
+  CHECK(right() == 0);
+  gauge.setValue(500);
+  CHECK(gauge.value == 100);
+  gauge.setValue(75);
+  CHECK(left() == 0);  // old needle erased
+  CHECK(right() > 10);
+}
