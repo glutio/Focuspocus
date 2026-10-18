@@ -9,7 +9,6 @@
 
 class BView;
 class BPoint;
-class BView;
 class BPanel;
 
 
@@ -128,7 +127,7 @@ protected:
   void measurePass(BView& view, uint16_t availableWidth, uint16_t availableHeight);
   void layoutRoot();
   void layoutPass(BView& view);
-  void drawPass(BView& view, BGraphics& g);
+  bool drawPass(BView& view, BGraphics& g);
 
   void broadcastCommandHelper(BView& view, BCommandInputEvent& event);
   void tickPass(BView& view, unsigned long ms);

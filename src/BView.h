@@ -199,7 +199,6 @@ protected:
   virtual void clicked();
   void handleMouse(BMouseInputEvent& event);
   void handleKeyboard(BKeyboardInputEvent& event);
-  void handleFocus(BFocusInputEvent& event);
 
 public:
   BButton();

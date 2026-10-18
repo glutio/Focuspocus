@@ -362,13 +362,22 @@ BView* BFocusManager::findView(BMouseInputEvent& event) {
   return target;
 }
 
-void BFocusManager::drawPass(BView& view, BGraphics& g) {
+static bool overlap(BView& a, BView& b) {
+  int16_t ax = a.x + a.margin.left, ay = a.y + a.margin.top;
+  int16_t bx = b.x + b.margin.left, by = b.y + b.margin.top;
+  return ax < bx + b.actualWidth && bx < ax + a.actualWidth &&
+         ay < by + b.actualHeight && by < ay + a.actualHeight;
+}
+
+// Returns true if anything in the view's subtree was drawn.
+bool BFocusManager::drawPass(BView& view, BGraphics& g) {
   BGraphics gv(g);
   gv.x += view.x + view.margin.left;
   gv.y += view.y + view.margin.top;
   gv.width = view.actualWidth;
   gv.height = view.actualHeight;
-  if (view.isDirty() && gv.overlaps()) {  // entirely outside its panel (e.g. scrolled): not drawn
+  bool drew = view.isDirty() && gv.overlaps();  // entirely outside its panel (e.g. scrolled): not drawn
+  if (drew) {
     view.draw(gv);
   }
 
@@ -380,14 +389,29 @@ void BFocusManager::drawPass(BView& view, BGraphics& g) {
     gv.width = panel->clientWidth();
     gv.height = panel->clientHeight();
     gv.clip(0, 0, gv.width, gv.height);  // children draw inside the client area only
-    for(BView& v : *panel) {
+    unsigned n = panel->_children.Length();
+    for (unsigned i = 0; i < n; ++i) {
+      if (!panel->_children[i]) {
+        continue;  // free slot
+      }
+      BView& v = *panel->_children[i];
       if (panel->isDirty()) {
         v._isDirty = true;  // the panel's background covered it
       }
-      drawPass(v, gv);
+      if (drawPass(v, gv)) {
+        drew = true;
+        // Later siblings are on top; redraw the ones v painted over.
+        for (unsigned j = i + 1; j < n; ++j) {
+          BView* above = panel->_children[j];
+          if (above && overlap(v, *above)) {
+            above->_isDirty = true;
+          }
+        }
+      }
     }
   }
   view.clearDirty();
+  return drew;
 }
 
 void BFocusManager::measurePass(BView& view, uint16_t availableWidth, uint16_t availableHeight) {
@@ -432,6 +456,14 @@ void BFocusManager::loop(unsigned long ms) {
   auto r = root();
   if (r) {
     BPanel& panel = *r;
+    // The display size can change after construction (begin(), setRotation()).
+    int16_t w = _g.api.displayWidth();
+    int16_t h = _g.api.displayHeight();
+    if (w != _g.width || h != _g.height) {
+      _g.width = _g.clipRight = w;
+      _g.height = _g.clipBottom = h;
+      _needsRootLayout = true;
+    }
     if (_needsRootLayout) {
       if (panel._focusManager != this) {
         panel._focusManager = this;
@@ -547,6 +579,7 @@ bool BFocusManager::push(BScreen& root) {
   if (!_stack.Add(&root)) {
     return false;
   }
+  _capture = nullptr;  // a press on the old screen must not click after a switch
   _needsRootLayout = true;
   return true;
 }
@@ -555,5 +588,6 @@ void BFocusManager::pop() {
   if (_stack.Length()) {
     _stack.Remove(_stack.Length() - 1);    
   }
+  _capture = nullptr;
   _needsRootLayout = true;
 }

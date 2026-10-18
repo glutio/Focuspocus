@@ -275,6 +275,8 @@ bitmaps). Before each call the library passes the visible area to `setClip`,
 and the driver must not draw outside it. `BAdafruitGraphics` draws shapes that
 fit straight to the display, and the rest through a small `Adafruit_GFX` wrapper
 that drops pixels outside the clip. It assumes the built-in 6x8 font.
+`drawTextOpaque` (text over a filled box, used by labels so changing text does
+not flash) is optional: by default it fills the box, then draws the text.
 
 ### Fonts
 

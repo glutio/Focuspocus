@@ -186,6 +186,7 @@ void BButton::handleMouse(BMouseInputEvent& event) {
     }
     case BInputEvent::evMouseUp:
     {
+      bool pressed = focusManager().capturingView() == this;  // the press was ours
       focusManager().releaseMouse(*this);
       _isDown = false;
       if (_animate) {
@@ -193,7 +194,7 @@ void BButton::handleMouse(BMouseInputEvent& event) {
       }
       BPoint pt = focusManager().mapScreenToView(*this, event.x, event.y);
       bool hit = hitTest(pt.x, pt.y);
-      if (hit) {
+      if (pressed && hit) {
         clicked();
       }     
       break;
@@ -427,7 +428,7 @@ void BPanel::layout() {
 void BPanel::finishLayout() {
   uint32_t hash = 2166136261UL;  // FNV-1a style, one 16-bit value per step
   for (BView& v : *this) {
-    const int16_t r[4] = { v.x, v.y, v.actualWidth, v.actualHeight };
+    const int16_t r[4] = { (int16_t)(v.x + v.margin.left), (int16_t)(v.y + v.margin.top), v.actualWidth, v.actualHeight };
     for (uint8_t k = 0; k < 4; ++k) {
       hash = (hash ^ (uint16_t)r[k]) * 16777619UL;
     }

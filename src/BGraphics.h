@@ -17,6 +17,9 @@ public:
   virtual void drawRoundRect(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t radius, uint16_t color) = 0;
   virtual void fillRoundRect(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t radius, uint16_t color) = 0;  
   virtual void drawText(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color) = 0;
+  // Text over its own box filled with background, so redrawing it over old
+  // text does not flash. Default: fill the box, then draw the text.
+  virtual void drawTextOpaque(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color, uint16_t background);
   virtual void drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[], uint16_t w, uint16_t h) = 0;
   virtual void drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[], const uint8_t mask[], uint16_t w, uint16_t h) = 0;
   virtual BRect getTextBounds(const char* str, uint8_t size) = 0;
@@ -61,6 +64,8 @@ public:
   void drawRoundRect(int16_t x, int16_t y, uint16_t width, uint16_t height, uint16_t radius, uint16_t color);
   void fillRoundRect(int16_t x, int16_t y, uint16_t width, uint16_t height, uint16_t radius, uint16_t color);
   void drawText(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color);
+  // Also fills the text's box (getTextBounds) with background.
+  void drawText(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color, uint16_t background);
   void drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[], uint16_t width, uint16_t height);
   void drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[], const uint8_t mask[], uint16_t width, uint16_t height);
   BRect getTextBounds(const char* str, uint8_t size);

@@ -76,6 +76,14 @@ void BAdafruitGraphics::drawText(const char* str, int16_t x, int16_t y, uint8_t 
   clipped.setTextSize(size);
   clipped.print(str);
 }
+// The classic font paints each 6x8 cell, background included, in one pass.
+void BAdafruitGraphics::drawTextOpaque(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color, uint16_t background) {
+  clipped.setTextWrap(false);
+  clipped.setCursor(x, y);
+  clipped.setTextColor(color, background);
+  clipped.setTextSize(size);
+  clipped.print(str);
+}
 // The classic font: a 6x8 cell per character, scaled by size.
 BRect BAdafruitGraphics::getTextBounds(const char* str, uint8_t size) {
   BRect rt;
@@ -142,6 +150,10 @@ void BAdafruitFontGraphics::drawText(const char* str, int16_t x, int16_t y, uint
   uint16_t w, h;
   measure(str, size, left, top, w, h);
   BAdafruitGraphics::drawText(str, x - left, y - top, size, color);
+}
+
+void BAdafruitFontGraphics::drawTextOpaque(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color, uint16_t background) {
+  BGraphicsApi::drawTextOpaque(str, x, y, size, color, background);
 }
 
 BRect BAdafruitFontGraphics::getTextBounds(const char* str, uint8_t size) {

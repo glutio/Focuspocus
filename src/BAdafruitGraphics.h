@@ -40,6 +40,7 @@ public:
   virtual void drawRoundRect(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t radius, uint16_t color);
   virtual void fillRoundRect(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t radius, uint16_t color);  
   virtual void drawText(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color);
+  virtual void drawTextOpaque(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color, uint16_t background);
   virtual void drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[], uint16_t w, uint16_t h);
   virtual void drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[], const uint8_t mask[], uint16_t w, uint16_t h);
   virtual BRect getTextBounds(const char* str, uint8_t size);
@@ -57,6 +58,8 @@ class BAdafruitFontGraphics: public BAdafruitGraphics {
 public:
   BAdafruitFontGraphics(Adafruit_GFX& g, const GFXfont* font);
   virtual void drawText(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color);
+  // GFX fonts draw no background: fill the box, then draw.
+  virtual void drawTextOpaque(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color, uint16_t background);
   virtual BRect getTextBounds(const char* str, uint8_t size);
 private:
   void measure(const char* str, uint8_t size, int16_t& left, int16_t& top, uint16_t& width, uint16_t& height);

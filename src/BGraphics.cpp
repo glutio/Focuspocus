@@ -1,6 +1,12 @@
 #include "BGraphics.h"
 #include "BView.h"
 
+void BGraphicsApi::drawTextOpaque(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color, uint16_t background) {
+  BRect rt = getTextBounds(str, size);
+  fillRect(x, y, rt.width, rt.height, background);
+  drawText(str, x, y, size, color);
+}
+
 BGraphics::BGraphics(BGraphicsApi& api)
   : api(api), x(0), y(0), width(api.displayWidth()), height(api.displayHeight()), visible(true),
     clipLeft(0), clipTop(0), clipRight(width), clipBottom(height) {
@@ -44,6 +50,9 @@ void BGraphics::fillRoundRect(int16_t x, int16_t y, uint16_t width, uint16_t hei
 }
 void BGraphics::drawText(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color) {
   if (str && ready()) api.drawText(str, this->x + x, this->y + y, size, color);
+}
+void BGraphics::drawText(const char* str, int16_t x, int16_t y, uint8_t size, uint16_t color, uint16_t background) {
+  if (str && ready()) api.drawTextOpaque(str, this->x + x, this->y + y, size, color, background);
 }
 void BGraphics::drawBitmap(int16_t x, int16_t y, const uint16_t bitmap[], uint16_t width, uint16_t height) {
   if (ready()) api.drawBitmap(this->x + x, this->y + y, bitmap, width, height);
