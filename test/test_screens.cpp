@@ -18,14 +18,14 @@ TEST_CASE("covered screen does not draw over the popup; it is repainted on pop")
   BStackPanel main(mainItems);
   main.width = -1;
   main.height = -1;
-  BRootView mainScreen(main);
+  BScreen mainScreen(main);
 
   Box box(100, 50, 0xF800);
   BView* popupItems[] = { &box };
   BPopup popup(popupItems);
   popup.width = -1;
   popup.height = -1;
-  BRootView popupScreen(popup);
+  BScreen popupScreen(popup);
 
   TestHost host(mainScreen);
   CHECK(host.gfx.pixel(5, 10) == 0x001F);
@@ -71,12 +71,12 @@ TEST_CASE("tick animates views on the visible screen only") {
   BStackPanel main(mainItems);
   main.width = -1;
   main.height = -1;
-  BRootView mainScreen(main);
+  BScreen mainScreen(main);
   BView* popupItems[] = { nullptr };
   BPopup popup(popupItems);
   popup.width = -1;
   popup.height = -1;
-  BRootView popupScreen(popup);
+  BScreen popupScreen(popup);
 
   TestHost host(mainScreen);
   CHECK(blinker.ticks > 0);

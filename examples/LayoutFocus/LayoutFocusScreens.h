@@ -17,7 +17,7 @@ namespace AskScreen {
   BStackPanel box(boxContent);
   BView* popupContent[] = { &box };
   BPopup popup(popupContent);
-  BRootView screen(popup);
+  BScreen screen(popup);
 
   void close(BButton* sender, bool) {
     sender->focusManager().pop();
@@ -72,7 +72,7 @@ namespace FocusScreen {
 
   BView* pageContent[] = { &status, &grid, &choices, &bar };
   BStackPanel page(pageContent);
-  BRootView screen(page);
+  BScreen screen(page);
 
   const char* names[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
@@ -187,7 +187,7 @@ namespace LayoutScreen {
 
   BView* pageContent[] = { &title, &stretch, &limits, &sample, &controls };
   BStackPanel page(pageContent);
-  BRootView screen(page);
+  BScreen screen(page);
 
   void turnSample(BButton*, bool) {
     sample.orientation = sample.orientation == B::vertical ? B::horizontal : B::vertical;

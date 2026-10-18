@@ -20,7 +20,7 @@ bool BFocusManager::findViewHelper(BView& view, int16_t x, int16_t y, BView*& ta
   }
   return true;
 }
-BRootView* BFocusManager::top() {
+BScreen* BFocusManager::top() {
   if (_stack.Length()) {
     return _stack[_stack.Length() - 1];
   }
@@ -543,7 +543,7 @@ void BFocusManager::dirtyLayout() {
   _needsLayout = true;
 }
 
-bool BFocusManager::push(BRootView& root) {
+bool BFocusManager::push(BScreen& root) {
   if (!_stack.Add(&root)) {
     return false;
   }

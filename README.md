@@ -38,12 +38,12 @@ BTextLabel label;
 BButton button;
 BView* columnItems[] = { &label, &button };
 BStackPanel column(columnItems);
-BRootView mainScreen(column);
+BScreen mainScreen(column);
 
 // The GUI: display + theme + screens.
 BAdafruitGraphics graphics(tft);
 BTheme theme;
-BRootView* screens[] = { &mainScreen };
+BScreen* screens[] = { &mainScreen };
 BFocusManager fm(graphics, screens, theme);
 BMouse mouse(fm);
 
@@ -98,13 +98,15 @@ needs more than an Uno: the SSD1306 driver alone needs 1 KB of RAM.
 
 ### Screens
 
-A screen is a panel wrapped in a `BRootView`. The focus manager keeps a stack
-of screens and shows the top one. `fm.push(screen)` shows another screen
+A `BScreen` pairs a root panel with its remembered keyboard focus; it is
+not a widget or a parent panel. The focus manager supplies the root panel's
+available space from the display dimensions, keeps a stack of screens and
+shows the top one. `fm.push(screen)` shows another screen
 (a dialog, a menu page), `fm.pop()` returns to the previous one. The stack size
 is the size of the array given to `BFocusManager`; unused slots are `nullptr`:
 
 ```cpp
-BRootView* screens[3] = { &mainScreen };   // room for 2 more
+BScreen* screens[3] = { &mainScreen };   // room for 2 more
 ```
 
 A screen made of a `BPopup` shades the screen below it instead of covering it.

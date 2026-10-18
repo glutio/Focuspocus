@@ -17,11 +17,11 @@ BView* rowItems[] = { &medium, &small, &tiny };
 BStackPanel row(rowItems);
 BView* columnItems[] = { &title, &reading, &big, &row, &bar };
 BStackPanel column(columnItems);
-BRootView mainScreen(column);
+BScreen mainScreen(column);
 
 BWin32Graphics gfx(240, 320); // ILI9341 portrait
 BTheme theme;
-BRootView* screens[] = { &mainScreen };
+BScreen* screens[] = { &mainScreen };
 BFocusManager fm(gfx, screens, theme);
 BMouse mouse(fm);
 BKeyboard keyboard(fm);

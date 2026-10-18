@@ -23,7 +23,7 @@ TEST_CASE("button: tap clicks once; Enter clicks once") {
   BView* items[] = { &button };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
   clicks = 0;
   button.onClick += countClick;
@@ -42,7 +42,7 @@ TEST_CASE("button: press, drag off and release does not click") {
   BView* items[] = { &button };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
   clicks = 0;
   button.onClick += countClick;
@@ -65,7 +65,7 @@ TEST_CASE("button: text uses the theme font size when fontSize is not set") {
   BView* items[] = { &themed, &explicitSize };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
   host.theme.fontSize = 2;
   panel.dirtyLayout();
@@ -87,7 +87,7 @@ TEST_CASE("checkbox: tap on box or label toggles; Enter toggles") {
   BView* items[] = { &cb };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
   changes = 0;
   cb.onChange += countChange;
@@ -111,7 +111,7 @@ TEST_CASE("checkbox: label keeps its font color after losing focus") {
   BView* items[] = { &cb, &other };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   BPoint p = host.screenPos(cb);
@@ -132,7 +132,7 @@ TEST_CASE("radio: selecting one clears the others in the same group only") {
   BView* items[] = { &a, &b, &c };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   host.tap(c);
@@ -154,7 +154,7 @@ TEST_CASE("radio: buttons without a group form one group") {
   BView* items[] = { &a, &b };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   host.tap(a);
@@ -174,7 +174,7 @@ TEST_CASE("label: setText redraws and leaves no old text behind") {
   BView* items[] = { &autoSized, &fixedSized };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
   uint16_t ink = host.theme.fontColor;
   CHECK(host.gfx.countPixels(0, 0, 240, 320, ink) > 0);
@@ -199,7 +199,7 @@ TEST_CASE("scrollbar: arrow keys step and clamp; onChange reports the value") {
   BView* items[] = { &sb };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
   changes = 0;
   sb.onChange += scrollChange;
@@ -226,7 +226,7 @@ TEST_CASE("scrollbar: dragging the thumb past either end clamps to minimum/maxim
   BView* items[] = { &sb };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   BPoint p = host.screenPos(sb);
@@ -257,7 +257,7 @@ TEST_CASE("progress bar: value only changes when the sketch sets it") {
   BView* items[] = { &bar };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   for (int i = 0; i < 10; ++i) {
@@ -274,7 +274,7 @@ TEST_CASE("progress bar: setValue clamps and redraws only the change") {
   BView* items[] = { &bar };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
   int16_t y = host.center(bar).y;
 
@@ -303,7 +303,7 @@ TEST_CASE("margins: progress bar and scrollbar draw inside their own bounds") {
   BView* items[] = { &bar, &sb };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   BPoint p = host.screenPos(bar);    // top-left inside the margin
@@ -324,7 +324,7 @@ TEST_CASE("hit test: overlapping views - the one drawn on top gets the tap") {
   BPanel panel(items);
   panel.width = -1;
   panel.height = -1;
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   CHECK(host.gfx.pixel(10, 10) == 0xF800);
@@ -340,7 +340,7 @@ TEST_CASE("focus: removing the focused view then focusNext moves on") {
   BView* items[] = { &a, &b };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   host.fm.focus(a);
@@ -355,7 +355,7 @@ TEST_CASE("focus: removing the focused view then focusPrev moves on") {
   BView* items[] = { &a, &b };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   host.fm.focus(b);
@@ -400,7 +400,7 @@ TEST_CASE("focus: next and prev go into and out of nested panels, both ways") {
   BView* items[] = { &a, &outer, &empty, &labels, &f, &deeper };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   focusLog = "";
@@ -425,7 +425,7 @@ TEST_CASE("remove: a removed view is not drawn by later setValue calls") {
   BView* items[] = { &bar };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   panel.remove(bar);
@@ -441,7 +441,7 @@ TEST_CASE("focus: a removed button no longer receives Enter") {
   BView* items[] = { &a, &b };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
   clicks = 0;
   a.onClick += countClick;
@@ -469,7 +469,7 @@ TEST_CASE("progress bar: stays visible after setValue and a blinking neighbour")
   panel.horizontalAlignment = B::center;
   panel.spacing = 15;
   panel.padding(10);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
   host.run();
   bar.setValue(600);
@@ -493,7 +493,7 @@ TEST_CASE("hit test: neighbouring buttons do not share their edge pixel") {
   b.onClick += [](BButton*, bool) { ++bClicks; };
   BView* items[] = { &a, &b };
   BStackPanel panel(items);  // horizontal, no spacing: b starts right after a
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   BPoint pa = host.screenPos(a);
@@ -512,7 +512,7 @@ TEST_CASE("layout: an empty auto-sized stack panel is just its padding") {
   BView* items[] = { &empty };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   CHECK(empty.actualWidth == 6);
@@ -527,7 +527,7 @@ TEST_CASE("focus: a view that is not focusable cannot take the focus") {
   BView* items[] = { &button, &label };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   CHECK(host.fm.focus(button));
@@ -541,7 +541,7 @@ TEST_CASE("checkbox: press, drag off and release does not toggle") {
   BView* items[] = { &cb };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   BPoint p = host.screenPos(cb);
@@ -570,7 +570,7 @@ TEST_CASE("gauge: setValue clamps and moves the needle") {
   BView* items[] = { &gauge };
   BStackPanel panel(items);
   column(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
   BPoint pos = host.screenPos(gauge);
   int16_t half = gauge.actualWidth / 2 - 5;  // left/right of the hub

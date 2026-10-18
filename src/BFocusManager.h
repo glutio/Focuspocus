@@ -89,10 +89,11 @@ struct BFocusInputEvent: BCommandInputEvent {
   BView* focused;
 };
 
-struct BRootView {
+// Screen state, not a widget: a root panel and its remembered focus.
+struct BScreen {
   BPanel& root;
   BView* focused;
-  BRootView(BPanel& panel) : root(panel), focused(0) {
+  BScreen(BPanel& panel) : root(panel), focused(0) {
   }
 };
 
@@ -103,7 +104,7 @@ public:
   BEVENT_N(AfterRender, BFocusManager, bool, 2)
 
 protected:
-  Buratino::BList<BRootView*> _stack;
+  Buratino::BList<BScreen*> _stack;
   BGraphics _g;
   BView* _capture;
   bool _isDirty;
@@ -135,11 +136,11 @@ protected:
   void viewRemoved(BView& view);
 
   BPanel* root();
-  BRootView* top();
+  BScreen* top();
 
 public:
   template<size_t N>
-  BFocusManager(BGraphicsApi& g, BRootView* (&stack)[N], BTheme& theme) 
+  BFocusManager(BGraphicsApi& g, BScreen* (&stack)[N], BTheme& theme)
     : _stack(stack, N, N), _g(g), _capture(nullptr),
       _isDirty(false), _needsLayout(false), _theme(&theme), _msTimer(0) {
     for(int i = _stack.Length() - 1; i >= 0; --i) {
@@ -180,7 +181,7 @@ public:
   void dirtyLayout();
   
   // Returns false if the screen stack is full.
-  bool push(BRootView& panel);
+  bool push(BScreen& panel);
   void pop();
 
   // Call from the sketch's loop() with millis(). Runs, in order: timer

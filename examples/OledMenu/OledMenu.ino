@@ -14,11 +14,11 @@ BRadioButton slow;
 BRadioButton fast;
 BView* columnItems[] = { &ledOn, &slow, &fast };
 BStackPanel column(columnItems);
-BRootView mainScreen(column);
+BScreen mainScreen(column);
 
 BAdafruitGraphics graphics(oled);
 BBWTheme theme;  // black and white, small sizes for 128x64
-BRootView* screens[] = { &mainScreen };
+BScreen* screens[] = { &mainScreen };
 BFocusManager fm(graphics, screens, theme);
 BKeyboard keyboard(fm);
 

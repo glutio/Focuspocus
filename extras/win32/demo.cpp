@@ -8,7 +8,7 @@
 
 BWin32Graphics gfx(240, 320); // ILI9341 portrait
 BWinTheme theme;
-BRootView* screens[] = { &MainScreen::screen, nullptr };
+BScreen* screens[] = { &MainScreen::screen, nullptr };
 BFocusManager fm(gfx, screens, theme);
 BMouse mouse(fm);
 BKeyboard keyboard(fm);

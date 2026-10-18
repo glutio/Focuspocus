@@ -25,7 +25,7 @@ TEST_CASE("layout: horizontal stack places children left to right with spacing")
   BStackPanel row(items);
   fill(row, B::horizontal);
   row.spacing = 5;
-  BRootView root(row);
+  BScreen root(row);
   TestHost host(root);
 
   at(host, a, 0, 0, 20, 10);
@@ -41,7 +41,7 @@ TEST_CASE("layout: vertical stack aligns right/bottom and center") {
   column.spacing = 4;
   column.horizontalAlignment = B::right;
   column.verticalAlignment = B::bottom;
-  BRootView root(column);
+  BScreen root(column);
   TestHost host(root);
 
   at(host, a, 220, 296, 20, 10);
@@ -68,7 +68,7 @@ TEST_CASE("layout: horizontal stack aligns bottom, then back to top") {
   BStackPanel row(items);
   fill(row, B::horizontal);
   row.verticalAlignment = B::bottom;
-  BRootView root(row);
+  BScreen root(row);
   TestHost host(root);
 
   at(host, a, 0, 310, 20, 10);
@@ -88,7 +88,7 @@ TEST_CASE("layout: negative sizes share the space left by fixed children") {
   BView* items[] = { &fixed, &one, &two };
   BStackPanel row(items);
   fill(row, B::horizontal);
-  BRootView root(row);
+  BScreen root(row);
   TestHost host(root);
 
   // 240 - 30 = 210 left, split 1:2
@@ -102,7 +102,7 @@ struct AxisScene {
   Box a, b, c, d;
   BView* items[4];
   BStackPanel stack;
-  BRootView root;
+  BScreen root;
   TestHost host;
 
   static void size(BView& v, B::Orientation o, int16_t main, int16_t cross) {
@@ -172,7 +172,7 @@ TEST_CASE("layout: maxWidth caps a stretched child; the rest goes to the others"
   BView* items[] = { &capped, &rest };
   BStackPanel row(items);
   fill(row, B::horizontal);
-  BRootView root(row);
+  BScreen root(row);
   TestHost host(root);
 
   at(host, capped, 0, 0, 40, 10);
@@ -187,7 +187,7 @@ TEST_CASE("layout: minHeight holds a stretched child; the rest goes to the other
   BView* items[] = { &held, &rest };
   BStackPanel column(items);
   fill(column, B::vertical);
-  BRootView root(column);
+  BScreen root(column);
   TestHost host(root);
 
   at(host, held, 0, 0, 10, 200);
@@ -206,7 +206,7 @@ TEST_CASE("layout: padding and margins offset children; width -1 fills between t
   BStackPanel column(items);
   fill(column, B::vertical);
   column.padding(10);
-  BRootView root(column);
+  BScreen root(column);
   TestHost host(root);
 
   at(host, a, 15, 13, 20, 10);
@@ -224,7 +224,7 @@ TEST_CASE("layout: a stack with size 0 fits its children") {
   fill(column, B::vertical);
   column.horizontalAlignment = B::center;
   column.verticalAlignment = B::center;
-  BRootView root(column);
+  BScreen root(column);
   TestHost host(root);
 
   CHECK(row.actualWidth == 2 + 20 + 5 + 30 + 2);
@@ -241,7 +241,7 @@ TEST_CASE("layout: a child growing re-sizes and re-centers its auto-sized parent
   BStackPanel column(items);
   fill(column, B::vertical);
   column.horizontalAlignment = B::center;
-  BRootView root(column);
+  BScreen root(column);
   TestHost host(root);
   at(host, b, 120, 0, 20, 10);
 
@@ -266,7 +266,7 @@ TEST_CASE("layout: BPanel keeps children at their own x/y") {
   panel.width = -1;
   panel.height = -1;
   panel.padding(4);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   at(host, a, 54, 64, 20, 10);
@@ -279,7 +279,7 @@ TEST_CASE("layout: a hidden-size child (0x0) takes no spacing") {
   BStackPanel row(items);
   fill(row, B::horizontal);
   row.spacing = 10;
-  BRootView root(row);
+  BScreen root(row);
   TestHost host(root);
 
   at(host, a, 0, 0, 20, 10);
@@ -296,7 +296,7 @@ TEST_CASE("layout: width -1 fills a centered column") {
   fill(panel, B::vertical);
   panel.horizontalAlignment = B::center;
   panel.padding(10);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
   host.run();
   CHECK(bar.actualWidth == panel.actualWidth - 20);
@@ -311,7 +311,7 @@ TEST_CASE("layout: left/right padding does not shrink child height") {
   fill(panel, B::vertical);
   panel.padding.left = 30;
   panel.padding.right = 30;
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   CHECK(child.actualWidth == 240 - 60);
@@ -331,7 +331,7 @@ TEST_CASE("layout: a label changing text in place does not redraw its neighbours
   BStackPanel panel(items);
   fill(panel, B::vertical);
   panel.horizontalAlignment = B::center;
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
   host.run();
   int before = box.draws;
@@ -353,7 +353,7 @@ TEST_CASE("layout: no room left - a stretched child gets 0, fixed children keep 
   BView* items[] = { &a, &stretched, &b };
   BStackPanel row(items);
   fill(row, B::horizontal);
-  BRootView root(row);
+  BScreen root(row);
   TestHost host(root);
 
   CHECK(stretched.actualWidth == 0);
@@ -368,7 +368,7 @@ TEST_CASE("layout: a share smaller than the child's margins gives 0, not a huge 
   BView* items[] = { &fixed, &one, &two };
   BStackPanel row(items);
   fill(row, B::horizontal);
-  BRootView root(row);
+  BScreen root(row);
   TestHost host(root);
 
   CHECK(one.actualWidth == 0);  // share 10, margin 15
@@ -384,7 +384,7 @@ TEST_CASE("layout: minimums that do not fit are kept and overflow") {
   BView* items[] = { &a, &b };
   BStackPanel row(items);
   fill(row, B::horizontal);
-  BRootView root(row);
+  BScreen root(row);
   TestHost host(root);
 
   at(host, a, 0, 0, 150, 10);
@@ -397,7 +397,7 @@ TEST_CASE("layout: too tall for the screen - a vertical stack overflows at the b
   BView* items[] = { &a, &stretched, &b };
   BStackPanel column(items);
   fill(column, B::vertical);
-  BRootView root(column);
+  BScreen root(column);
   TestHost host(root);
 
   CHECK(stretched.actualHeight == 0);
@@ -420,7 +420,7 @@ TEST_CASE("scroll: views are clipped to the BPanel; taps stay outside") {
   BView* items[] = { &header, &viewport, &footer };
   BStackPanel column(items);
   fill(column, B::vertical);
-  BRootView root(column);
+  BScreen root(column);
   TestHost host(root);
 
   list.y = -50;  // scroll down by 50 px
@@ -456,7 +456,7 @@ TEST_CASE("scroll: text cut by the BPanel edge draws its visible part") {
   BView* items[] = { &header, &viewport };
   BStackPanel column(items);
   fill(column, B::vertical);
-  BRootView root(column);
+  BScreen root(column);
   TestHost host(root);
 
   CHECK(host.gfx.countPixels(0, 50, 240, 8, CYAN) > 0);
@@ -476,7 +476,7 @@ TEST_CASE("layout: margins are 8-bit but their sums are not") {
   panel.width = -1;
   panel.height = -1;
   panel.orientation = B::vertical;
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   CHECK(inner.actualWidth == 50 + 200 + 254);
@@ -498,7 +498,7 @@ TEST_CASE("layout: auto-sized vertical list of stretched buttons fits them all")
   BView* outer[] = { &list };
   BStackPanel page(outer);
   fill(page, B::vertical);
-  BRootView root(page);
+  BScreen root(page);
   TestHost host(root);
 
   int16_t h = a.actualHeight;
