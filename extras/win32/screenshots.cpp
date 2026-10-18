@@ -43,7 +43,7 @@ static void recordGif() {
   CreateDirectoryW(L"build\\gif", nullptr);
   BWin32Graphics gfx(240, 320);
   BWinTheme theme;
-  BRootView* screens[] = { &MainScreen::screen, nullptr };
+  BScreen* screens[] = { &MainScreen::screen, nullptr };
   BFocusManager fm(gfx, screens, theme);
   BMouse mouse(fm);
   MainScreen::begin(240, 320, theme);
@@ -136,10 +136,10 @@ static void shot(const wchar_t* name, BView& view, int16_t w, int16_t h, void (*
   panel.height = -1;
   panel.horizontalAlignment = B::center;
   panel.verticalAlignment = B::center;
-  BRootView root(panel);
+  BScreen root(panel);
   BWin32Graphics gfx(w, h);
   BWinTheme theme;
-  BRootView* screens[] = { &root };
+  BScreen* screens[] = { &root };
   BFocusManager fm(gfx, screens, theme);
   fm.loop(20);
   if (act) {
@@ -207,7 +207,7 @@ int main(int argc, char** argv) {
   // The Demo, as on the device.
   BWin32Graphics gfx(240, 320);
   BWinTheme theme;
-  BRootView* screens[] = { &MainScreen::screen, nullptr };
+  BScreen* screens[] = { &MainScreen::screen, nullptr };
   BFocusManager fm(gfx, screens, theme);
   MainScreen::begin(240, 320, theme);
   unsigned long ms = 0;
@@ -230,7 +230,7 @@ int main(int argc, char** argv) {
 
   // LayoutFocus: layout, focus and an auto-sized popup.
   BWin32Graphics lgfx(240, 320);
-  BRootView* lscreens[] = { &LayoutScreen::screen, nullptr, nullptr };
+  BScreen* lscreens[] = { &LayoutScreen::screen, nullptr, nullptr };
   BFocusManager lfm(lgfx, lscreens, theme);
   LayoutScreen::begin();
   FocusScreen::begin();

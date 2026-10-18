@@ -14,13 +14,13 @@
 struct TestHost {
   BWin32Graphics gfx;
   BTheme theme;
-  BRootView* stack[4];
+  BScreen* stack[4];
   BFocusManager fm;
   BMouse mouse;
   BKeyboard keyboard;
   unsigned long ms;
 
-  explicit TestHost(BRootView& root, int16_t width = 240, int16_t height = 320)
+  explicit TestHost(BScreen& root, int16_t width = 240, int16_t height = 320)
     : gfx(width, height), stack{ &root, nullptr, nullptr, nullptr },
       fm(gfx, stack, theme), mouse(fm), keyboard(fm), ms(0) {
     run();

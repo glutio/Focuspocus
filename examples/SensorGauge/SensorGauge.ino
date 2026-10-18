@@ -39,11 +39,11 @@ BGauge gauge;
 AlarmLabel alarmLabel;
 BView* columnItems[] = { &title, &reading, &gauge, &bar, &alarmLabel };
 BStackPanel column(columnItems);
-BRootView mainScreen(column);
+BScreen mainScreen(column);
 
 BAdafruitGraphics graphics(tft);
 BTheme theme;
-BRootView* screens[] = { &mainScreen };
+BScreen* screens[] = { &mainScreen };
 BFocusManager fm(graphics, screens, theme);
 
 BInterval readEvery(200);

@@ -13,7 +13,7 @@ TEST_CASE("fixed panel: add fills free (nullptr) slots and fails when full") {
   BView* slots[2] = { nullptr, nullptr };
   BStackPanel panel(slots);
   row(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   CHECK(panel.add(a));
@@ -31,7 +31,7 @@ TEST_CASE("fixed panel: add reuses the slot freed by remove") {
   BView* slots[] = { &a, &b };
   BStackPanel panel(slots);
   row(panel);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   CHECK_FALSE(panel.add(c));
@@ -52,7 +52,7 @@ TEST_CASE("heap panel: grows and holds heap-allocated views") {
     boxes[i] = new Box(10, 10);
     CHECK(panel.add(*boxes[i]));
   }
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   CHECK(host.screenPos(*boxes[9]).x == 90);
@@ -73,7 +73,7 @@ TEST_CASE("heap panel: insert places a view before existing ones") {
   CHECK(panel.add(b));
   CHECK(panel.insert(0, c));
   CHECK_FALSE(panel.insert(9, c));
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
 
   CHECK(host.screenPos(c).x == 0);
@@ -85,7 +85,7 @@ TEST_CASE("push fails when the screen stack is full and works again after pop") 
   Box a(10, 10);
   BView* items[] = { &a };
   BStackPanel panel(items);
-  BRootView root(panel), extra(panel);
+  BScreen root(panel), extra(panel);
   TestHost host(root);  // stack of 4, one used
 
   CHECK(host.fm.push(extra));
@@ -107,7 +107,7 @@ TEST_CASE("events: one handler per widget event, -= frees the slot, duplicates a
   Box a(50, 50);
   BView* items[] = { &a };
   BStackPanel panel(items);
-  BRootView root(panel);
+  BScreen root(panel);
   TestHost host(root);
   Counter first, second;
 

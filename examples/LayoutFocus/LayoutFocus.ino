@@ -24,7 +24,7 @@ Adafruit_FT6206 touch;
 
 BAdafruitGraphics graphics(tft);
 BWinTheme theme;
-BRootView* screens[] = { &LayoutScreen::screen, nullptr, nullptr };  // + focus screen + popup
+BScreen* screens[] = { &LayoutScreen::screen, nullptr, nullptr };  // + focus screen + popup
 BFocusManager fm(graphics, screens, theme);
 BMouse mouse(fm);
 BKeyboard keyboard(fm);

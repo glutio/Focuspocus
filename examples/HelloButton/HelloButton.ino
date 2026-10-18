@@ -12,12 +12,12 @@ BTextLabel label;
 BButton button;
 BView* columnItems[] = { &label, &button };
 BStackPanel column(columnItems);
-BRootView mainScreen(column);
+BScreen mainScreen(column);
 
 // The GUI: graphics + theme + screen stack -> focus manager -> input.
 BAdafruitGraphics graphics(tft);
 BTheme theme;
-BRootView* screens[] = { &mainScreen };
+BScreen* screens[] = { &mainScreen };
 BFocusManager fm(graphics, screens, theme);
 BMouse mouse(fm);
 

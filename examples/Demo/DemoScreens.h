@@ -28,7 +28,7 @@ namespace PopupScreen {
   BStackPanel box(boxContent);
   BView* popupContent[] = { &box };
   BPopup popup(popupContent);
-  BRootView screen(popup);
+  BScreen screen(popup);
 
   void handleOk(BButton* sender, bool) {
     sender->focusManager().pop();
@@ -86,7 +86,7 @@ namespace MainScreen {
 
   BView* rootContent[] = { &viewport, &hscrollbar, &vscrollbar };
   BPanel root(rootContent);
-  BRootView screen(root);
+  BScreen screen(root);
 }
 
 // A popup used as a list box: picking a color updates the main screen.
@@ -98,7 +98,7 @@ namespace ListScreen {
   BStackPanel list(listContent);
   BView* popupContent[] = { &list };
   BPopup popup(popupContent);
-  BRootView screen(popup);
+  BScreen screen(popup);
 
   void pick(BButton* sender, bool) {
     const Choice& c = choices[sender - items];

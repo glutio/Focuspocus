@@ -20,7 +20,7 @@ namespace ConfirmScreen {
   BStackPanel box(boxItems);
   BView* popupItems[] = { &box };
   BPopup popup(popupItems);       // shades the screen below, centers its content
-  BRootView screen(popup);
+  BScreen screen(popup);
 }
 
 namespace MainScreen {
@@ -28,7 +28,7 @@ namespace MainScreen {
   BButton toggle;
   BView* columnItems[] = { &status, &toggle };
   BStackPanel column(columnItems);
-  BRootView screen(column);
+  BScreen screen(column);
 
   void showStatus() {
     status.setText(lightOn ? "Light is ON" : "Light is OFF");
@@ -37,7 +37,7 @@ namespace MainScreen {
 
 BAdafruitGraphics graphics(tft);
 BTheme theme;
-BRootView* screens[] = { &MainScreen::screen, nullptr };  // room for the popup
+BScreen* screens[] = { &MainScreen::screen, nullptr };  // room for the popup
 BFocusManager fm(graphics, screens, theme);
 BMouse mouse(fm);
 
