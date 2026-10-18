@@ -186,6 +186,15 @@ TEST_CASE("label: setText redraws and leaves no old text behind") {
   fixedSized.setText("I");
   host.run();
   CHECK(host.gfx.countPixels(0, 0, 240, 320, ink) > 0);
+
+  // Shorter text over longer text: the old text right of the new one is cleared.
+  BPoint p = host.screenPos(fixedSized);
+  fixedSized.setText("WWWWWW");
+  host.run();
+  CHECK(host.gfx.countPixels(p.x + 20, p.y, 80, 20, ink) > 0);
+  fixedSized.setText("I");
+  host.run();
+  CHECK(host.gfx.countPixels(p.x + 20, p.y, 80, 20, ink) == 0);
 }
 
 // --- BScrollbar --------------------------------------------------------------
@@ -331,6 +340,96 @@ TEST_CASE("hit test: overlapping views - the one drawn on top gets the tap") {
   host.tap(10, 10);
   CHECK_FALSE(above.mouseEvents.empty());
   CHECK(below.mouseEvents.empty());
+}
+
+TEST_CASE("draw: redrawing a view does not paint over the sibling on top") {
+  Box below(50, 50, 0x001F), above(20, 20, 0xF800);
+  above.x = 10;
+  above.y = 10;
+  BView* items[] = { &below, &above };
+  BPanel panel(items);
+  panel.width = -1;
+  panel.height = -1;
+  BScreen root(panel);
+  TestHost host(root);
+
+  below.dirty();
+  host.run();
+  CHECK(host.gfx.pixel(15, 15) == 0xF800);
+  CHECK(host.gfx.pixel(5, 5) == 0x001F);
+}
+
+TEST_CASE("draw: changing a child's margin clears where it was") {
+  Box box(20, 20, 0xF800);
+  BView* items[] = { &box };
+  BPanel panel(items);
+  panel.width = -1;
+  panel.height = -1;
+  BScreen root(panel);
+  TestHost host(root);
+  CHECK(host.gfx.pixel(5, 5) == 0xF800);
+
+  box.margin.left = 50;
+  box.dirtyLayout();
+  host.run();
+  CHECK(host.gfx.pixel(55, 5) == 0xF800);
+  CHECK(host.gfx.pixel(5, 5) == host.theme.background);
+}
+
+TEST_CASE("button: a press does not click after the screen changes") {
+  BButton button;
+  button.text = "OK";
+  BView* items[] = { &button };
+  BStackPanel panel(items);
+  column(panel);
+  BScreen root(panel);
+  Box box(240, 320);
+  BView* popupItems[] = { &box };
+  BPopup popup(popupItems);
+  BScreen popupScreen(popup);
+  TestHost host(root);
+  clicks = 0;
+  button.onClick += countClick;
+
+  BPoint c = host.center(button);
+  host.mouse.move(c.x, c.y, true);
+  host.run();
+  host.fm.push(popupScreen);
+  host.run();
+  host.fm.pop();
+  host.run();
+  host.mouse.move(c.x, c.y, false);
+  host.run();
+  CHECK(clicks == 0);
+}
+
+// A display whose size changes after the focus manager is built, like
+// tft.setRotation() in setup() with a global BFocusManager.
+struct RotatingGraphics : BWin32Graphics {
+  RotatingGraphics() : BWin32Graphics(240, 320) {}
+  void rotate() { int16_t w = _width; _width = _height; _height = w; }
+};
+
+TEST_CASE("layout: the root follows a display size change") {
+  RotatingGraphics gfx;
+  BTheme theme;
+  Box box;
+  BView* items[] = { &box };
+  BStackPanel panel(items);
+  column(panel);
+  BScreen root(panel);
+  BScreen* stack[] = { &root };
+  BFocusManager fm(gfx, stack, theme);
+
+  gfx.rotate();
+  fm.loop(20);
+  CHECK(panel.actualWidth == 320);
+  CHECK(panel.actualHeight == 240);
+
+  gfx.rotate();
+  fm.loop(40);
+  CHECK(panel.actualWidth == 240);
+  CHECK(panel.actualHeight == 320);
 }
 
 TEST_CASE("focus: removing the focused view then focusNext moves on") {
