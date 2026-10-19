@@ -11,7 +11,7 @@
 #include "BView.h"
 #include "BFocusManager.h"
 
-class BGauge: public BView, public BColorAware {
+class BGauge: public BView {
 public:
   int16_t minimum;
   int16_t maximum;
@@ -34,7 +34,7 @@ public:
     }
     BGraphics g = focusManager().getGraphics(*this);
     focusManager().beginDraw();
-    drawNeedle(g, viewBackground(*this));
+    drawNeedle(g, actualBackground());
     value = val;
     drawNeedle(g, needle());
     focusManager().endDraw();
@@ -53,8 +53,8 @@ public:
 
   virtual void draw(BGraphics& g) {
     BView::draw(g);
-    uint16_t c = viewColor(*this);
-    g.fillRect(0, 0, actualWidth, actualHeight, viewBackground(*this));
+    uint16_t c = actualColor();
+    g.fillRect(0, 0, actualWidth, actualHeight, actualBackground());
     int16_t r = radius();
     for (int16_t a = 0; a < 180; a += 6) {  // the arc, as short lines
       g.drawLine(px(a, r), py(a, r), px(a + 6, r), py(a + 6, r), c);

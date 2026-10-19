@@ -20,6 +20,20 @@ bool BView::hitTest(int16_t ptX, int16_t ptY) {
   return BRect(0, 0, actualWidth, actualHeight).contains(ptX, ptY);
 }
 
+uint8_t BView::themed(const BNullable<uint8_t>& value, uint8_t BTheme::*field) {
+  return value.hasValue() ? (uint8_t)value : focusManager().theme().*field;
+}
+uint16_t BView::themed(const BNullable<uint16_t>& value, uint16_t BTheme::*field) {
+  return value.hasValue() ? (uint16_t)value : focusManager().theme().*field;
+}
+uint16_t BView::actualColor() {
+  return themed(color, &BTheme::color);
+}
+uint16_t BView::actualBackground() {
+  if (!background.hasValue() && parent()) return parent()->actualBackground();
+  return themed(background, &BTheme::background);
+}
+
 void BView::setParent(BPanel& parent) {
   if (_parent != &parent) {
     auto old = _parent;
@@ -225,7 +239,7 @@ void BButton::measure(uint16_t, uint16_t) {
   const BTheme& theme = focusManager().theme();
   BRect rt;
   if (text) {
-    rt = focusManager().getTextBounds(text, viewFontSize(*this));
+    rt = focusManager().getTextBounds(text, actualFontSize());
   }
   if (width <= 0) {
     int16_t w = max((int16_t)(rt.width + theme.buttonPadding * 2), (int16_t)theme.buttonWidth);
@@ -239,7 +253,7 @@ void BButton::measure(uint16_t, uint16_t) {
 
 void BButton::draw(BGraphics& g) {
   BView::draw(g);
-  auto parentBackground = viewBackground(*parent());
+  auto parentBackground = parent()->actualBackground();
   auto radius = focusManager().theme().buttonRadius;
 
   if (_isDown) {
@@ -248,8 +262,8 @@ void BButton::draw(BGraphics& g) {
     g.fillRoundRect(2, 2, actualWidth - 4, actualHeight - 4, radius, focusManager().theme().focusBackground);
   }
   else {
-    auto c = viewColor(*this);
-    uint16_t b = background.hasValue() ? (uint16_t)background : focusManager().theme().background; // own face, not the panel's
+    auto c = actualColor();
+    uint16_t b = themed(background, &BTheme::background); // own face, not the panel's
     if (isFocused()) {
       c = focusManager().theme().focusColor;
       b = focusManager().theme().focusBackground;
@@ -262,9 +276,9 @@ void BButton::draw(BGraphics& g) {
 }
 
 void BButton::drawContent(BGraphics& g) {
-  auto rt = g.getTextBounds(text, viewFontSize(*this));
-  int16_t c = (isFocused()) ? focusManager().theme().focusColor : viewFontColor(*this);
-  g.drawText(text, (g.width - rt.width)/2, (g.height - rt.height)/2, viewFontSize(*this), c);
+  auto rt = g.getTextBounds(text, actualFontSize());
+  int16_t c = (isFocused()) ? focusManager().theme().focusColor : actualFontColor();
+  g.drawText(text, (g.width - rt.width)/2, (g.height - rt.height)/2, actualFontSize(), c);
 }
 
 /*
@@ -374,9 +388,9 @@ void BPanel::remove(BView& view) {
 }
 
 void BPanel::draw(BGraphics& g) {
-  g.fillRect(border, border, g.width - border * 2, g.height - border * 2, viewBackground(*this));
+  g.fillRect(border, border, g.width - border * 2, g.height - border * 2, actualBackground());
   if (border) {
-    g.drawRect(0, 0, g.width, g.height, viewColor(*this));
+    g.drawRect(0, 0, g.width, g.height, actualColor());
   }
   BView::draw(g);  
 }

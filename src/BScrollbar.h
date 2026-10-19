@@ -3,7 +3,7 @@
 
 #include "BView.h"
 
-class BScrollbar: public BControl, public BColorAware {
+class BScrollbar: public BControl {
 public:
   BEVENT(Change, BScrollbar, int16_t)
 

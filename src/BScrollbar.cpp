@@ -34,11 +34,11 @@ void BScrollbar::fillThumb(BGraphics& g, uint16_t color) {
 }
 
 uint16_t BScrollbar::thumbColor() {
-  return isFocused() ? focusManager().theme().focusColor : viewColor(*this);
+  return isFocused() ? focusManager().theme().focusColor : actualColor();
 }
 
 uint16_t BScrollbar::trackColor() {
-  return isFocused() ? focusManager().theme().focusBackground : viewBackground(*this);
+  return isFocused() ? focusManager().theme().focusBackground : actualBackground();
 }
 // Thumb follows the pointer, keeping the point where it was grabbed.
 void BScrollbar::moveThumb(BMouseInputEvent& event) {

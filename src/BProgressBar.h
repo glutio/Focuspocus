@@ -3,7 +3,7 @@
 
 #include "BView.h"
 
-class BProgressBar: public BView, public BColorAware {
+class BProgressBar: public BView {
 public:
   int16_t minimum;
   int16_t maximum;

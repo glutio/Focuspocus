@@ -7,6 +7,7 @@
 #include <Buratino.h>
 #include "BEvent.h"
 #include "BNullable.h"
+#include "BTheme.h"
 
 
 class BInputEvent;
@@ -99,11 +100,16 @@ public:
   BMargin margin;
   int16_t actualWidth;
   int16_t actualHeight;
+  BNullable<uint16_t> color;      // unset: the theme's
+  BNullable<uint16_t> background; // unset: the parent panel's, up to the theme's
 
 protected:
   virtual BPanel* asPanel() {
     return nullptr;
   }
+  // value if set, else the theme's field (e.g. &BTheme::fontSize)
+  uint8_t themed(const BNullable<uint8_t>& value, uint8_t BTheme::*field);
+  uint16_t themed(const BNullable<uint16_t>& value, uint16_t BTheme::*field);
 
 public:
   typedef EventDelegate<BView, BMouseInputEvent&> MouseEvent; // for BFocusManager::onMouse
@@ -124,6 +130,10 @@ public:
   BPanel* parent();
   BFocusManager& focusManager();
 
+  // The colors to draw with: color/background, or their defaults.
+  uint16_t actualColor();
+  uint16_t actualBackground();
+
   void dirty();
   bool isDirty();
   void clearDirty();
@@ -139,48 +149,6 @@ public:
   friend class BFocusManager;
 };
 
-class BFontAware {
-public:
-  BNullable<uint8_t> fontSize;
-  BNullable<uint16_t> fontColor;
-
-  template<typename T>
-  uint8_t viewFontSize(T& view) {
-    if (view.fontSize.hasValue())
-      return view.fontSize;
-    return view.focusManager().theme().fontSize;
-  }
-  template<typename T>
-  uint16_t viewFontColor(T& view) {
-    if (view.fontColor.hasValue())
-      return view.fontColor;
-    return view.focusManager().theme().fontColor;
-  }
-};
-
-class BColorAware {
-public:
-  BNullable<uint16_t> color;
-  BNullable<uint16_t> background;
-
-  template<typename T>
-  uint16_t viewColor(T& view) {
-    if (view.color.hasValue())
-      return view.color;
-    return view.focusManager().theme().color;
-  }
-
-  // Unset: the parent panel's background, up to the theme's.
-  template<typename T>
-  uint16_t viewBackground(T& view) {
-    if (view.background.hasValue())
-      return view.background;
-    if (view.parent())
-      return view.parent()->viewBackground(*view.parent());
-    return view.focusManager().theme().background;
-  }
-};
-
 class BControl: public BView {
 public:
   typedef EventDelegate<BControl, BFocusInputEvent&> FocusEvent; // for BFocusManager::onFocus
@@ -188,12 +156,16 @@ public:
   virtual void handleEvent(BInputEvent& event);
 };
 
-class BButton: public BControl, public BFontAware, public BColorAware {
+class BButton: public BControl {
 public:
   BEVENT(Click, BButton, bool)
 
 public:
   const char* text;
+  BNullable<uint8_t> fontSize;   // unset: the theme's
+  BNullable<uint16_t> fontColor; // unset: the theme's
+  uint8_t actualFontSize() { return themed(fontSize, &BTheme::fontSize); }
+  uint16_t actualFontColor() { return themed(fontColor, &BTheme::fontColor); }
 
 protected:
   virtual void drawContent(BGraphics& g);
@@ -209,7 +181,7 @@ public:
   virtual void draw(BGraphics& g);
 };
 
-class BPanel: public BControl, public BColorAware {
+class BPanel: public BControl {
 public:
     class Iterator {
     private:
