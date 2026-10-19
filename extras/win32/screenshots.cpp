@@ -233,7 +233,7 @@ int main(int argc, char** argv) {
   BScreen* lscreens[] = { &LayoutScreen::screen, nullptr, nullptr };
   BFocusManager lfm(lgfx, lscreens, theme);
   LayoutScreen::begin();
-  FocusScreen::begin();
+  FocusScreen::begin(lfm);
   AskScreen::begin();
   auto lrun = [&](int frames) { for (int i = 0; i < frames; ++i) lfm.loop(ms += 20); };
   lrun(30);

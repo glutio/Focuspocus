@@ -7,6 +7,7 @@
 #include <Buratino.h>
 #include "BEvent.h"
 #include "BNullable.h"
+#include "BTheme.h"
 
 
 class BInputEvent;
@@ -57,12 +58,12 @@ struct BMargin {
 };
 
 struct B {
-  enum Orientation {
+  enum Orientation : uint8_t {
     vertical,
     horizontal
   };
 
-  enum Alignment {
+  enum Alignment : uint8_t {
     top,
     bottom,
     center,
@@ -79,11 +80,14 @@ private:
   BPanel* _parent;
 
 protected:
-  // One byte for all three flags.
+  // One byte for all the flags, including those of subclasses.
   bool _isDirty : 1;
   bool _needsLayout : 1;
+  bool _isDown : 1;  // BButton
+  bool _animate : 1; // BButton
 public:
   bool focusable : 1;
+  bool border : 1;   // BPanel: 1 pixel frame
 
   int16_t x;
   int16_t y;
@@ -96,15 +100,19 @@ public:
   BMargin margin;
   int16_t actualWidth;
   int16_t actualHeight;
-  const char* tag;
+  BNullable<uint16_t> color;      // unset: the theme's
+  BNullable<uint16_t> background; // unset: the parent panel's, up to the theme's
 
 protected:
   virtual BPanel* asPanel() {
     return nullptr;
   }
+  // value if set, else the theme's field (e.g. &BTheme::fontSize)
+  uint8_t themed(const BNullable<uint8_t>& value, uint8_t BTheme::*field);
+  uint16_t themed(const BNullable<uint16_t>& value, uint16_t BTheme::*field);
 
 public:
-  BEVENT(Mouse, BView, BMouseInputEvent&)
+  typedef EventDelegate<BView, BMouseInputEvent&> MouseEvent; // for BFocusManager::onMouse
   
 public:
   BView();
@@ -122,6 +130,10 @@ public:
   BPanel* parent();
   BFocusManager& focusManager();
 
+  // The colors to draw with: color/background, or their defaults.
+  uint16_t actualColor();
+  uint16_t actualBackground();
+
   void dirty();
   bool isDirty();
   void clearDirty();
@@ -137,61 +149,23 @@ public:
   friend class BFocusManager;
 };
 
-class BFontAware {
-public:
-  BNullable<uint8_t> fontSize;
-  BNullable<uint16_t> fontColor;
-
-  template<typename T>
-  uint8_t viewFontSize(T& view) {
-    if (view.fontSize.hasValue())
-      return view.fontSize;
-    return view.focusManager().theme().fontSize;
-  }
-  template<typename T>
-  uint16_t viewFontColor(T& view) {
-    if (view.fontColor.hasValue())
-      return view.fontColor;
-    return view.focusManager().theme().fontColor;
-  }
-};
-
-class BColorAware {
-public:
-  BNullable<uint16_t> color;
-  BNullable<uint16_t> background;
-
-  template<typename T>
-  uint16_t viewColor(T& view) {
-    if (view.color.hasValue())
-      return view.color;
-    return view.focusManager().theme().color;
-  }
-
-  template<typename T>
-  uint16_t viewBackground(T& view) {
-    if (view.background.hasValue())
-      return view.background;
-    return view.focusManager().theme().background;
-  }
-};
-
 class BControl: public BView {
 public:
-  BEVENT(Focus, BControl, BFocusInputEvent&)
+  typedef EventDelegate<BControl, BFocusInputEvent&> FocusEvent; // for BFocusManager::onFocus
 public:
   virtual void handleEvent(BInputEvent& event);
 };
 
-class BButton: public BControl, public BFontAware, public BColorAware {
-protected:
-  bool _isDown : 1;
-  bool _animate : 1;
+class BButton: public BControl {
 public:
   BEVENT(Click, BButton, bool)
 
 public:
   const char* text;
+  BNullable<uint8_t> fontSize;   // unset: the theme's
+  BNullable<uint16_t> fontColor; // unset: the theme's
+  uint8_t actualFontSize() { return themed(fontSize, &BTheme::fontSize); }
+  uint16_t actualFontColor() { return themed(fontColor, &BTheme::fontColor); }
 
 protected:
   virtual void drawContent(BGraphics& g);
@@ -207,7 +181,7 @@ public:
   virtual void draw(BGraphics& g);
 };
 
-class BPanel: public BControl, public BColorAware {
+class BPanel: public BControl {
 public:
     class Iterator {
     private:
@@ -270,7 +244,6 @@ protected:
 
 public:
   BMargin padding;
-  bool border;
 protected:
   uint16_t applyMinMax(uint16_t val, uint16_t minimum, uint16_t maximum);
   int16_t indexOf(BView& view);
@@ -283,13 +256,13 @@ public:
   // add/insert fail once every slot is used.
   template<size_t N>
   BPanel(BView* (&children)[N]) 
-    : _focusManager(nullptr), _children(children, N, N), _layoutHash(0), border(false) {
+    : _focusManager(nullptr), _children(children, N, N), _layoutHash(0) {
     focusable = false;
   }
 
   // Heap storage: the child list grows as needed.
   explicit BPanel(unsigned capacity = 0)
-    : _focusManager(nullptr), _children(capacity), _layoutHash(0), border(false) {
+    : _focusManager(nullptr), _children(capacity), _layoutHash(0) {
     focusable = false;
   }
 

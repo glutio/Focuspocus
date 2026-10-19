@@ -16,7 +16,7 @@ void BTextLabel::setText(const char* value) {
 void BTextLabel::measure(uint16_t availableWidth, uint16_t availableHeight) {
   BView::measure(availableWidth, availableHeight);
   if (width <= 0 || height <= 0) {
-    BRect rt = focusManager().getTextBounds(text, viewFontSize(*this));
+    BRect rt = focusManager().getTextBounds(text, actualFontSize());
     if (width <= 0) {
       actualWidth = min((uint16_t)rt.width, availableWidth);
     }
@@ -27,7 +27,7 @@ void BTextLabel::measure(uint16_t availableWidth, uint16_t availableHeight) {
 }
 
 void BTextLabel::draw(BGraphics& g) {
-  BRect rt = g.getTextBounds(text, viewFontSize(*this));
+  BRect rt = g.getTextBounds(text, actualFontSize());
   int16_t x = 0;
   int16_t y = 0;
   if (horizontalAlignment == B::right) {    
@@ -41,7 +41,7 @@ void BTextLabel::draw(BGraphics& g) {
     y = (g.height - rt.height) / 2;
   }
   // Fill only around the text; the text paints its own box, so it never flashes.
-  uint16_t bg = viewBackground(*this);
+  uint16_t bg = actualBackground();
   int16_t l = max(x, (int16_t)0), t = max(y, (int16_t)0);
   int16_t r = min((int16_t)(x + rt.width), g.width), b = min((int16_t)(y + rt.height), g.height);
   if (r <= l || b <= t) {
@@ -53,5 +53,5 @@ void BTextLabel::draw(BGraphics& g) {
     if (r < g.width) g.fillRect(r, t, g.width - r, b - t, bg);
   }
   BView::draw(g);
-  g.drawText(text, x, y, viewFontSize(*this), viewFontColor(*this), bg);
+  g.drawText(text, x, y, actualFontSize(), actualFontColor(), bg);
 }

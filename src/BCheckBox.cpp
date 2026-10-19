@@ -13,7 +13,7 @@ int16_t BCheckBoxBase::boxPixels() {
 }
 
 BRect BCheckBoxBase::textBounds() {
-  return text ? focusManager().getTextBounds(text, viewFontSize(*this)) : BRect();
+  return text ? focusManager().getTextBounds(text, actualFontSize()) : BRect();
 }
 
 void BCheckBoxBase::clicked() {
@@ -41,7 +41,7 @@ void BCheckBoxBase::draw(BGraphics& g) {
   int16_t textX = alignment == B::left ? x + box + spacing : x;
   int16_t boxX = alignment == B::left ? x : x + rt.width + spacing;
 
-  g.fillRect(0, 0, g.width, g.height, viewBackground(*this));
+  g.fillRect(0, 0, g.width, g.height, actualBackground());
 
   BGraphics gb(g);
   gb.x += boxX;
@@ -53,15 +53,15 @@ void BCheckBoxBase::draw(BGraphics& g) {
   // Focus highlights the text like a focused button.
   bool f = isFocused();
   int16_t textY = (g.height - rt.height) / 2;
-  g.fillRect(textX, textY, rt.width, rt.height, f ? focusManager().theme().focusBackground : viewBackground(*this));
+  g.fillRect(textX, textY, rt.width, rt.height, f ? focusManager().theme().focusBackground : actualBackground());
   if (text) {
-    g.drawText(text, textX, textY, viewFontSize(*this), f ? focusManager().theme().focusColor : viewFontColor(*this));
+    g.drawText(text, textX, textY, actualFontSize(), f ? focusManager().theme().focusColor : actualFontColor());
   }
 }
 
 void BCheckBoxBase::drawBox(BGraphics& g) {
-  uint16_t c = viewColor(*this);
-  uint16_t b = viewBackground(*this);
+  uint16_t c = actualColor();
+  uint16_t b = actualBackground();
   g.drawRect(0, 0, g.width, g.height, c);
   g.drawRect(1, 1, g.width - 2, g.height - 2, b);
   if (_isDown) {
@@ -72,8 +72,8 @@ void BCheckBoxBase::drawBox(BGraphics& g) {
 }
 
 void BRadioButton::drawBox(BGraphics& g) {
-  uint16_t c = viewColor(*this);
-  uint16_t b = viewBackground(*this);
+  uint16_t c = actualColor();
+  uint16_t b = actualBackground();
   int16_t org = g.height / 2;
   g.drawCircle(org, org, g.height / 2, c);
   g.drawCircle(org, org, (g.height - 2) / 2, b);

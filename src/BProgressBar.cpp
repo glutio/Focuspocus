@@ -24,11 +24,11 @@ void BProgressBar::setValue(int16_t val) {
   if (orientation == B::horizontal) {
     int16_t from = min(old.width, now.width);
     int16_t to = max(old.width, now.width);
-    g.fillRect(now.x + from, now.y, to - from, now.height, now.width > old.width ? viewColor(*this) : viewBackground(*this));
+    g.fillRect(now.x + from, now.y, to - from, now.height, now.width > old.width ? actualColor() : actualBackground());
   } else {
     int16_t from = min(old.height, now.height);
     int16_t to = max(old.height, now.height);
-    g.fillRect(now.x, now.y + from, now.width, to - from, now.height > old.height ? viewColor(*this) : viewBackground(*this));
+    g.fillRect(now.x, now.y + from, now.width, to - from, now.height > old.height ? actualColor() : actualBackground());
   }
   focusManager().endDraw();
 }
@@ -52,8 +52,8 @@ BRect BProgressBar::progressRect() {
 
 void BProgressBar::draw(BGraphics& g) {
   BView::draw(g);
-  auto c = viewColor(*this);
-  auto b = viewBackground(*this);
+  auto c = actualColor();
+  auto b = actualBackground();
   g.fillRect(0, 0, actualWidth, actualHeight, b);
   g.drawRect(0, 0, actualWidth, actualHeight, c);
   BRect rt = progressRect();

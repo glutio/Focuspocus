@@ -76,21 +76,12 @@ namespace FocusScreen {
 
   const char* names[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
-  void showFocus(const char* name) {
-    static char line[20];
-    snprintf(line, sizeof(line), "Focus: %s", name);
-    status.setText(line);
-  }
-
-  void buttonFocus(BControl* sender, BFocusInputEvent& event) {
+  // Every focusable control in this example is a button (or a checkbox, which is one).
+  void showFocus(BControl* sender, BFocusInputEvent& event) {
     if (event.command == BCommandInputEvent::cmFocus) {
-      showFocus(((BButton*)sender)->text);
-    }
-  }
-
-  void choiceFocus(BControl* sender, BFocusInputEvent& event) {
-    if (event.command == BCommandInputEvent::cmFocus) {
-      showFocus(((BCheckBoxBase*)sender)->text);
+      static char line[20];
+      snprintf(line, sizeof(line), "Focus: %s", ((BButton*)sender)->text);
+      status.setText(line);
     }
   }
 
@@ -102,14 +93,14 @@ namespace FocusScreen {
     sender->focusManager().push(AskScreen::screen);
   }
 
-  void begin() {
+  void begin(BFocusManager& fm) {
     status.text = "Focus: 5";
+    fm.onFocus += showFocus;
 
     for (int i = 0; i < 9; ++i) {
       keys[i].text = names[i];
       keys[i].width = -1;
       keys[i].height = -1;
-      keys[i].onFocus += buttonFocus;
     }
     BStackPanel* rows[] = { &row1, &row2, &row3 };
     for (BStackPanel* row : rows) {
@@ -127,18 +118,13 @@ namespace FocusScreen {
     red.group = "color";
     blue.text = "Blue";
     blue.group = "color";
-    check.onFocus += choiceFocus;
-    red.onFocus += choiceFocus;
-    blue.onFocus += choiceFocus;
     choices.spacing = 8;
 
     back.text = "< Back";
     back.width = -1;
-    back.onFocus += buttonFocus;
     back.onClick += goBack;
     ask.text = "Popup";
     ask.width = -1;
-    ask.onFocus += buttonFocus;
     ask.onClick += openAsk;
     bar.width = -1;
     bar.spacing = 4;
