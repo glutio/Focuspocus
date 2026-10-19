@@ -10,6 +10,7 @@
 class BView;
 class BPoint;
 class BPanel;
+class BControl;
 
 
 class BMouseInputEvent;
@@ -101,6 +102,12 @@ public:
   BEVENT_N(TimerTick, BFocusManager, unsigned long, 2)
   BEVENT_N(BeforeRender, BFocusManager, bool, 2)
   BEVENT_N(AfterRender, BFocusManager, bool, 2)
+public:
+  // One event for all views, rather than one per view, to save RAM.
+  // A control gained or lost focus (event.command: cmFocus or cmBlur).
+  EventSource<BControl, BFocusInputEvent&, 2> onFocus;
+  // A view received a mouse event.
+  EventSource<BView, BMouseInputEvent&, 2> onMouse;
 
 protected:
   Buratino::BList<BScreen*> _stack;

@@ -197,6 +197,32 @@ TEST_CASE("label: setText redraws and leaves no old text behind") {
   CHECK(host.gfx.countPixels(p.x + 20, p.y, 80, 20, ink) == 0);
 }
 
+TEST_CASE("background: unset falls back to the nearest panel's, then the theme's") {
+  BTextLabel inherited, own;
+  inherited.text = own.text = "I";
+  inherited.width = own.width = 100;
+  inherited.height = own.height = 20;
+  own.background = 0x001F;
+  BView* innerItems[] = { &inherited, &own };
+  BStackPanel inner(innerItems);  // no background: passes the outer one through
+  column(inner);
+  BView* items[] = { &inner };
+  BStackPanel panel(items);
+  column(panel);
+  panel.background = 0xF800;
+  BScreen root(panel);
+  TestHost host(root);
+  BPoint a = host.screenPos(inherited), b = host.screenPos(own);
+  CHECK(host.gfx.countPixels(a.x + 20, a.y, 80, 20, 0xF800) == 80 * 20);
+  CHECK(host.gfx.countPixels(b.x + 20, b.y, 80, 20, 0x001F) == 80 * 20);
+
+  panel.background.clear();
+  panel.dirty();
+  inherited.dirty();
+  host.run();
+  CHECK(host.gfx.countPixels(a.x + 20, a.y, 80, 20, host.theme.background) == 80 * 20);
+}
+
 // --- BScrollbar --------------------------------------------------------------
 
 TEST_CASE("scrollbar: arrow keys step and clamp; onChange reports the value") {
@@ -465,7 +491,7 @@ TEST_CASE("focus: removing the focused view then focusPrev moves on") {
 static std::string focusLog;
 static void logFocus(BControl* sender, BFocusInputEvent& event) {
   if (event.command == BCommandInputEvent::cmFocus) {
-    focusLog += sender->tag;
+    focusLog += ((BButton*)sender)->text;
   }
 }
 
@@ -476,13 +502,11 @@ TEST_CASE("focus: next and prev go into and out of nested panels, both ways") {
   BTextLabel label1, label2;
   label1.text = label2.text = "-";
   BButton* buttons[] = { &a, &b, &c, &d, &e, &g };
-  const char* tags[] = { "a", "b", "c", "d", "e", "g" };
+  const char* names[] = { "a", "b", "c", "d", "e", "g" };
   for (int i = 0; i < 6; ++i) {
-    buttons[i]->text = buttons[i]->tag = tags[i];
-    buttons[i]->onFocus += logFocus;
+    buttons[i]->text = names[i];
   }
-  f.text = f.tag = "f";
-  f.onFocus += logFocus;
+  f.text = "f";
 
   BView* innerItems[] = { &c, &d };
   BStackPanel inner(innerItems);
@@ -501,6 +525,7 @@ TEST_CASE("focus: next and prev go into and out of nested panels, both ways") {
   column(panel);
   BScreen root(panel);
   TestHost host(root);
+  host.fm.onFocus += logFocus;
 
   focusLog = "";
   host.fm.focus(a);

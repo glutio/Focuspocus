@@ -57,12 +57,12 @@ struct BMargin {
 };
 
 struct B {
-  enum Orientation {
+  enum Orientation : uint8_t {
     vertical,
     horizontal
   };
 
-  enum Alignment {
+  enum Alignment : uint8_t {
     top,
     bottom,
     center,
@@ -79,11 +79,14 @@ private:
   BPanel* _parent;
 
 protected:
-  // One byte for all three flags.
+  // One byte for all the flags, including those of subclasses.
   bool _isDirty : 1;
   bool _needsLayout : 1;
+  bool _isDown : 1;  // BButton
+  bool _animate : 1; // BButton
 public:
   bool focusable : 1;
+  bool border : 1;   // BPanel: 1 pixel frame
 
   int16_t x;
   int16_t y;
@@ -96,7 +99,6 @@ public:
   BMargin margin;
   int16_t actualWidth;
   int16_t actualHeight;
-  const char* tag;
 
 protected:
   virtual BPanel* asPanel() {
@@ -104,7 +106,7 @@ protected:
   }
 
 public:
-  BEVENT(Mouse, BView, BMouseInputEvent&)
+  typedef EventDelegate<BView, BMouseInputEvent&> MouseEvent; // for BFocusManager::onMouse
   
 public:
   BView();
@@ -168,25 +170,25 @@ public:
     return view.focusManager().theme().color;
   }
 
+  // Unset: the parent panel's background, up to the theme's.
   template<typename T>
   uint16_t viewBackground(T& view) {
     if (view.background.hasValue())
       return view.background;
+    if (view.parent())
+      return view.parent()->viewBackground(*view.parent());
     return view.focusManager().theme().background;
   }
 };
 
 class BControl: public BView {
 public:
-  BEVENT(Focus, BControl, BFocusInputEvent&)
+  typedef EventDelegate<BControl, BFocusInputEvent&> FocusEvent; // for BFocusManager::onFocus
 public:
   virtual void handleEvent(BInputEvent& event);
 };
 
 class BButton: public BControl, public BFontAware, public BColorAware {
-protected:
-  bool _isDown : 1;
-  bool _animate : 1;
 public:
   BEVENT(Click, BButton, bool)
 
@@ -270,7 +272,6 @@ protected:
 
 public:
   BMargin padding;
-  bool border;
 protected:
   uint16_t applyMinMax(uint16_t val, uint16_t minimum, uint16_t maximum);
   int16_t indexOf(BView& view);
@@ -283,13 +284,13 @@ public:
   // add/insert fail once every slot is used.
   template<size_t N>
   BPanel(BView* (&children)[N]) 
-    : _focusManager(nullptr), _children(children, N, N), _layoutHash(0), border(false) {
+    : _focusManager(nullptr), _children(children, N, N), _layoutHash(0) {
     focusable = false;
   }
 
   // Heap storage: the child list grows as needed.
   explicit BPanel(unsigned capacity = 0)
-    : _focusManager(nullptr), _children(capacity), _layoutHash(0), border(false) {
+    : _focusManager(nullptr), _children(capacity), _layoutHash(0) {
     focusable = false;
   }
 

@@ -5,15 +5,16 @@
 
 void BView::handleEvent(BInputEvent& event) {
   if (event.type & BInputEvent::evMouse) {
-    onMouse(this, (BMouseInputEvent&)event);
+    focusManager().onMouse(this, (BMouseInputEvent&)event);
   }
 }
 
 BView::BView() 
-: _parent(nullptr), _isDirty(true), _needsLayout(false), focusable(true),
+: _parent(nullptr), _isDirty(true), _needsLayout(false), _isDown(false), _animate(true),
+  focusable(true), border(false),
   x(0), y(0), width(0), height(0), 
   minWidth(0), minHeight(0), maxWidth(-1), maxHeight(-1), 
-  actualWidth(0), actualHeight(0), tag(nullptr) {}
+  actualWidth(0), actualHeight(0) {}
 
 bool BView::hitTest(int16_t ptX, int16_t ptY) {
   return BRect(0, 0, actualWidth, actualHeight).contains(ptX, ptY);
@@ -115,7 +116,7 @@ void BControl::handleEvent(BInputEvent& event) {
       case BCommandInputEvent::cmBlur: {
         dirty();
         BFocusInputEvent& cmd = (BFocusInputEvent&)event;
-        onFocus(this, cmd);
+        focusManager().onFocus(this, cmd);
         break;
       }
     }
@@ -125,7 +126,7 @@ void BControl::handleEvent(BInputEvent& event) {
 /*
  BButton
 */
-BButton::BButton() : _isDown(false), _animate(true), text(nullptr) {
+BButton::BButton() : text(nullptr) {
 }
 
 void BButton::clicked() {
@@ -248,7 +249,7 @@ void BButton::draw(BGraphics& g) {
   }
   else {
     auto c = viewColor(*this);
-    auto b = viewBackground(*this);
+    uint16_t b = background.hasValue() ? (uint16_t)background : focusManager().theme().background; // own face, not the panel's
     if (isFocused()) {
       c = focusManager().theme().focusColor;
       b = focusManager().theme().focusBackground;

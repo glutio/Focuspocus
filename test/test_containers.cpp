@@ -103,25 +103,27 @@ struct Counter {
 };
 }
 
-TEST_CASE("events: one handler per widget event, -= frees the slot, duplicates are ignored") {
+TEST_CASE("events: fm.onMouse holds two handlers, -= frees a slot, duplicates are ignored") {
   Box a(50, 50);
   BView* items[] = { &a };
   BStackPanel panel(items);
   BScreen root(panel);
   TestHost host(root);
-  Counter first, second;
+  Counter first, second, third;
 
-  CHECK((a.onMouse += BView::MouseEvent(&first, &Counter::handle)));
-  CHECK((a.onMouse += BView::MouseEvent(&first, &Counter::handle)));
-  CHECK_FALSE((a.onMouse += BView::MouseEvent(&second, &Counter::handle)));
+  CHECK((host.fm.onMouse += BView::MouseEvent(&first, &Counter::handle)));
+  CHECK((host.fm.onMouse += BView::MouseEvent(&first, &Counter::handle)));
+  CHECK((host.fm.onMouse += BView::MouseEvent(&second, &Counter::handle)));
+  CHECK_FALSE((host.fm.onMouse += BView::MouseEvent(&third, &Counter::handle)));
   host.tap(a);
   CHECK(first.calls > 0);
-  CHECK(second.calls == 0);
+  CHECK(second.calls > 0);
+  CHECK(third.calls == 0);
 
-  a.onMouse -= BView::MouseEvent(&first, &Counter::handle);
-  CHECK((a.onMouse += BView::MouseEvent(&second, &Counter::handle)));
+  host.fm.onMouse -= BView::MouseEvent(&first, &Counter::handle);
+  CHECK((host.fm.onMouse += BView::MouseEvent(&third, &Counter::handle)));
   int before = first.calls;
   host.tap(a);
   CHECK(first.calls == before);
-  CHECK(second.calls > 0);
+  CHECK(third.calls > 0);
 }

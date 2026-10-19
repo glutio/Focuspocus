@@ -179,6 +179,17 @@ Events are [Eventfun](https://github.com/glutio/Eventfun) `EventSource`s with
 room for a fixed number of handlers: each widget event holds **one** (`+=`
 returns `false` when it is taken); the focus manager's events hold two.
 
+Focus and mouse events are on the focus manager, one for all views, so each
+widget does not carry them. The sender is the view:
+
+```cpp
+void onFocus(BControl* sender, BFocusInputEvent& e) {
+  if (e.command == BCommandInputEvent::cmFocus) { ... }  // or cmBlur
+}
+fm.onFocus += onFocus;
+fm.onMouse += onMouse;  // void onMouse(BView* sender, BMouseInputEvent& e)
+```
+
 ### Loop, timers and drawing
 
 Call `fm.loop(millis())` from `loop()`. It runs timers about every 16 ms,
@@ -230,7 +241,9 @@ the view is not on the visible screen.
 | `BStackPanel`, `BPanel` | see Layout | `add`, `insert`, `remove` |
 | `BPopup` | a centered `BStackPanel` that shades the screen below | |
 
-`color`, `background`, `fontSize` and `fontColor` default to the theme.
+`color`, `fontSize` and `fontColor` default to the theme. An unset
+`background` is the nearest panel's, else the theme's; button faces use the
+theme's.
 
 | | | |
 |:-:|:-:|:-:|

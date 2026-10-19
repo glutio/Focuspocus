@@ -15,7 +15,7 @@ BKeyboard keyboard(fm);
 
 int main() {
   LayoutScreen::begin();
-  FocusScreen::begin();
+  FocusScreen::begin(fm);
   AskScreen::begin();
 
   BWin32Window window(gfx, fm, mouse, keyboard, L"Focuspocus - layout and focus", 2);

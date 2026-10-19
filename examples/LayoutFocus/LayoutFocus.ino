@@ -48,7 +48,7 @@ void setup() {
   nextButton.onChange += onNext;
 
   LayoutScreen::begin();
-  FocusScreen::begin();
+  FocusScreen::begin(fm);
   AskScreen::begin();
 }
 
